@@ -1,0 +1,28 @@
+{
+  "name": "hubot-playbook",
+  "version": "0.0.0",
+  "description": "Conversation branching library for Hubots.",
+  "main": "index.js",
+  "scripts": {
+    "test": "gulp test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/timkinnane/hubot-playbook.git"
+  },
+  "keywords": [
+    "hubot",
+    "chatbot",
+    "slack",
+    "rocketchat",
+    "messenger",
+    "conversation",
+    "dialogue"
+  ],
+  "author": "Tim Kinnane <tim@nestedcode.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/timkinnane/hubot-playbook/issues"
+  },
+  "homepage": "https://github.com/timkinnane/hubot-playbook#readme"
+}
