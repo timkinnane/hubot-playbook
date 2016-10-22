@@ -31,35 +31,19 @@ gulp.task 'lint', ->
     .pipe $.coffeelint('./coffeelint.json')
     .pipe $.coffeelint.reporter()
 
-gulp.task 'clean', del.bind(null, ['./compile'])
-gulp.task 'clean:coverage', del.bind(null, ['./coverage'])
+gulp.task 'clean', del.bind(null, ['./coverage'])
 
-gulp.task 'compile', ['lint'], ->
-  es.merge(
-    gulp.src paths.source
-      .pipe $.sourcemaps.init()
-      .pipe($.coffee(bare: true).on('error', $.util.log))
-      .pipe $.sourcemaps.write()
-      .pipe gulp.dest('./compile/src')
-    gulp.src paths.tests
-      .pipe $.sourcemaps.init()
-      .pipe($.coffee({ bare: true }).on('error', $.util.log))
-      .pipe $.sourcemaps.write()
-      .pipe $.espower()
-      .pipe gulp.dest('./compile/test')
-  )
-  undefined
-
-gulp.task 'istanbul', ['clean:coverage', 'compile'], (cb) ->
-  gulp.src ['./compile/src/**/*.js']
+gulp.task 'istanbul', ['clean'], (cb) ->
+  gulp.src ['./src/**/*.coffee']
     #Covering files
-    .pipe $.istanbul({ includeUntested: true })
+    .pipe $.coffeeIstanbul({ includeUntested: true })
+    .pipe $.coffeeIstanbul.hookRequire()
     .on 'finish', ->
-      gulp.src ['./compile/test/**/*.js'], {cwd: __dirname}
+      gulp.src ['./test/**/*.coffee'], {cwd: __dirname}
         .pipe $.if(!boolifyString(process.env.CI), $.plumber())
         .pipe $.mocha()
         #Creating the reports after tests runned
-        .pipe $.istanbul.writeReports()
+        .pipe $.coffeeIstanbul.writeReports()
         .on 'finish', ->
           process.chdir __dirname
           cb()
