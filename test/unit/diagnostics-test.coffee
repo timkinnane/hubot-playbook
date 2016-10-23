@@ -20,9 +20,8 @@ helper = new Helper script
 
 describe '#Diagnostics', ->
 
+  # Create without helper to test constructors and listeners
   beforeEach ->
-
-    # Create without helper to test constructors and listeners
     @user = new User 'Tester', {room: 'Lobby'}
     @bot = new Robot 'hubot/src/adapters', 'shell'
     @spy =
@@ -31,12 +30,7 @@ describe '#Diagnostics', ->
       response: sinon.spy @bot, 'Response'
     require(module) @bot
 
-    # Create helper to test messaging after listeners set up
-    @room = helper.createRoom()
-
-  afterEach ->
-    @bot.shutdown()
-    @room.destroy()
+  afterEach -> @bot.shutdown()
 
   context 'Script sets up listeners', ->
 
@@ -55,7 +49,7 @@ describe '#Diagnostics', ->
       unmute = mute() # supress hubot messages in test results
       @cb = sinon.spy @bot.listeners[0], 'callback'
       @bot.receive new TextMessage @user, 'hubot which version', '111'
-      Q.delay(500).done =>
+      Q.delay(200).done =>
         unmute()
         done()
 
@@ -75,7 +69,7 @@ describe '#Diagnostics', ->
       unmute = mute() # supress hubot messages in test results
       @cb = sinon.spy @bot.listeners[1], 'callback'
       @bot.receive new TextMessage @user, 'is hubot listening?', '111'
-      Q.delay(500).done =>
+      Q.delay(200).done =>
         unmute()
         done()
 
@@ -89,4 +83,23 @@ describe '#Diagnostics', ->
       @res = @cb.args[0][0] # get res from callback
       @res.should.be.instanceof @spy.response
 
-  # context 'User asks for diagnostic responses', ->
+  context 'User asks for diagnostic responses', ->
+
+    # Create helper to test messaging
+    beforeEach -> @room = helper.createRoom()
+    afterEach -> @room.destroy()
+
+    it 'reply to the version request with a version number', (done) ->
+      @room.user.say 'Tester', 'hubot which version are you on?'
+      Q.delay(200).done =>
+        @room.messages[1][1].should.match /\d.\d.\d/
+        done()
+
+    it 'reply to qustions confirming hubot listening', (done) ->
+      @room.user.say 'Tester', 'Is hubot listening?'
+      @room.user.say 'Tester', 'Are any hubots listening?'
+      @room.user.say 'Tester', 'Is there a bot listening?'
+      @room.user.say 'Tester', 'Hubot are you listening?'
+      Q.delay(200).done =>
+        @room.messages.length.should.equal 8
+        done()
