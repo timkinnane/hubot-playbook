@@ -12,7 +12,7 @@ pids
 lib-cov
 
 # Coverage directory used by tools like istanbul
-coverage
+test/coverage
 
 # nyc test coverage
 .nyc_output
@@ -39,3 +39,4 @@ jspm_packages
 # Extras
 temp
 compile
+.hubot-history

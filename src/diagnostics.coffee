@@ -12,12 +12,12 @@
 #   <optional notes required for the script>
 #
 # Author:
-#   Tim Kinnane[@<org>]
+#   Tim Kinnane[@4thParty]
 
 module.exports = (robot) ->
 
-  robot.respond /hello/, (msg) ->
-    msg.reply "hello!"
+  robot.respond /hello/, (res) ->
+    res.reply "hello!"
 
-  robot.hear /orly/, (msg) ->
-    msg.send "yarly"
+  robot.hear /orly/, (res) ->
+    res.send "yarly"

@@ -3,9 +3,12 @@
   "version": "0.0.0",
   "description": "Conversation branching library for Hubots.",
   "main": "index.coffee",
+  "engines": {
+    "node": "^4.4.x"
+  },
   "scripts": {
     "test": "gulp test",
-    "coveralls": "gulp test && cat coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
+    "coveralls": "gulp test && cat test/coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
   },
   "repository": {
     "type": "git",
@@ -37,6 +40,7 @@
   },
   "devDependencies": {
     "boolify-string": "^0.1.0",
+    "chai": "^3.5.0",
     "coveralls": "^2.10.1",
     "del": "^1.1.1",
     "event-stream": "^3.1.5",
@@ -54,6 +58,7 @@
     "hubot": "^2.19.0",
     "power-assert": "^0.10.1",
     "sinon": "^1.10.2",
+    "sinon-chai": "^2.8.0",
     "traceur": "0.0.111"
   }
 }
