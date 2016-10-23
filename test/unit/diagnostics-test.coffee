@@ -12,6 +12,7 @@ expect = chai.expect
 # Tests for unaltered hubot and its listeners
 # This just provide a baseline measure before doing anything complicated
 # Really I'm just trying different patterns and utils for testing Hubot
+# Many tests use 200ms delay for hubot to process messages
 
 module = "../../src/diagnostics"
 script = "#{ module }.coffee"
@@ -68,7 +69,7 @@ describe '#Diagnostics', ->
     beforeEach (done) ->
       unmute = mute() # supress hubot messages in test results
       @cb = sinon.spy @bot.listeners[1], 'callback'
-      @bot.receive new TextMessage @user, 'is hubot listening?', '111'
+      @bot.receive new TextMessage @user, 'Is hubot listening?', '111'
       Q.delay(200).done =>
         unmute()
         done()
@@ -83,23 +84,52 @@ describe '#Diagnostics', ->
       @res = @cb.args[0][0] # get res from callback
       @res.should.be.instanceof @spy.response
 
-  context 'User asks for diagnostic responses', ->
+  # TODO: why isn't this covering branch?
+  context 'Bot responds to its alias', ->
 
-    # Create helper to test messaging
-    beforeEach -> @room = helper.createRoom()
-    afterEach -> @room.destroy()
-
-    it 'reply to the version request with a version number', (done) ->
-      @room.user.say 'Tester', 'hubot which version are you on?'
+    # rerun module with an alias'd bot
+    beforeEach (done) ->
+      @bot = new Robot 'hubot/src/adapters', 'shell'
+      @bot.alias = 'buddy'
+      require(module) @bot
+      @response = sinon.spy @bot, 'Response'
+      @cb = sinon.spy @bot.listeners[0], 'callback'
+      unmute = mute()
+      @bot.receive new TextMessage @user, 'buddy which version', '111'
       Q.delay(200).done =>
-        @room.messages[1][1].should.match /\d.\d.\d/
+        unmute()
         done()
 
-    it 'reply to qustions confirming hubot listening', (done) ->
+    it 'calls callback with response', ->
+      @response.should.have.been.calledOnce
+      @cb.should.have.been.calledOnce
+      @cb.args[0][0].should.be.instanceof @spy.response
+
+  # Below uses helper for easy messaging tests
+
+  context 'User asks for version number', ->
+
+    beforeEach (done) ->
+      @room = helper.createRoom()
+      @room.user.say 'Tester', 'hubot which version are you on?'
+      Q.delay(200).done -> done()
+
+    afterEach -> @room.destroy()
+
+    it 'replies with a version number', ->
+      @room.messages[1][1].should.match /\d.\d.\d/
+
+  context 'User asks a variety of ways if hubot is listening', ->
+
+    beforeEach (done) ->
+      @room = helper.createRoom()
       @room.user.say 'Tester', 'Is hubot listening?'
       @room.user.say 'Tester', 'Are any hubots listening?'
       @room.user.say 'Tester', 'Is there a bot listening?'
       @room.user.say 'Tester', 'Hubot are you listening?'
-      Q.delay(200).done =>
-        @room.messages.length.should.equal 8
-        done()
+      Q.delay(200).done -> done()
+
+    afterEach -> @room.destroy()
+
+    it 'reply to qustions confirming hubot listening', ->
+      @room.messages.length.should.equal 8
