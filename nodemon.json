@@ -1,0 +1,6 @@
+{
+  "verbose": true,
+  "watch": ["scripts", "src", "modules", "scenes"],
+  "exec": "coffee --nodejs '--debug -r dotenv/config' node_modules/hubot/bin/hubot --name 'player' -a 'shell'",
+  "ext": "js json yml coffee"
+}

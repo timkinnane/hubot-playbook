@@ -1,8 +1,9 @@
 # Description
-#   A hubot script that does the things
+#   Diagnostics interactions provide a baseline measure before doing anything
+#   more complicated. They work on Hubot without any modules of Playvbook.
 #
 # Configuration:
-#   LIST_OF_ENV_VARS_TO_SET
+#   N/A
 #
 # Commands:
 #   hubot which version - Responds with the NPM version of this package

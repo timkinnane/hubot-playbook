@@ -39,5 +39,5 @@ jspm_packages
 # Extras
 temp
 compile
-.hubot-history
+.hubot_history
 .env
