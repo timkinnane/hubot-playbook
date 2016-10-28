@@ -24,8 +24,8 @@
 module.exports = (robot) ->
 
   robot.respond /which version/i, (res) ->
-    pjson = require '../package.json'
-    res.reply "I'm currently running version #{ pjson.version }"
+    {version} = require '../package.json'
+    res.reply "I'm currently running version #{ version }"
 
   hearTest = ".*\\b((hu)?bot(s)?|#{robot.name}"
   hearTest+= "|#{robot.alias}" if robot.alias?
