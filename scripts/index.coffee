@@ -11,6 +11,6 @@
 #   This file won't be used when Playbook is required as a module.
 #
 # Author:
-#   Tim Kinnane[@4thParty
+#   Tim Kinnane[@4thParty]
 Playbook = require '../index.coffee'
 module.exports = (robot, scripts) ->  Playbook robot, scripts

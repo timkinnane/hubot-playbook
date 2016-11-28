@@ -30,7 +30,7 @@ gulp.task 'lint', ->
     .pipe $.coffeelint('./coffeelint.json')
     .pipe $.coffeelint.reporter()
 
-gulp.task 'clean', del.bind(null, ['./test/coverage'])
+gulp.task 'clean', del.bind(null, ['./coverage'])
 
 gulp.task 'istanbul', ['clean'], (cb) ->
   gulp.src ['./src/**/*.coffee']
@@ -42,7 +42,7 @@ gulp.task 'istanbul', ['clean'], (cb) ->
         .pipe $.if(!boolifyString(process.env.CI), $.plumber())
         .pipe $.mocha()
         #Creating the reports after tests runned
-        .pipe $.coffeeIstanbul.writeReports({ dir: './test/coverage' })
+        .pipe $.coffeeIstanbul.writeReports({ dir: './coverage' })
         .on 'finish', ->
           process.chdir __dirname
           cb()
