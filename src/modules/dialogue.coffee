@@ -14,7 +14,7 @@ class Dialogue extends EventEmitter
     @logger = @res.robot.logger
     @choices = []
     @config = _.defaults options, # use defaults for any missing options
-      timeout: process.env.DIALOGUE_TIMEOUT or 30000
+      timeout: parseInt process.env.DIALOGUE_TIMEOUT or 30000
       timeoutLine: process.env.DIALOGUE_TIMEOUT_LINE or
         'Timed out! Please start again.'
     @startTimeout()
