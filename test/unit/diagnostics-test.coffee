@@ -1,4 +1,5 @@
 Q = require 'q'
+_ = require 'underscore'
 mute = require 'mute'
 assert = require 'power-assert'
 sinon = require 'sinon'
@@ -9,27 +10,31 @@ chai.use require 'sinon-chai'
 # Tests for unaltered hubot and its listeners
 # This just provide a baseline measure before doing anything complicated
 # Really I'm just trying different patterns and utils for testing Hubot
-# Many tests use 200ms delay for hubot to process messages
+# Tests use 200ms delay for hubot to process messages
 
 Helper = require 'hubot-test-helper'
 module = "../../src/diagnostics"
 script = "#{ module }.coffee"
 {Robot, TextMessage, User} = require 'hubot'
 helper = new Helper script
+msDelay = 200
 
 describe '#Diagnostics', ->
 
   # Create without helper to test constructors and listeners
   beforeEach ->
     @user = new User 'Tester', room: 'Lobby'
-    @bot = new Robot 'hubot/src/adapters', 'shell'
     @spy =
-      respond: sinon.spy @bot, 'respond'
-      hear: sinon.spy @bot, 'hear'
-      response: sinon.spy @bot, 'Response'
+      hear: sinon.spy Robot.prototype, 'hear'
+      respond: sinon.spy Robot.prototype, 'respond'
+    @bot = new Robot 'hubot/src/adapters', 'shell'
+    @bot.alias = null
+    @spy.response = sinon.spy @bot, 'Response' # sub-constructors after init
     require(module) @bot
 
-  afterEach -> @bot.shutdown()
+  afterEach ->
+    _.invoke @spy, 'restore' # remove all spies so they can be reattached clean
+    @bot.shutdown()
 
   context 'Script sets up listeners', ->
 
@@ -52,7 +57,7 @@ describe '#Diagnostics', ->
       unmute = mute() # supress hubot messages in test results
       @cb = sinon.spy @bot.listeners[0], 'callback'
       @bot.receive new TextMessage @user, 'Hubot which version', '111'
-      Q.delay(200).done =>
+      Q.delay(msDelay).done ->
         unmute()
         done()
 
@@ -72,7 +77,7 @@ describe '#Diagnostics', ->
       unmute = mute() # supress hubot messages in test results
       @cb = sinon.spy @bot.listeners[1], 'callback'
       @bot.receive new TextMessage @user, 'Is Hubot listening?', '111'
-      Q.delay(200).done =>
+      Q.delay(msDelay).done ->
         unmute()
         done()
 
@@ -89,21 +94,21 @@ describe '#Diagnostics', ->
   # TODO: why isn't this covering branch?
   context 'Bot responds to its alias', ->
 
-    # rerun module with an alias'd bot
+    # rerun module (recreating bot and listeners) with bot alias
     beforeEach (done) ->
       @bot = new Robot 'hubot/src/adapters', 'shell'
       @bot.alias = 'buddy'
+      @spy.response = sinon.spy @bot, 'Response' # sub-constructors after init
       require(module) @bot
-      @response = sinon.spy @bot, 'Response'
       @cb = sinon.spy @bot.listeners[0], 'callback'
       unmute = mute()
       @bot.receive new TextMessage @user, 'buddy which version', '111'
-      Q.delay(200).done =>
+      Q.delay(msDelay).done ->
         unmute()
         done()
 
     it 'calls callback with response', ->
-      @response.should.have.been.calledOnce
+      @spy.response.should.have.been.calledOnce
       @cb.should.have.been.calledOnce
       @cb.args[0][0].should.be.instanceof @spy.response
 
@@ -114,7 +119,7 @@ describe '#Diagnostics', ->
     beforeEach (done) ->
       @room = helper.createRoom()
       @room.user.say 'Tester', 'Hubot which version are you on?'
-      Q.delay(200).done -> done()
+      Q.delay(msDelay).done -> done()
 
     afterEach -> @room.destroy()
 
@@ -129,7 +134,7 @@ describe '#Diagnostics', ->
       @room.user.say 'Tester', 'Are any Hubots listening?'
       @room.user.say 'Tester', 'Is there a bot listening?'
       @room.user.say 'Tester', 'Hubot are you listening?'
-      Q.delay(200).done -> done()
+      Q.delay(msDelay).done -> done()
 
     afterEach -> @room.destroy()
 
