@@ -1,4 +1,5 @@
 Q = require 'q'
+_ = require 'underscore'
 mute = require 'mute'
 assert = require 'power-assert'
 sinon = require 'sinon'
@@ -13,7 +14,6 @@ module = "../../src/modules/Dialogue"
 script = "#{ module }.coffee"
 helper = new Helper script
 Dialogue = require module
-_ = require 'underscore'
 Timeout = setTimeout () ->
   null
 , 0
@@ -28,12 +28,12 @@ delete process.env.DIALOGUE_TIMEOUT_LINE
 describe '#Dialogue', ->
 
   # Create bot and initiate a response to test with
-  beforeEach ->
+  beforeEach (done) ->
     @user = new User 'Tester', room: 'Lobby'
     @bot = new Robot 'hubot/src/adapters', 'shell'
     @res = null
     @bot.respond /testing/, (res) => @res = res
-    @bot.receive new TextMessage @user, 'Hubot testing', '111'
+    @bot.receive new TextMessage @user, 'Hubot testing', '111' # start dialogue
     @spy =
       startTimeout: sinon.spy Dialogue.prototype, 'startTimeout'
       onTimeout: sinon.spy Dialogue.prototype, 'onTimeout'
@@ -43,18 +43,15 @@ describe '#Dialogue', ->
       choice: sinon.spy Dialogue.prototype, 'choice'
       getChoices: sinon.spy Dialogue.prototype, 'getChoices'
       clearChoices: sinon.spy Dialogue.prototype, 'clearChoices'
+    Q.delay(100).done -> done() # let it process the messages and create res
 
   afterEach ->
+    _.invoke @spy, 'restore'
     @bot.shutdown()
-    _.invoke @spy, 'restore' # remove spies so they can be reattached clean
 
   context 'Create a Dialogue with defaults', ->
 
-    beforeEach (done) ->
-      Q.delay(200).done =>
-        @dialogue = new Dialogue @res
-        done()
-
+    beforeEach -> @dialogue = new Dialogue @res
     afterEach -> clearTimeout @dialogue.countdown
 
     it 'inherits event emmiter', ->
@@ -81,15 +78,48 @@ describe '#Dialogue', ->
 
   context 'Create a Dialogue with env vars', ->
 
-    beforeEach (done) ->
+    beforeEach ->
+      # unmute = mute()
       process.env.DIALOGUE_TIMEOUT = 500
-      process.env.DIALOGUE_TIMEOUT_LINE = 'Testing timeout'
-      Q.delay(200).done =>
-        @dialogue = new Dialogue @res
-        done()
-
-    afterEach -> clearTimeout @dialogue.countdown
+      process.env.DIALOGUE_TIMEOUT_LINE = 'Testing timeout env'
+      @dialogue = new Dialogue @res
+    afterEach ->
+      clearTimeout @dialogue.countdown
+      delete process.env.DIALOGUE_TIMEOUT
+      delete process.env.DIALOGUE_TIMEOUT_LINE
+      # unmute()
 
     it 'uses the environment timeout settings', ->
       @dialogue.config.timeout.should.equal 500
-      @dialogue.config.timeoutLine.should.equal 'Testing timeout'
+      @dialogue.config.timeoutLine.should.equal 'Testing timeout env'
+
+  context 'Create a Dialogue with options', ->
+
+    beforeEach ->
+      @dialogue = new Dialogue @res,
+        timeout: 555
+        timeoutLine: 'Testing timeout options'
+    afterEach -> clearTimeout @dialogue.countdown
+
+    it 'uses the passed options timeout settings', ->
+      @dialogue.config.timeout.should.equal 555
+      @dialogue.config.timeoutLine.should.equal 'Testing timeout options'
+
+  context 'Create a Dialogue with 100ms timeout', ->
+
+    beforeEach (done) ->
+      unmute = mute()
+      @eventSpy = sinon.spy()
+      @dialogue = new Dialogue @res,
+        timeout: 100
+      @dialogue.on 'timeout', @eventSpy
+      Q.delay(110).done ->
+        unmute()
+        done()
+    afterEach -> clearTimeout @dialogue.countdown
+
+    it 'emits timeout event', ->
+      @eventSpy.should.have.been.calledOnce
+
+    it 'calls onTimeout', ->
+      @spy.onTimeout.should.have.been.calledOnce
