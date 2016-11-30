@@ -10,7 +10,6 @@ _ = require 'underscore'
 # @param {object} options key/vals for config, e.g overide timeout default
 class Dialogue extends EventEmitter
   constructor: (@res, options={}) ->
-    # console.log @res
     @logger = @res.robot.logger
     @choices = []
     @config = _.defaults options, # use defaults for any missing options
