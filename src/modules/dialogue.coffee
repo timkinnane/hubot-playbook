@@ -29,6 +29,35 @@ class Dialogue extends EventEmitter
   # default timeout method sends line unless null or method overrride
   onTimeout: -> @send @res, @config.timeoutLine if @config.timeoutLine?
 
+  # add a choice branch with string response and/or callback
+  # 1: .choice( regex, response ) reply with response on regex match
+  # 2: .choice( regex, callback ) trigger callback on regex match
+  # 3: .choice( regex, response, callback ) reply and do callback
+  # @param regex, expression to match
+  # @param {string} response message text (optional)
+  # @param {function} handler function when matched (optional)
+  choice: (regex, args...) ->
+    if typeof args[0] is 'function'
+      handler = args[0]
+    else if typeof args[0] is 'string'
+      handler = (res) =>
+        @send res, args[0]
+        args[1] res if typeof args[1] is 'function'
+    else
+      @logger.error 'wrong args given for choice'
+      return false
+
+    # new choice restarts the countdown
+    @clearTimeout()
+    @startTimeout()
+    @choices.push # return new choices length
+      regex: regex,
+      handler: handler
+
+  getChoices: -> @choices
+
+  clearChoices: -> @choices = []
+
   # accept an incoming message, match against the registered choices
   # if matched, deliver response, clear timeout and end dialogue
   # @param res, the message object to match against
@@ -64,34 +93,5 @@ class Dialogue extends EventEmitter
     @emit 'complete', @res, success
     @clearTimeout()
     return success
-
-  # add a choice branch with string response and/or callback
-  # 1: .choice( regex, response ) reply with response on regex match
-  # 2: .choice( regex, callback ) trigger callback on regex match
-  # 3: .choice( regex, response, callback ) reply and do callback
-  # @param regex, expression to match
-  # @param {string} response message text (optional)
-  # @param {function} handler function when matched (optional)
-  choice: (regex, args...) ->
-    if typeof args[0] is 'function'
-      handler = args[0]
-    else if typeof args[0] is 'string'
-      handler = (res) =>
-        @send res, args[0]
-        args[1] res if typeof args[1] is 'function'
-    else
-      @logger.error 'wrong args given for choice'
-      return false
-
-    # new choice restarts the countdown
-    @clearTimeout()
-    @startTimeout()
-    @choices.push # return new choices length
-      regex: regex,
-      handler: handler
-
-  getChoices: -> @choices
-
-  clearChoices: -> @choices = []
 
 module.exports = Dialogue
