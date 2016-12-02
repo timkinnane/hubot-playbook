@@ -63,7 +63,7 @@ class Dialogue extends EventEmitter
   # @param res, the message object to match against
   receive: (res) ->
     line = res.message.text
-    @logger.debug "Dialogue received "
+    @logger.debug "Dialogue received #{ line }"
     match = false
 
     # stop at the first match in the order in which they were added

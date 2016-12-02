@@ -10,6 +10,7 @@ chai.use require 'sinon-chai'
 Helper = require 'hubot-test-helper'
 helper = new Helper "../utils/noScript.coffee"
 Dialogue = require "../../src/modules/Dialogue"
+{TextMessage, User, Response} = require 'hubot'
 {EventEmitter} = require 'events'
 Timeout = setTimeout () ->
   null
@@ -38,7 +39,7 @@ describe '#Dialogue', ->
     _.invoke @spy, 'restore' # restore all the methods
     @room.destroy()
 
-  context 'Dialogue created with defaults', ->
+  context 'Created with defaults', ->
 
     beforeEach -> @dialogue = new Dialogue @res
     afterEach -> clearTimeout @dialogue.countdown
@@ -64,7 +65,7 @@ describe '#Dialogue', ->
       @dialogue.countdown.should.be.instanceof Timeout
       @spy.startTimeout.should.have.been.calledOnce
 
-  context 'Dialogue created with env vars', ->
+  context 'Created with env vars', ->
 
     beforeEach ->
       process.env.DIALOGUE_TIMEOUT = 500
@@ -79,7 +80,7 @@ describe '#Dialogue', ->
       @dialogue.config.timeout.should.equal 500
       @dialogue.config.timeoutLine.should.equal 'Testing timeout env'
 
-  context 'Dialogue created with options', ->
+  context 'Created with options', ->
 
     beforeEach ->
       @dialogue = new Dialogue @res,
@@ -91,7 +92,7 @@ describe '#Dialogue', ->
       @dialogue.config.timeout.should.equal 555
       @dialogue.config.timeoutLine.should.equal 'Testing timeout options'
 
-  context 'Dialogue created with 100ms timeout', ->
+  context 'Created with 100ms timeout', ->
 
     beforeEach (done) ->
       @eventSpy = sinon.spy()
@@ -112,34 +113,94 @@ describe '#Dialogue', ->
         [ 'hubot', @dialogue.config.timeoutLine ]
       ]
 
-  context 'Dialogue created with different choice types', ->
+  context 'Created with all variations of choice', ->
 
-    beforeEach (done) ->
-      unmute = mute() # don't write logs amongst test results
-      @dialogue = new Dialogue @res, timeout: 500
-      @errSpy = sinon.spy @room.robot.logger, 'error'
-      @cbSpy1 = sinon.spy()
-      @cbSpy2 = sinon.spy()
-      @dialogue.choice /number 1/i, 'Nothing'
-      @dialogue.choice /number 2/i, @cbSpy1
-      @dialogue.choice /number 3/i, 'Booby Prize', @cbSpy2
+    beforeEach ->
+      # unmute = mute() # don't write logs amongst test results
+      @dialogue = new Dialogue @res
+      @user = new User 'user1', room: 'test'
+      @errorSpy = sinon.spy @room.robot.logger, 'error'
+      @debugSpy = sinon.spy @dialogue.logger, 'debug'
+
+      # create four choices, first three are valid
+      # prepare a message, match and response objects for each choice
+      # these will be received directly by dialogue, not through @room
+      # NB: Dialogue doesn't attach the middleware to pass along a message
+
+      # door number 1
+      @txt1 = 'Door number 1'
+      @prize1 = 'Nothing'
+      @dialogue.choice /number 1/i, @prize1
+      @handler1 = sinon.spy @dialogue.choices[0], 'handler'
+      msg = new TextMessage @user, @txt1, '1'
+      match = msg.text.match @dialogue.choices[0].regex
+      @res1 = new Response @room.robot, msg, match
+
+      # door number 2
+      @txt2 = 'Door number 2'
+      @dialogue.choice /number 2/i, () -> null
+      @handler2 = sinon.spy @dialogue.choices[1], 'handler'
+      msg = new TextMessage @user, @txt2, '1'
+      match = msg.text.match @dialogue.choices[1].regex
+      @res2 = new Response @room.robot, msg, match
+
+      # door number 3
+      @txt3 = 'Door number 3'
+      @prize3 = 'Booby Prize'
+      @prize3Spy = sinon.spy()
+      @dialogue.choice /number 3/i, @prize3, @prize3Spy
+      @handler3 = sinon.spy @dialogue.choices[2], 'handler'
+      msg = new TextMessage @user, @txt3, '1'
+      match = msg.text.match @dialogue.choices[2].regex
+      @res3 = new Response @room.robot, msg, match
+
+      # false door
       @dialogue.choice /number 4/i, null
-      unmute()
-      Q.delay(100).done -> done()
-    afterEach -> clearTimeout @dialogue.countdown
 
-    it 'Should clear and restart the timeout each time', ->
-      @spy.clearTimeout.should.have.been.calledThrice
+      # unmute()
+    afterEach ->
+      @handler1.restore()
+      @handler2.restore()
+      # @handler3.restore()
+      clearTimeout @dialogue.countdown
 
-    it 'Should remember three (of four) valid choices', ->
+    it 'clear and restart the timeout each time', ->
+      @spy.clearTimeout.should.have.callCount 3
+      @spy.startTimeout.should.have.callCount 4 # called on init
+
+    it 'remember three (of four) valid choices', ->
       @dialogue.choices.should.be.an 'array'
       @dialogue.choices.length.should.equal 3
 
-    it 'Should create an object with a listener and a handler for each', ->
+    it 'has object with listener and handler for each valid choice', ->
       _.each @dialogue.choices, (choice) =>
         choice.should.be.an 'object'
         choice.regex.should.be.instanceof RegExp
         choice.handler.should.be.a 'function'
 
-    it 'Should have logged an error for incorrect args', ->
-      @errSpy.should.have.been.calledOnce
+    it 'log an error for incorrect args', ->
+      @errorSpy.should.have.been.calledOnce
+
+    # NB: Response take time to process, delay room tests by 100ms
+
+    it 'match choice 1 with default callback, sends message', ->
+      yield @dialogue.receive @res1
+      @handler1.should.have.been.calledOnce
+      @debugSpy.should.have.been.called # log at least something
+      @room.messages.pop().should.eql [ 'hubot', @prize1 ]
+
+    it 'match choice 2 with custom callback', ->
+      yield @dialogue.receive @res2
+      @handler2.should.have.been.calledOnce
+
+    it 'match choice 3 with custom callback', ->
+      yield @dialogue.receive @res3
+      @handler3.should.have.been.calledOnce
+      @prize3Spy.should.have.been.calledOnce
+      @room.messages.pop().should.eql [ 'hubot', @prize3 ]
+
+# TODO: re-order tests with file renames
+# TODO: replace arbitrary delays with yields
+# TODO: make sure choices cleared after match, aren't matched more than once
+# e.g.  .should.not.have.been.called
+# or    .should.have.been.notCalled
