@@ -133,29 +133,26 @@ describe '#Dialogue', ->
       # NB: Dialogue doesn't attach the middleware to pass along a message
 
       # door number 1
-      @txt1 = 'Door number 1'
       @prize1 = 'Nothing'
       @dialogue.choice /number 1/i, @prize1
       @handler1 = sinon.spy @dialogue.choices[0], 'handler'
-      msg = new TextMessage @user, @txt1, '1'
+      msg = new TextMessage @user, 'Door number 1', '1'
       match = msg.text.match @dialogue.choices[0].regex
       @res1 = new Response @room.robot, msg, match
 
       # door number 2
-      @txt2 = 'Door number 2'
       @dialogue.choice /number 2/i, () -> null
       @handler2 = sinon.spy @dialogue.choices[1], 'handler'
-      msg = new TextMessage @user, @txt2, '1'
+      msg = new TextMessage @user, 'Door number 2', '1'
       match = msg.text.match @dialogue.choices[1].regex
       @res2 = new Response @room.robot, msg, match
 
       # door number 3
-      @txt3 = 'Door number 3'
       @prize3 = 'Booby Prize'
       @prize3Spy = sinon.spy()
       @dialogue.choice /number 3/i, @prize3, @prize3Spy
       @handler3 = sinon.spy @dialogue.choices[2], 'handler'
-      msg = new TextMessage @user, @txt3, '1'
+      msg = new TextMessage @user, 'Door number 3', '1'
       match = msg.text.match @dialogue.choices[2].regex
       @res3 = new Response @room.robot, msg, match
 
@@ -166,7 +163,7 @@ describe '#Dialogue', ->
     afterEach ->
       @handler1.restore()
       @handler2.restore()
-      # @handler3.restore()
+      @handler3.restore()
       clearTimeout @dialogue.countdown
 
     it 'clear and restart the timeout each time', ->
@@ -193,8 +190,6 @@ describe '#Dialogue', ->
 
     it 'log an error for incorrect args', ->
       @errorSpy.should.have.been.calledOnce
-
-    # NB: Response take time to process, delay room tests by 100ms
 
     it 'match choice 1 with default callback, sends message', ->
       @dialogue.receive @res1
@@ -228,9 +223,29 @@ describe '#Dialogue', ->
         @spy.clearChoices.should.have.been.calledOnce
         @room.messages.pop().should.eql [ 'hubot', @prize1 ]
 
-#   context 'add another choice with matched choice callback', ->
-#
-#
-# unmute = mute() # don't write logs amongst test results
-# @dialogue = new Dialogue @res
-# @user = new User 'user1', room: 'test'
+  context 'add another choice with matched choice callback', ->
+
+    beforeEach ->
+      unmute = mute()
+      @dialogue = new Dialogue @res
+      @user = new User 'user1', room: 'test'
+      @yesSpy = sinon.spy()
+      @dialogue.choice /confirm/, () => @dialogue.choice /yes/i, @yesSpy
+      msg1 = new TextMessage @user, 'confirm', '1'
+      match1 = msg1.text.match @dialogue.choices[0].regex
+      @res1 = new Response @room.robot, msg1, match1
+      msg2 = new TextMessage @user, 'yes', '1'
+      match2 = msg2.text.match @dialogue.choices[0].regex
+      @res2 = new Response @room.robot, msg2, match2
+      unmute()
+
+    afterEach -> clearTimeout @dialogue.countdown
+
+    it 'has new choice after matching original', ->
+      @dialogue.receive @res1
+      .then => @dialogue.choices.length.should.equal 1
+
+    it 'calls second callback after matching sequence', ->
+      @dialogue.receive @res1
+      .then => @dialogue.receive @res2
+      .then => @yesSpy.should.have.been.calledOnce
