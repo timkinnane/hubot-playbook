@@ -21,8 +21,6 @@ Timeout = setTimeout () ->
 delete process.env.DIALOGUE_TIMEOUT
 delete process.env.DIALOGUE_TIMEOUT_LINE
 
-# Tests for user-to-bot / group-to-bot dialogues
-
 describe '#Dialogue', ->
 
   # Create bot and initiate a response to test with
