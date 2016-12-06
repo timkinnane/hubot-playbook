@@ -39,7 +39,7 @@ describe '#Dialogue', ->
     _.invoke @spy, 'restore' # restore all the methods
     @room.destroy()
 
-  context 'Created with defaults', ->
+  context 'created with defaults', ->
 
     beforeEach -> @dialogue = new Dialogue @res
     afterEach -> clearTimeout @dialogue.countdown
@@ -63,9 +63,10 @@ describe '#Dialogue', ->
     it 'starts timeout', ->
       @dialogue.countdown.should.exist
       @dialogue.countdown.should.be.instanceof Timeout
+      @dialogue.countdown._called.should.be.false
       @spy.startTimeout.should.have.been.calledOnce
 
-  context 'Created with env vars', ->
+  context 'created with env vars', ->
 
     beforeEach ->
       process.env.DIALOGUE_TIMEOUT = 500
@@ -80,7 +81,7 @@ describe '#Dialogue', ->
       @dialogue.config.timeout.should.equal 500
       @dialogue.config.timeoutLine.should.equal 'Testing timeout env'
 
-  context 'Created with options', ->
+  context 'created with options', ->
 
     beforeEach ->
       @dialogue = new Dialogue @res,
@@ -92,7 +93,7 @@ describe '#Dialogue', ->
       @dialogue.config.timeout.should.equal 555
       @dialogue.config.timeoutLine.should.equal 'Testing timeout options'
 
-  context 'Created with 100ms timeout', ->
+  context 'created with 100ms timeout', ->
 
     beforeEach (done) ->
       @eventSpy = sinon.spy()
@@ -104,8 +105,12 @@ describe '#Dialogue', ->
     it 'emits timeout event', ->
       @eventSpy.should.have.been.calledOnce
 
-    it 'calls onTimeout', ->
+    it 'calls onTimeout with response object', ->
       @spy.onTimeout.should.have.been.calledOnce
+      @spy.onTimeout.should.have.been.calledWith @res
+
+    it 'clears internal timeout counter', ->
+      @dialogue.countdown._called.should.be.true
 
     it 'sends timout message to room', ->
       @room.messages.should.eql [
@@ -113,7 +118,7 @@ describe '#Dialogue', ->
         [ 'hubot', @dialogue.config.timeoutLine ]
       ]
 
-  context 'Created with all variations of choice', ->
+  context 'created with all variations of choice', ->
 
     beforeEach ->
       unmute = mute() # don't write logs amongst test results
@@ -172,6 +177,14 @@ describe '#Dialogue', ->
       @dialogue.choices.should.be.an 'array'
       @dialogue.choices.length.should.equal 3
 
+    it 'getChoices returns the array of choices', ->
+      @dialogue.getChoices().should.eql @dialogue.choices
+
+    it 'clearChoices clears the array of choices', ->
+      @dialogue.clearChoices()
+      @dialogue.choices.should.be.an 'array'
+      @dialogue.choices.length.should.equal 0
+
     it 'has object with listener and handler for each valid choice', ->
       _.each @dialogue.choices, (choice) =>
         choice.should.be.an 'object'
@@ -202,6 +215,22 @@ describe '#Dialogue', ->
         @prize3Spy.should.have.been.calledOnce
         @room.messages.pop().should.eql [ 'hubot', @prize3 ]
 
-# TODO: make sure choices cleared after match, aren't matched more than once
-# e.g.  .should.not.have.been.called
-# or    .should.have.been.notCalled
+    it 'clears choices after match', ->
+      @dialogue.receive @res1
+      .then => @spy.clearChoices.should.have.been.calledOnce
+
+    it 'does not match more than once', ->
+      Q.all [
+        @dialogue.receive @res1
+        @dialogue.receive @res3
+      ]
+      .then =>
+        @spy.clearChoices.should.have.been.calledOnce
+        @room.messages.pop().should.eql [ 'hubot', @prize1 ]
+
+#   context 'add another choice with matched choice callback', ->
+#
+#
+# unmute = mute() # don't write logs amongst test results
+# @dialogue = new Dialogue @res
+# @user = new User 'user1', room: 'test'

@@ -35,7 +35,7 @@ describe '#Diagnostics', ->
     _.invoke @spy, 'restore' # remove all spies so they can be reattached clean
     @bot.shutdown()
 
-  context 'Script sets up listeners', ->
+  context 'script sets up listeners', ->
 
     it 'registers a respond listener with RegExp and callback', ->
       @spy.respond.should.have.been.calledWith /which version/i
@@ -50,7 +50,7 @@ describe '#Diagnostics', ->
     it 'bot has two listeners', ->
       @bot.listeners.length.should.equal 2
 
-  context 'Bot responds to a matching message', ->
+  context 'bot responds to a matching message', ->
 
     beforeEach (done) ->
       unmute = mute() # supress hubot messages in test results
@@ -68,7 +68,7 @@ describe '#Diagnostics', ->
       @res = @cb.args[0][0] # get res from callback
       @res.should.be.instanceof @spy.response
 
-  context 'Bot hears a matching message', ->
+  context 'bot hears a matching message', ->
 
     beforeEach (done) ->
       unmute = mute() # supress hubot messages in test results
@@ -89,7 +89,7 @@ describe '#Diagnostics', ->
       @res.should.be.instanceof @spy.response
 
   # TODO: why isn't this covering branch?
-  context 'Bot responds to its alias', ->
+  context 'bot responds to its alias', ->
 
     # rerun module (recreating bot and listeners) with bot alias
     beforeEach (done) ->
@@ -111,7 +111,7 @@ describe '#Diagnostics', ->
 
   # Below uses helper for easy messaging tests
 
-  context 'User asks for version number', ->
+  context 'user asks for version number', ->
 
     beforeEach ->
       @room = helper.createRoom()
@@ -122,7 +122,7 @@ describe '#Diagnostics', ->
     it 'replies with a version number', ->
       @room.messages[1][1].should.match /\d.\d.\d/
 
-  context 'User asks a variety of ways if Hubot is listening', ->
+  context 'user asks a variety of ways if Hubot is listening', ->
 
     beforeEach ->
       @room = helper.createRoom()
