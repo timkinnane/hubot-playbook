@@ -116,7 +116,7 @@ describe '#Dialogue', ->
   context 'Created with all variations of choice', ->
 
     beforeEach ->
-      # unmute = mute() # don't write logs amongst test results
+      unmute = mute() # don't write logs amongst test results
       @dialogue = new Dialogue @res
       @user = new User 'user1', room: 'test'
       @errorSpy = sinon.spy @room.robot.logger, 'error'
@@ -157,7 +157,7 @@ describe '#Dialogue', ->
       # false door
       @dialogue.choice /number 4/i, null
 
-      # unmute()
+      unmute()
     afterEach ->
       @handler1.restore()
       @handler2.restore()
@@ -184,23 +184,25 @@ describe '#Dialogue', ->
     # NB: Response take time to process, delay room tests by 100ms
 
     it 'match choice 1 with default callback, sends message', ->
-      yield @dialogue.receive @res1
-      @handler1.should.have.been.calledOnce
-      @debugSpy.should.have.been.called # log at least something
-      @room.messages.pop().should.eql [ 'hubot', @prize1 ]
+      @dialogue.receive @res1
+      .then =>
+        @handler1.should.have.been.calledOnce
+        @debugSpy.should.have.been.called # log at least something
+        @room.messages.pop().should.eql [ 'hubot', @prize1 ]
 
     it 'match choice 2 with custom callback', ->
-      yield @dialogue.receive @res2
-      @handler2.should.have.been.calledOnce
+      @dialogue.receive @res2
+      .then =>
+        @handler2.should.have.been.calledOnce
 
     it 'match choice 3 with custom callback', ->
-      yield @dialogue.receive @res3
-      @handler3.should.have.been.calledOnce
-      @prize3Spy.should.have.been.calledOnce
-      @room.messages.pop().should.eql [ 'hubot', @prize3 ]
+      @dialogue.receive @res3
+      .then =>
+        @handler3.should.have.been.calledOnce
+        @prize3Spy.should.have.been.calledOnce
+        @room.messages.pop().should.eql [ 'hubot', @prize3 ]
 
 # TODO: re-order tests with file renames
-# TODO: replace arbitrary delays with yields
 # TODO: make sure choices cleared after match, aren't matched more than once
 # e.g.  .should.not.have.been.called
 # or    .should.have.been.notCalled

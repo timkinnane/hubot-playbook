@@ -10,14 +10,13 @@ chai.use require 'sinon-chai'
 # Tests for unaltered hubot and its listeners
 # This just provide a baseline measure before doing anything complicated
 # Really I'm just trying different patterns and utils for testing Hubot
-# Tests use 200ms delay for hubot to process messages
+# NB: @bot.receive tests use `done` callback, @room.say tests return promise
 
 Helper = require 'hubot-test-helper'
 module = "../../src/diagnostics"
 script = "#{ module }.coffee"
 {Robot, TextMessage, User} = require 'hubot'
 helper = new Helper script
-msDelay = 200
 
 describe '#Diagnostics', ->
 
@@ -56,10 +55,8 @@ describe '#Diagnostics', ->
     beforeEach (done) ->
       unmute = mute() # supress hubot messages in test results
       @cb = sinon.spy @bot.listeners[0], 'callback'
-      @bot.receive new TextMessage @user, 'Hubot which version', '111'
-      Q.delay(msDelay).done ->
-        unmute()
-        done()
+      msg = new TextMessage @user, 'Hubot which version', '111'
+      @bot.receive msg, () -> done()
 
     it 'bot creates response', ->
       @spy.response.should.have.been.calledOnce
@@ -76,8 +73,8 @@ describe '#Diagnostics', ->
     beforeEach (done) ->
       unmute = mute() # supress hubot messages in test results
       @cb = sinon.spy @bot.listeners[1], 'callback'
-      @bot.receive new TextMessage @user, 'Is Hubot listening?', '111'
-      Q.delay(msDelay).done ->
+      msg = new TextMessage @user, 'Is Hubot listening?', '111'
+      @bot.receive msg, () ->
         unmute()
         done()
 
@@ -102,8 +99,8 @@ describe '#Diagnostics', ->
       require(module) @bot
       @cb = sinon.spy @bot.listeners[0], 'callback'
       unmute = mute()
-      @bot.receive new TextMessage @user, 'buddy which version', '111'
-      Q.delay(msDelay).done ->
+      msg = new TextMessage @user, 'buddy which version', '111'
+      @bot.receive msg, () ->
         unmute()
         done()
 
@@ -116,10 +113,9 @@ describe '#Diagnostics', ->
 
   context 'User asks for version number', ->
 
-    beforeEach (done) ->
+    beforeEach ->
       @room = helper.createRoom()
       @room.user.say 'Tester', 'Hubot which version are you on?'
-      Q.delay(msDelay).done -> done()
 
     afterEach -> @room.destroy()
 
@@ -128,13 +124,12 @@ describe '#Diagnostics', ->
 
   context 'User asks a variety of ways if Hubot is listening', ->
 
-    beforeEach (done) ->
+    beforeEach ->
       @room = helper.createRoom()
       @room.user.say 'Tester', 'Is Hubot listening?'
-      @room.user.say 'Tester', 'Are any Hubots listening?'
-      @room.user.say 'Tester', 'Is there a bot listening?'
-      @room.user.say 'Tester', 'Hubot are you listening?'
-      Q.delay(msDelay).done -> done()
+      .then => @room.user.say 'Tester', 'Are any Hubots listening?'
+      .then => @room.user.say 'Tester', 'Is there a bot listening?'
+      .then => @room.user.say 'Tester', 'Hubot are you listening?'
 
     afterEach -> @room.destroy()
 

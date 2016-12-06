@@ -62,36 +62,36 @@ class Dialogue extends EventEmitter
   # if matched, deliver response, clear timeout and end dialogue
   # @param res, the message object to match against
   receive: (res) ->
-    line = res.message.text
-    @logger.debug "Dialogue received #{ line }"
-    match = false
+    new Promise (resolve) =>
+      line = res.message.text
+      @logger.debug "Dialogue received #{ line }"
+      match = false
 
-    # stop at the first match in the order in which they were added
-    @choices.some (choice) =>
-      if match = line.match choice.regex
-        @logger.debug "`#{ line }` matched #{ inspect choice.regex }"
-        @emit 'match', line, choice.regex
+      # stop at the first match in the order in which they were added
+      @choices.some (choice) =>
+        if match = line.match choice.regex
+          @logger.debug "`#{ line }` matched #{ inspect choice.regex }"
+          @emit 'match', line, choice.regex
 
-        # match found, clear this step
-        @clearChoices()
-        @clearTimeout()
+          # match found, clear this step
+          @clearChoices()
+          @clearTimeout()
 
-        res.match = match # overrride the original match from hubot listener
-        choice.handler(res) # may add additional choices
-        return true
+          res.match = match # overrride the original match from hubot listener
+          choice.handler res # may add additional choices
+          return resolve true # don't process further matches
 
-    # complete fail if nothing matched, success if nothing left to do
-    return @complete false unless match
-    return @complete true if @choices.length is 0
+      # fail if nothing matched, success if nothing left to do
+      success = false unless match
+      success = true if @choices.length is 0
+
+      # send status for scene to disengage participants
+      @logger.debug "Dialog #{ if success then 'succeeded' else 'failed' }"
+      @emit 'complete', @res, success
+      @clearTimeout()
+      resolve success
 
   # address the audience appropriately
   send: (res, line) -> if @config.reply then res.reply line else res.send line
-
-  # send status for scene to disengage participants
-  complete: (success) ->
-    @logger.debug "Dialog #{ if success then 'succeeded' else 'failed' }"
-    @emit 'complete', @res, success
-    @clearTimeout()
-    return success
 
 module.exports = Dialogue
