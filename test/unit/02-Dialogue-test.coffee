@@ -202,7 +202,6 @@ describe '#Dialogue', ->
         @prize3Spy.should.have.been.calledOnce
         @room.messages.pop().should.eql [ 'hubot', @prize3 ]
 
-# TODO: re-order tests with file renames
 # TODO: make sure choices cleared after match, aren't matched more than once
 # e.g.  .should.not.have.been.called
 # or    .should.have.been.notCalled
