@@ -1,5 +1,4 @@
-# Created by lmarkus on 10/1/15. - Some utils for testing.
-
+# Message sending utils - created by lmarkus
 module.exports.Messenger = (bot, messages) ->
   next: (cb) ->
     bot.receive messages.shift(), ->

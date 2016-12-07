@@ -24,14 +24,13 @@ delete process.env.DIALOGUE_TIMEOUT_LINE
 describe '#Dialogue', ->
 
   # Create bot and initiate a response to test with
-  beforeEach (done) ->
+  beforeEach ->
     @room = helper.createRoom()
     @res = null
     @room.robot.respond /testing/, (res) => @res = res
-    @room.user.say 'user1', 'hubot testing' # start dialogue
     @spy = _.mapObject Dialogue.prototype, (val, key) ->
       sinon.spy Dialogue.prototype, key # spy on all the class methods
-    Q.delay(100).done -> done() # let it process the messages and create res
+    @room.user.say 'user1', 'hubot testing' # start dialogue
 
   afterEach ->
     _.invoke @spy, 'restore' # restore all the methods
@@ -70,6 +69,7 @@ describe '#Dialogue', ->
       process.env.DIALOGUE_TIMEOUT = 500
       process.env.DIALOGUE_TIMEOUT_LINE = 'Testing timeout env'
       @dialogue = new Dialogue @res
+
     afterEach ->
       clearTimeout @dialogue.countdown
       delete process.env.DIALOGUE_TIMEOUT
@@ -98,6 +98,7 @@ describe '#Dialogue', ->
       @dialogue = new Dialogue @res, timeout: 100
       @dialogue.on 'timeout', @eventSpy
       Q.delay(110).done -> done()
+
     afterEach -> clearTimeout @dialogue.countdown
 
     it 'emits timeout event', ->
@@ -158,6 +159,7 @@ describe '#Dialogue', ->
       @dialogue.choice /number 4/i, null
 
       unmute()
+
     afterEach ->
       @handler1.restore()
       @handler2.restore()

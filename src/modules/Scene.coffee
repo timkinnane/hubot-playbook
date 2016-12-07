@@ -12,24 +12,33 @@ _ = require 'underscore'
 # @param type (optional), audience - room, user (default) or userRoom
 class Scene
   constructor: (@robot, @type='user') ->
+    if @type not in [ 'room', 'user', 'userRoom' ]
+      throw new Error "invalid scene type given"
+
     @engaged = {} # dialogues of each engaged audience
     @logger = @robot.logger
 
-    # add hubot middleware to re-route to internal matching while engaged
-    @robot.receiveMiddleware @getMiddleware()
+    # hubot middleware re-routes to internal matching while engaged
+    @robot.receiveMiddleware (context, next, done) =>
+      res = context.response
+      audience = @whoSpeaks res.message
 
-  # receive middleware checks if incoming messages are part of active scene
-  getMiddleware: -> (context, next, done) =>
-    res = context.response
-    audience = @whoSpeaks res.message
-    if audience of @engaged
-      @logger.debug "#{ audience } engaged in dialogue, routing dialogue."
-      res.finish() # don't process regular listeners
-      @engaged[audience].receive res # let dialogue handle the response
-      done() # don't process further middleware.
-    else
-      @logger.debug "#{ audience } not engaged, continue as normal."
-      next done
+      # check if incoming messages are part of active scene
+      if audience of @engaged
+        @logger.debug "#{ audience } is engaged in dialogue, routing dialogue."
+        res.finish() # don't process regular listeners
+        @engaged[audience].receive res # let dialogue handle the response
+        done() # don't process further middleware.
+      else
+        @logger.debug "#{ audience } not engaged, continue as normal."
+        next done
+
+  # return the source of a message (ID of user or room)
+  whoSpeaks: (msg) ->
+    switch @type
+      when 'user' then return msg.user.id
+      when 'room' then return msg.room
+      when 'userRoom' then return "#{ msg.user.id }:#{ msg.room }"
 
   # engage the audience in dialogue
   # @param res, the response object
@@ -66,13 +75,6 @@ class Scene
     @logger.debug "Disengaged because dialogue #{ reason }" if reason?
     @engaged[audience]?.clearTimeout()
     delete @engaged[audience]
-
-  # return the source of a message (ID of user or room)
-  whoSpeaks: (msg) ->
-    switch @type
-      when 'user' then return msg.user.id
-      when 'room' then return msg.room
-      when 'userRoom' then return "#{ msg.user.id }:#{ msg.room }"
 
   # return the dialogue for an engaged audience
   dialogue: (audience) -> return @engaged[audience]
