@@ -8,7 +8,7 @@ chai.should()
 chai.use require 'sinon-chai'
 
 Helper = require 'hubot-test-helper'
-helper = new Helper "../utils/noScript.coffee"
+helper = new Helper "../utils/ping.coffee"
 Dialogue = require "../../src/modules/Dialogue"
 {TextMessage, User, Response} = require 'hubot'
 {EventEmitter} = require 'events'

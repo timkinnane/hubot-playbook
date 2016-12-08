@@ -1,12 +1,11 @@
 # credit to lmarkus/hubot-conversation for the original concept
 
 Dialogue = require './Dialogue'
-_ = require 'underscore'
 
 # handles array of participants engaged in dialogue
 # while engaged the robot will only follow the given dialogue choices
 # entering a user scene will engage the user
-# entering a user scene will engage the whole room
+# entering a room scene will engage the whole room
 # entering a userRoom scene will engage the user in that room only
 # @param robot, a hubot instance
 # @param type (optional), audience - room, user (default) or userRoom
@@ -59,22 +58,28 @@ class Scene
     @logger.debug "Engaging #{ @type } #{ audience } in dialogue"
     @engaged[audience] = new Dialogue res, options
 
-    # send first line of dialogue if provided
-    res.reply reply if reply?
-
     # remove audience from engaged participants on timeout or completion
-    @engaged[audience].on 'timeout', () => @exit res, 'timed out'
-    @engaged[audience].on 'complete', () => @exit res, 'completed'
+    @engaged[audience].on 'timeout', => @exit res, 'timed out'
+    @engaged[audience].on 'complete', => @exit res, 'completed'
 
-    return @engaged[audience]
+    # send first line of dialogue if provided
+    if reply? then res.reply reply
+
+    # return started dialogue
+    @engaged[audience]
 
   # disengage an audience from dialogue (can help in case of error)
   exit: (res, reason) ->
     audience = @whoSpeaks res.message
-    @logger.debug "Disengaging #{ @type } #{ audience } from dialogue"
-    @logger.debug "Disengaged because dialogue #{ reason }" if reason?
-    @engaged[audience]?.clearTimeout()
-    delete @engaged[audience]
+    if @engaged[audience]?
+      @logger.debug "Disengaging #{ @type } #{ audience } from scene"
+      @logger.debug "Disengaged because dialogue #{ reason }" if reason?
+      @engaged[audience].clearTimeout()
+      delete @engaged[audience]
+      true
+    else
+      @logger.debug "Cannot disengage #{ audience }, not in #{ @type } scene"
+      false
 
   # return the dialogue for an engaged audience
   dialogue: (audience) -> return @engaged[audience]
