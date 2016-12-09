@@ -1,6 +1,4 @@
 Q = require 'q'
-_ = require 'underscore'
-require('underscore-observe')(_) # extends underscore
 mute = require 'mute'
 {inspect} = require 'util'
 sinon = require 'sinon'
@@ -10,30 +8,12 @@ chai.use require 'sinon-chai'
 
 Helper = require 'hubot-test-helper'
 helper = new Helper "../utils/ping.coffee"
+observer = require '../utils/observer'
 Dialogue = require "../../src/modules/Dialogue"
 Scene = require "../../src/modules/Scene"
 {EventEmitter} = require 'events'
 
 # helper to attach update callbacks to room messages
-
-# look for any new message
-observeNext = (messages, cb) ->
-  start = messages.length
-  _.observe messages, 'create', (created) ->
-    if messages.length > start
-      _.unobserve()
-      cb created
-
-# look for a specific message
-observeWhen = (messages, message, cb) ->
-  _.observe messages, 'create', (created)->
-    if message is created
-      _.unobserve()
-      cb created
-
-# look at every message
-observe = (messages, cb) -> _.observe messages, 'create', -> cb() # every time
-unobserve = -> _.unobserve() # alias for consistent syntax
 
 describe '#Scene', ->
 
@@ -42,9 +22,7 @@ describe '#Scene', ->
     @room = helper.createRoom()
     @room.robot.on 'respond', (res) => @res = res # store every latest response
 
-  afterEach ->
-    @room.destroy()
-    delete @observer
+  afterEach -> @room.destroy()
 
   context 'without type', ->
 
@@ -53,9 +31,7 @@ describe '#Scene', ->
       @debugSpy = sinon.spy @scene.logger, 'debug'
       @room.user.say 'user1', 'hubot ping' # generate response
 
-    afterEach ->
-      @debugSpy.restore()
-      delete @scene
+    afterEach -> @debugSpy.restore()
 
     describe "constructor", ->
 
@@ -91,7 +67,7 @@ describe '#Scene', ->
 
         beforeEach (done) ->
           @dialogue = @scene.enter @res, 'hello'
-          observeNext @room.messages, -> done()
+          observer.next @room.messages, -> done()
 
         it 'sends the reply to the user', ->
           @room.messages.pop().should.eql [ 'hubot', '@user1 hello' ]
@@ -113,7 +89,7 @@ describe '#Scene', ->
           @dialogue = @scene.enter @res, 'hello',
             timeout: 100
             timeoutLine: 'foo'
-          observeNext @room.messages, -> done()
+          observer.next @room.messages, -> done()
 
         it 'sends the reply to the user', ->
           @room.messages.pop().should.eql [ 'hubot', '@user1 hello' ]
@@ -128,7 +104,7 @@ describe '#Scene', ->
           @dialogue = @scene.enter @res, timeout: 10
           @timeoutSpy = sinon.spy @scene, 'exit'
           @timeoutSpy.withArgs @res, 'timed out'
-          Q.delay(10).done -> done()
+          Q.delay(15).done -> done()
 
         it 'calls scene exit with response and "timed out"', ->
           @timeoutSpy.should.have.been.calledOnce
@@ -145,12 +121,35 @@ describe '#Scene', ->
         it 'calls scene exit with response and "completed"', ->
           @completeSpy.should.have.been.calledOnce
 
-    # TODO: these...
     describe '.exit', ->
-      # @dialogue.countdown._called.should.be.true
-      # @dialogue.should.not.exist
-      # returns true for user in dialogue
-      # returns false for user not in dialogue
+
+      context 'user in dialogue', ->
+
+        beforeEach ->
+          @dialogue = @scene.enter @res
+          @timeoutSpy = sinon.spy @dialogue, 'clearTimeout'
+          @exitStatus = @scene.exit @res, 'testing'
+
+        it 'dialogue should clear timeout', ->
+          @timeoutSpy.should.have.been.calledOnce
+        #
+        # it 'should have removed the dialogue', ->
+        #   console.log @scene.engaged
+        #   @dialogue.should.not.exist
+        #
+        # it 'returns true', ->
+        #   @exitStatus.should.be.true
+
+      # context 'user not in dialogue', ->
+      #
+      #   beforeEach (done) ->
+      #     @dialogue = @scene.enter @res, timeout: 10
+      #     Q.delay(15).done =>
+      #       @exitStatus = false # @scene.exit @res, 'testing'
+      #       done()
+      #
+      #   it 'returns false', ->
+      #     @exitStatus.should.be.false
 
   # TODO: and these...
   context 'with room type', ->
@@ -166,3 +165,4 @@ describe '#Scene', ->
 
 # TODO: Add complete test to Dialogue (should fire after last choice handler)
 # TODO: Add test that user scene dialogue will only "respond", group will "hear"
+# TODO: Matched choices through during scene are saved to array - can be got

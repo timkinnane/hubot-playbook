@@ -11,17 +11,19 @@ _ = require 'underscore'
 class Dialogue extends EventEmitter
   constructor: (@res, options={}) ->
     @logger = @res.robot.logger
+    @complete = false
     @choices = []
     @config = _.defaults options, # use defaults for any missing options
       timeout: parseInt process.env.DIALOGUE_TIMEOUT or 30000
       timeoutLine: process.env.DIALOGUE_TIMEOUT_LINE or
         'Timed out! Please start again.'
-    @startTimeout()
 
   startTimeout: ->
     @countdown = setTimeout () =>
       @emit 'timeout', @res
       @onTimeout @res
+      delete @countdown
+      @end()
     , @config.timeout
 
   clearTimeout: -> clearTimeout @countdown
@@ -37,6 +39,11 @@ class Dialogue extends EventEmitter
   # @param {string} response message text (optional)
   # @param {function} handler function when matched (optional)
   choice: (regex, args...) ->
+
+    # validate arguments
+    if not _.isRegExp regex
+      @logger.error 'invalid regex given for choice'
+      return false
     if typeof args[0] is 'function'
       handler = args[0]
     else if typeof args[0] is 'string'
@@ -48,7 +55,7 @@ class Dialogue extends EventEmitter
       return false
 
     # new choice restarts the countdown
-    @clearTimeout()
+    @clearTimeout() if @countdown?
     @startTimeout()
     @choices.push # return new choices length
       regex: regex,
@@ -62,36 +69,37 @@ class Dialogue extends EventEmitter
   # if matched, deliver response, clear timeout and end dialogue
   # @param res, the message object to match against
   receive: (res) ->
-    new Promise (resolve) =>
-      line = res.message.text
-      @logger.debug "Dialogue received #{ line }"
-      match = false
+    line = res.message.text
+    @logger.debug "Dialogue received #{ line }"
+    match = false
 
-      # stop at the first match in the order in which they were added
-      @choices.some (choice) =>
-        if match = line.match choice.regex
-          @logger.debug "`#{ line }` matched #{ inspect choice.regex }"
-          @emit 'match', line, choice.regex
+    # stop at the first match in the order in which they were added
+    @choices.some (choice) =>
+      if match = line.match choice.regex
+        @logger.debug "`#{ line }` matched #{ inspect choice.regex }"
+        @emit 'match', match, line, choice.regex
 
-          # match found, clear this step
-          @clearChoices()
-          @clearTimeout()
+        # match found, clear this step
+        @clearChoices()
+        @clearTimeout()
 
-          res.match = match # overrride the original match from hubot listener
-          choice.handler res # may add additional choices
-          return resolve true # don't process further matches
+        res.match = match # overrride the original match from hubot listener
+        choice.handler res # may add additional choices
+        return true # don't process further matches
 
-      # fail if nothing matched, success if nothing left to do
-      success = false unless match
-      success = true if @choices.length is 0
-
-      # send status for scene to disengage participants
-      @logger.debug "Dialog #{ if success then 'succeeded' else 'failed' }"
-      @emit 'complete', @res, success
-      @clearTimeout()
-      resolve success
+      # end if nothing left to do
+      @complete = @choices.length is 0
+      @end() if @complete
+      return match
 
   # address the audience appropriately
   send: (res, line) -> if @config.reply then res.reply line else res.send line
+
+  # shut it down - emit status for scene to disengage participants
+  end: ->
+    @logger.debug "Dialog ended #{ if @complete then 'in' }complete"
+    @clearChoices()
+    @clearTimeout()
+    @emit 'end', @res, @complete
 
 module.exports = Dialogue
