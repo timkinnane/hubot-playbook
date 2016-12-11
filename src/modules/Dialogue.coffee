@@ -11,8 +11,8 @@ _ = require 'underscore'
 class Dialogue extends EventEmitter
   constructor: (@res, options={}) ->
     @logger = @res.robot.logger
-    @complete = false
     @choices = []
+    @ended = false
     @config = _.defaults options, # use defaults for any missing options
       timeout: parseInt process.env.DIALOGUE_TIMEOUT or 30000
       timeoutLine: process.env.DIALOGUE_TIMEOUT_LINE or
@@ -28,7 +28,7 @@ class Dialogue extends EventEmitter
 
   clearTimeout: -> clearTimeout @countdown
 
-  # default timeout method sends line unless null or method overrride
+  # default timeout method sends line unless null or method overrriden
   onTimeout: -> @send @res, @config.timeoutLine if @config.timeoutLine?
 
   # add a choice branch with string response and/or callback
@@ -66,9 +66,11 @@ class Dialogue extends EventEmitter
   clearChoices: -> @choices = []
 
   # accept an incoming message, match against the registered choices
-  # if matched, deliver response, clear timeout and end dialogue
+  # if matched, deliver response, restart timeout and end dialogue
   # @param res, the message object to match against
   receive: (res) ->
+    return false if @ended # dialogue is over, don't process
+
     line = res.message.text
     @logger.debug "Dialogue received #{ line }"
     match = false
@@ -77,29 +79,33 @@ class Dialogue extends EventEmitter
     @choices.some (choice) =>
       if match = line.match choice.regex
         @logger.debug "`#{ line }` matched #{ inspect choice.regex }"
-        @emit 'match', match, line, choice.regex
+        @emit 'match', res.message.user, line, choice.regex, match
 
         # match found, clear this step
         @clearChoices()
         @clearTimeout()
 
         res.match = match # overrride the original match from hubot listener
-        choice.handler res # may add additional choices
+        choice.handler res # may add additional choices / restarting timeout
         return true # don't process further matches
 
-      # end if nothing left to do
-      @complete = @choices.length is 0
-      @end() if @complete
-      return match
+    # report if nothing matched
+    @emit 'mismatch', res.message.user, line, choice.regex if not match
+
+    # end if nothing left to do
+    @end() if @choices.length is 0
 
   # address the audience appropriately
   send: (res, line) -> if @config.reply then res.reply line else res.send line
 
   # shut it down - emit status for scene to disengage participants
   end: ->
-    @logger.debug "Dialog ended #{ if @complete then 'in' }complete"
+    return false if @ended
+    complete = @choices.length is 0
+    @logger.debug "Dialog ended #{ if not complete then 'in' }complete"
     @clearChoices()
-    @clearTimeout()
-    @emit 'end', @res, @complete
+    @clearTimeout() if @countdown?
+    @emit 'end', @res, complete
+    @ended = true
 
 module.exports = Dialogue

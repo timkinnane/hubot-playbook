@@ -42,7 +42,8 @@ describe '#Dialogue', ->
       @dialogue = new Dialogue @res
       @room.robot.respond /.*/, (res) => @dialog.receive res # hear all messages
 
-    afterEach -> clearTimeout @dialogue.countdown
+    afterEach ->
+      clearTimeout @dialogue.countdown
 
     describe 'constructor', ->
 
@@ -72,7 +73,8 @@ describe '#Dialogue', ->
 
       context 'with a reply string', ->
 
-        beforeEach -> @dialogue.choice /.*/, 'foo'
+        beforeEach ->
+          @dialogue.choice /.*/, 'foo'
 
         it 'has object with regex and handler', ->
           @dialogue.choices[0].should.be.an 'object'
@@ -90,7 +92,8 @@ describe '#Dialogue', ->
 
       context 'with a custom handler callback', ->
 
-        beforeEach -> @dialogue.choice /.*/, () -> null
+        beforeEach ->
+          @dialogue.choice /.*/, () -> null
 
         it 'has object with regex and handler', ->
           @dialogue.choices[0].should.be.an 'object'
@@ -105,7 +108,8 @@ describe '#Dialogue', ->
 
       context 'with a reply and handler', ->
 
-        beforeEach -> @dialogue.choice /.*/, 'foo', () -> null
+        beforeEach ->
+          @dialogue.choice /.*/, 'foo', () -> null
 
         it 'has object with regex and handler', ->
           @dialogue.choices[0].should.be.an 'object'
@@ -154,14 +158,15 @@ describe '#Dialogue', ->
           @dialogue.choice /confirm/, () => @dialogue.choice /yes/i, @yesSpy
           @room.user.say 'user1', 'confirm'
 
-        afterEach -> @dialogue.end()
+        afterEach ->
+          @dialogue.end()
 
         it 'has new choice after matching original', ->
           @dialogue.choices.length.should.equal 1
 
         it 'calls second callback after matching sequence', ->
           @room.user.say 'user1', 'yes'
-          .then => @yesSpy.should.have.been.calledOnce
+          .then => @yesSpy.should.have.calledOnce
 
     describe '.clearChoices', ->
 
@@ -170,8 +175,6 @@ describe '#Dialogue', ->
         @dialogue.choice /.*/, @choicesSpy
         @dialogue.clearChoices()
         @room.user.say 'user1', 'test'
-
-      afterEach -> delete @choiceSpy
 
       it 'clears the array of choices', ->
         @dialogue.choices.should.be.an 'array'
@@ -198,7 +201,13 @@ describe '#Dialogue', ->
 
       context 'matching choice with reply string', ->
 
-        beforeEach -> @room.user.say 'user1', '1'
+        beforeEach ->
+          @emitSpy = sinon.spy()
+          @dialogue.on 'match', @emitSpy
+          @room.user.say 'user1', '1'
+
+        it 'emits match event with match, line and regex', ->
+          @emitSpy.should.have.calledWith [ '1'.match('1'), '1', /1/, 'user1' ]
 
         it 'calls the created handler', ->
           @handler1.should.have.calledOnce
@@ -208,7 +217,13 @@ describe '#Dialogue', ->
 
       context 'matching choice with no reply and custom handler', ->
 
-        beforeEach -> @room.user.say 'user1', '2'
+        beforeEach ->
+          @emitSpy = sinon.spy()
+          @dialogue.on 'match', @emitSpy
+          @room.user.say 'user1', '2'
+
+        it 'emits match event with match, line and regex', ->
+          @emitSpy.should.have.calledWith [ '2'.match('2'), '2', /2/, 'user1' ]
 
         it 'calls the custom handler', ->
           @handler2.should.have.calledOnce
@@ -218,7 +233,13 @@ describe '#Dialogue', ->
 
       context 'matching choice with reply and custom handler', ->
 
-        beforeEach -> @room.user.say 'user1', '3'
+        beforeEach ->
+          @emitSpy = sinon.spy()
+          @dialogue.on 'match', @emitSpy
+          @room.user.say 'user1', '3'
+
+        it 'emits match event with match, line and regex', ->
+          @emitSpy.should.have.calledWith [ '3'.match('3'), '3', /3/, 'user3' ]
 
         it 'calls the custom handler', ->
           @handler3.should.have.calledOnce
@@ -241,16 +262,81 @@ describe '#Dialogue', ->
         it 'does not reply to the second', ->
           @room.messages.pop().should.eql [ 'hubot', 'got 1' ]
 
+      context 'when choice is matched and none added', ->
+
+        beforeEach ->
+          @room.user.say 'user1', '1'
+
+        it 'ends dialogue', ->
+          @spy.end.should.have.called
+
+      context 'when choice is not matched', ->
+
+        beforeEach ->
+          @emitSpy = sinon.spy()
+          @dialogue.on 'match', @emitSpy
+          @room.user.say 'user1', '?'
+
+        it 'does not emit match event', ->
+
+        it 'emits mismatch event', ->
+
+        it 'does not call end', ->
+
+    describe '.send', ->
+
+      beforeEach ->
+        @dialogue.send 'test'
+
+      it 'sends to the room from original res', ->
+        @room.messages.pop().should.eql [ 'hubot', 'test' ]
+
+    describe '.end', ->
+
+      context 'when choices remain', ->
+
+        beforeEach ->
+          @dialogue.choice /.*/, () -> null
+          @endSpy = sinon.spy()
+          @dialogue.on 'end', @endSpy
+
+        it 'emits successful complete status', ->
+          @endSpy.should.have.calledWith true
+
+        it 'sends ended to true', ->
+          @dialogue.ended.should.be true
+
+      context 'when no choices remain', ->
+
+        @room.user.say 'user1', '1'
+
+      context 'when already ended', ->
+
+        it 'should not process consecutively', ->
+
     describe '.getChoices', ->
 
-      beforeEach -> @dialogue.choice /.*/, 'foo'
+      beforeEach ->
+        @dialogue.choice /.*/, 'foo'
 
       it 'returns the array of choices', ->
         @dialogue.getChoices().should.eql @dialogue.choices
 
     describe '.end', ->
 
-      # @TODO :
+      beforeEach ->
+        @emitSpy = sinon.spy()
+        @dialogue.on 'end', emitSpy
+        @dialogue.end()
+
+      it 'clears choices', ->
+        @spy.clearChoices.should.have.called
+
+      it 'clears timeout', ->
+        @spy.clearTimeout.should.have.called
+
+      it 'emits end event', ->
+        @emitSpy.should.have.called
 
   context 'with env vars set', ->
 
@@ -279,7 +365,8 @@ describe '#Dialogue', ->
           timeout: 555
           timeoutLine: 'Testing timeout options'
 
-      afterEach -> @dialogue.end()
+      afterEach ->
+        @dialogue.end()
 
       it 'uses passed options', ->
         @dialogue.config.timeout.should.equal 555
@@ -288,24 +375,27 @@ describe '#Dialogue', ->
   context 'with 10ms timeout', ->
 
     beforeEach (done) ->
-      @eventSpy = sinon.spy()
+      @timeoutSpy = sinon.spy()
+      @endSpy = sinon.spy()
       @dialogue = new Dialogue @res, timeout: 10
-      @dialogue.on 'timeout', @eventSpy
+      @dialogue.on 'timeout', @timeoutSpy
+      @dialogue.on 'end', @endSpy
       Q.delay(15).done -> done()
 
-    afterEach -> @dialogue.end()
+    afterEach ->
+      @dialogue.end()
 
-    describe '.startTimeout', ->
+    describe '.startTimeout (expiring)', ->
 
       it 'emits timeout event', ->
-        @eventSpy.should.have.been.calledOnce
-
-      it 'emits end event', ->
-
+        @timeoutSpy.should.have.calledOnce
 
       it 'calls onTimeout with response object', ->
-        @spy.onTimeout.should.have.been.calledOnce
-        @spy.onTimeout.should.have.been.calledWith @res
+        @spy.onTimeout.should.have.calledOnce
+        @spy.onTimeout.should.have.calledWith @res
+
+      it 'calls .end', ->
+        @spy.end.should.have.calledOnce
 
     describe '.onTimeout', ->
 
@@ -316,7 +406,14 @@ describe '#Dialogue', ->
           [ 'hubot', @dialogue.config.timeoutLine ]
         ]
 
-# @TODO : .receive emits 'match' with match, line and regex
+    describe '.end', ->
+
+      it 'emits end event with false complete status', ->
+        @endSpy.should.have.calledWith false
+
+      it 'clear timeout should not ever be called', ->
+        @spy.clearTimeout.should.not.have.called
+
 # @TODO : .receive ends dialogue when no more choices
 # @TODO : and ended dialogue cannot receive
 

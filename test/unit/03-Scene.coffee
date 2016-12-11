@@ -22,7 +22,8 @@ describe '#Scene', ->
     @room = helper.createRoom()
     @room.robot.on 'respond', (res) => @res = res # store every latest response
 
-  afterEach -> @room.destroy()
+  afterEach ->
+    @room.destroy()
 
   context 'without type', ->
 
@@ -31,7 +32,8 @@ describe '#Scene', ->
       @debugSpy = sinon.spy @scene.logger, 'debug'
       @room.user.say 'user1', 'hubot ping' # generate response
 
-    afterEach -> @debugSpy.restore()
+    afterEach ->
+      @debugSpy.restore()
 
     describe "constructor", ->
 
@@ -55,7 +57,8 @@ describe '#Scene', ->
 
       context 'without arguments', ->
 
-        beforeEach -> @dialogue = @scene.enter @res
+        beforeEach ->
+          @dialogue = @scene.enter @res
 
         it 'saves engaged Dialogue instance with username key', ->
           @scene.engaged['user1'].should.be.instanceof Dialogue

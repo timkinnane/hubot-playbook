@@ -1,6 +1,6 @@
 # Description
 #   Diagnostics interactions provide a baseline measure before doing anything
-#   more complicated. They work on Hubot without any modules of Playvbook.
+#   more complicated. They work on Hubot without any modules of Playbook.
 #
 # Configuration:
 #   N/A
