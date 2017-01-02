@@ -20,16 +20,24 @@ class Dialogue extends EventEmitter
 
   startTimeout: ->
     @countdown = setTimeout () =>
-      @emit 'timeout', @res
-      @onTimeout @res
+      @emit 'timeout'
+  #try @onTimeout() catch e then @logger.error "onTimeout error: #{ inspect e}"
+      @onTimeout()
       delete @countdown
       @end()
     , @config.timeout
 
-  clearTimeout: -> clearTimeout @countdown
+  clearTimeout: ->
+    clearTimeout @countdown
+    delete @countdown
 
-  # default timeout method sends line unless null or method overrriden
-  onTimeout: -> @send @res, @config.timeoutLine if @config.timeoutLine?
+  # default timeout method sends line unless null or method overriden
+  # can override by passing in a function, or reassigning the property
+  onTimeout: (override) ->
+    if override?
+      @onTimeout = override
+    else
+      @send @config.timeoutLine if @config.timeoutLine?
 
   # add a choice branch with string response and/or callback
   # 1: .choice( regex, response ) reply with response on regex match
@@ -48,7 +56,7 @@ class Dialogue extends EventEmitter
       handler = args[0]
     else if typeof args[0] is 'string'
       handler = (res) =>
-        @send res, args[0]
+        @send args[0]
         args[1] res if typeof args[1] is 'function'
     else
       @logger.error 'wrong args given for choice'
@@ -60,8 +68,6 @@ class Dialogue extends EventEmitter
     @choices.push # return new choices length
       regex: regex,
       handler: handler
-
-  getChoices: -> @choices
 
   clearChoices: -> @choices = []
 
@@ -79,33 +85,40 @@ class Dialogue extends EventEmitter
     @choices.some (choice) =>
       if match = line.match choice.regex
         @logger.debug "`#{ line }` matched #{ inspect choice.regex }"
-        @emit 'match', res.message.user, line, choice.regex, match
+        @emit 'match', res.message.user, line, match, choice.regex
 
         # match found, clear this step
         @clearChoices()
         @clearTimeout()
 
-        res.match = match # overrride the original match from hubot listener
+        res.match = match # override the original match from hubot listener
         choice.handler res # may add additional choices / restarting timeout
         return true # don't process further matches
 
     # report if nothing matched
-    @emit 'mismatch', res.message.user, line, choice.regex if not match
+    @emit 'mismatch', res.message.user, line if not match
 
     # end if nothing left to do
     @end() if @choices.length is 0
 
-  # address the audience appropriately
-  send: (res, line) -> if @config.reply then res.reply line else res.send line
+  # Send response using original response object
+  # Address the audience appropriately (i.e. @user reply or send to channel)
+  send: (line) -> if @config.reply then @res.reply line else @res.send line
 
   # shut it down - emit status for scene to disengage participants
   end: ->
     return false if @ended
     complete = @choices.length is 0
     @logger.debug "Dialog ended #{ if not complete then 'in' }complete"
-    @clearChoices()
     @clearTimeout() if @countdown?
-    @emit 'end', @res, complete
+    @emit 'end', complete
     @ended = true
 
 module.exports = Dialogue
+
+# TODO: Refactor choice as (path>branch/prompt) store prior message as prompt
+# Accept key name for path, or generate unique ID
+# Keep history of key and corresponding branch match
+# Path contains the message "prompt" that preceed choices and each "branch"
+# Each choice answered, resets the current path
+# Debounce or queue consquetive receive calls to process messages synchronously

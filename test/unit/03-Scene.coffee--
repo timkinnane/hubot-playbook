@@ -8,7 +8,7 @@ chai.use require 'sinon-chai'
 
 Helper = require 'hubot-test-helper'
 helper = new Helper "../utils/ping.coffee"
-observer = require '../utils/observer'
+observer = require '../utils/observe'
 Dialogue = require "../../src/modules/Dialogue"
 Scene = require "../../src/modules/Scene"
 {EventEmitter} = require 'events'

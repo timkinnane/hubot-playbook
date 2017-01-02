@@ -19,7 +19,10 @@ module.exports = (robot) ->
   # talk when talked to
   robot.respond /ping/, (res) -> res.reply 'pong'
 
-  # let tests listen for response object
+  # let tests listen for response objects
+  robot.receiveMiddleware (context, next, done) ->
+    robot.emit 'receive', context.response
+    next()
   robot.responseMiddleware (context, next, done) ->
     robot.emit 'respond', context.response
     next()

@@ -4,13 +4,14 @@ mute = require 'mute'
 {inspect} = require 'util'
 sinon = require 'sinon'
 chai = require 'chai'
-chai.should()
+should = chai.should()
 chai.use require 'sinon-chai'
 
 Helper = require 'hubot-test-helper'
-helper = new Helper "../utils/ping.coffee"
-observer = require '../utils/observer'
-Dialogue = require "../../src/modules/Dialogue"
+helper = new Helper '../scripts/ping.coffee'
+Observer = require '../utils/observer'
+
+Dialogue = require '../../src/modules/Dialogue'
 {TextMessage, User, Response} = require 'hubot'
 {EventEmitter} = require 'events'
 Timeout = setTimeout () ->
@@ -27,7 +28,9 @@ describe '#Dialogue', ->
   # Create bot and initiate a response to test with
   beforeEach ->
     @room = helper.createRoom()
-    @room.robot.on 'respond', (res) => @res = res # store every latest response
+    @observer = new Observer @room.messages
+    @room.robot.on 'respond', (res) => @res = res # store every response sent
+    @room.robot.on 'receive', (res) => @rec = res # store every message received
     @spy = _.mapObject Dialogue.prototype, (val, key) ->
       sinon.spy Dialogue.prototype, key # spy on all the class methods
     @room.user.say 'user1', 'hubot ping' # create first response
@@ -40,10 +43,10 @@ describe '#Dialogue', ->
 
     beforeEach ->
       @dialogue = new Dialogue @res
-      @room.robot.respond /.*/, (res) => @dialog.receive res # hear all messages
+      @room.robot.hear /.*/, (res) => @result = @dialogue.receive res # hear all
 
     afterEach ->
-      clearTimeout @dialogue.countdown
+      @dialogue.end()
 
     describe 'constructor', ->
 
@@ -64,7 +67,7 @@ describe '#Dialogue', ->
         @dialogue.config.timeoutLine.should.be.a 'string'
 
       it 'has not started the timeout', ->
-        @dialogue.countdown.should.not.exist
+        should.not.exist @dialogue.countdown
 
     describe '.choice', ->
 
@@ -86,9 +89,7 @@ describe '#Dialogue', ->
 
         it 'starts the timeout', ->
           @spy.startTimeout.should.have.calledOnce
-          @dialogue.countdown.should.exist
           @dialogue.countdown.should.be.instanceof Timeout
-          @dialogue.countdown._called.should.be.false
 
       context 'with a custom handler callback', ->
 
@@ -100,12 +101,6 @@ describe '#Dialogue', ->
           @dialogue.choices[0].regex.should.be.instanceof RegExp
           @dialogue.choices[0].handler.should.be.a 'function'
 
-        it 'starts the timeout', ->
-          @spy.startTimeout.should.have.calledOnce
-          @dialogue.countdown.should.exist
-          @dialogue.countdown.should.be.instanceof Timeout
-          @dialogue.countdown._called.should.be.false
-
       context 'with a reply and handler', ->
 
         beforeEach ->
@@ -116,16 +111,18 @@ describe '#Dialogue', ->
           @dialogue.choices[0].regex.should.be.instanceof RegExp
           @dialogue.choices[0].handler.should.be.a 'function'
 
-        it 'clears and restarts the timeout', ->
-          @spy.clearTimeout.should.have.calledOnce
+        it 'starts the timeout', ->
           @spy.startTimeout.should.have.calledOnce
+          @dialogue.countdown.should.be.instanceof Timeout
 
       context 'with bad arguments', ->
 
         beforeEach ->
+          unmute = mute() # remove error logs from test
           @dialogue.choice /.*/, null
           @dialogue.choice /.*/, null, () -> null
           @dialogue.choice 'foo', 'bar', () -> null
+          unmute()
 
         it 'log an error for each incorrect call', ->
           @errorSpy.should.have.calledThrice
@@ -136,6 +133,7 @@ describe '#Dialogue', ->
         it 'does not clear or start timeout', ->
           @spy.clearTimeout.should.not.have.called
           @spy.startTimeout.should.not.have.called
+          should.not.exist @dialogue.countdown
 
       context 'with consecutive added choices', ->
 
@@ -155,11 +153,8 @@ describe '#Dialogue', ->
 
         beforeEach ->
           @yesSpy = sinon.spy()
-          @dialogue.choice /confirm/, () => @dialogue.choice /yes/i, @yesSpy
+          @dialogue.choice /confirm/, => @dialogue.choice /yes/, @yesSpy
           @room.user.say 'user1', 'confirm'
-
-        afterEach ->
-          @dialogue.end()
 
         it 'has new choice after matching original', ->
           @dialogue.choices.length.should.equal 1
@@ -172,7 +167,7 @@ describe '#Dialogue', ->
 
       beforeEach ->
         @choiceSpy = sinon.spy()
-        @dialogue.choice /.*/, @choicesSpy
+        @dialogue.choice /.*/, @choiceSpy
         @dialogue.clearChoices()
         @room.user.say 'user1', 'test'
 
@@ -181,7 +176,7 @@ describe '#Dialogue', ->
         @dialogue.choices.length.should.equal 0
 
       it 'does not respond to prior added choices', ->
-        @choicesSpy.should.not.have.called
+        @choiceSpy.should.not.have.called
 
     describe '.receive', ->
 
@@ -195,19 +190,19 @@ describe '#Dialogue', ->
 
       afterEach ->
         @handler1.restore()
-        @handler2.restore()
-        @handler3.restore()
-        @dialogue.end()
 
-      context 'matching choice with reply string', ->
+      context 'match for choice with reply string', ->
 
         beforeEach ->
-          @emitSpy = sinon.spy()
-          @dialogue.on 'match', @emitSpy
+          @match = sinon.spy()
+          @dialogue.on 'match', @match
           @room.user.say 'user1', '1'
 
-        it 'emits match event with match, line and regex', ->
-          @emitSpy.should.have.calledWith [ '1'.match('1'), '1', /1/, 'user1' ]
+        it 'emits match event', ->
+          @match.should.have.calledOnce
+
+        it 'event has user, line, match and regex', ->
+          @match.should.have.calledWith @rec.message.user,'1','1'.match('1'),/1/
 
         it 'calls the created handler', ->
           @handler1.should.have.calledOnce
@@ -218,28 +213,28 @@ describe '#Dialogue', ->
       context 'matching choice with no reply and custom handler', ->
 
         beforeEach ->
-          @emitSpy = sinon.spy()
-          @dialogue.on 'match', @emitSpy
+          @match = sinon.spy()
+          @dialogue.on 'match', @match
           @room.user.say 'user1', '2'
 
-        it 'emits match event with match, line and regex', ->
-          @emitSpy.should.have.calledWith [ '2'.match('2'), '2', /2/, 'user1' ]
+        it 'event has user, line, match and regex', ->
+          @match.should.have.calledWith @rec.message.user,'2','2'.match('2'),/2/
 
         it 'calls the custom handler', ->
           @handler2.should.have.calledOnce
 
-        it 'does not say anything new', ->
-          @room.messages.pop().should.eql [ 'hubot', '@user1 pong' ]
+        it 'hubot does not reply', ->
+          @room.messages.pop().should.eql [ 'user1', '2' ]
 
       context 'matching choice with reply and custom handler', ->
 
         beforeEach ->
-          @emitSpy = sinon.spy()
-          @dialogue.on 'match', @emitSpy
+          @match = sinon.spy()
+          @dialogue.on 'match', @match
           @room.user.say 'user1', '3'
 
-        it 'emits match event with match, line and regex', ->
-          @emitSpy.should.have.calledWith [ '3'.match('3'), '3', /3/, 'user3' ]
+        it 'event has user, line, match and regex', ->
+          @match.should.have.calledWith @rec.message.user,'3','3'.match('3'),/3/
 
         it 'calls the custom handler', ->
           @handler3.should.have.calledOnce
@@ -273,19 +268,45 @@ describe '#Dialogue', ->
       context 'when choice is not matched', ->
 
         beforeEach ->
-          @emitSpy = sinon.spy()
-          @dialogue.on 'match', @emitSpy
+          @match = sinon.spy()
+          @mismatch = sinon.spy()
+          @dialogue.on 'match', @match
+          @dialogue.on 'mismatch', @mismatch
           @room.user.say 'user1', '?'
 
         it 'does not emit match event', ->
+          @match.should.not.have.called
 
         it 'emits mismatch event', ->
+          @mismatch.should.have.called
+
+        it 'mismatch event has user and line', ->
+          @mismatch.should.have.calledWith @rec.message.user,'?'
 
         it 'does not call end', ->
+          @spy.end.should.not.have.called
+
+      context 'when already ended', ->
+
+        beforeEach ->
+          @match = sinon.spy()
+          @dialogue.on 'match', @match
+          @dialogue.end()
+          @room.user.say 'user1', '1'
+
+        it 'returns false', ->
+          @result.should.be.false
+
+        it 'does not call the handler', ->
+          @handler1.should.not.have.called
+
+        it 'does not emit match event', ->
+          @match.should.not.have.called
 
     describe '.send', ->
 
-      beforeEach ->
+      beforeEach (done) ->
+        @observer.next().then -> done() # watch for response before proceeding
         @dialogue.send 'test'
 
       it 'sends to the room from original res', ->
@@ -293,50 +314,50 @@ describe '#Dialogue', ->
 
     describe '.end', ->
 
+      beforeEach ->
+        @dialogue.choice /.*/, () -> null
+        @end = sinon.spy()
+        @dialogue.on 'end', @end
+
       context 'when choices remain', ->
 
         beforeEach ->
-          @dialogue.choice /.*/, () -> null
-          @endSpy = sinon.spy()
-          @dialogue.on 'end', @endSpy
+          @dialogue.end()
 
-        it 'emits successful complete status', ->
-          @endSpy.should.have.calledWith true
+        it 'sets ended to true', ->
+          @dialogue.ended.should.be.true
 
-        it 'sends ended to true', ->
-          @dialogue.ended.should.be true
+        it 'emits end event with success status (false)', ->
+          @end.should.have.calledWith false
 
-      context 'when no choices remain', ->
+        it 'clears the timeout', ->
+          @spy.clearTimeout.should.have.calledOnce
 
-        @room.user.say 'user1', '1'
+      context 'when triggered by last choice match', ->
 
-      context 'when already ended', ->
+        beforeEach ->
+          @room.user.say 'user1', '1'
+
+        it 'emits end event with unsuccessful status', ->
+          @end.should.have.calledWith true
+
+        it 'sets ended to true', ->
+          @dialogue.ended.should.be.true
+
+        it 'clears the timeout only once (from match)', ->
+          @spy.clearTimeout.should.have.calledOnce
+
+      context 'when already ended (by last choice match)', ->
+
+        beforeEach ->
+          @room.user.say 'user1', '1'
+          .then => @result = @dialogue.end()
 
         it 'should not process consecutively', ->
+          @result.should.be.false
 
-    describe '.getChoices', ->
-
-      beforeEach ->
-        @dialogue.choice /.*/, 'foo'
-
-      it 'returns the array of choices', ->
-        @dialogue.getChoices().should.eql @dialogue.choices
-
-    describe '.end', ->
-
-      beforeEach ->
-        @emitSpy = sinon.spy()
-        @dialogue.on 'end', emitSpy
-        @dialogue.end()
-
-      it 'clears choices', ->
-        @spy.clearChoices.should.have.called
-
-      it 'clears timeout', ->
-        @spy.clearTimeout.should.have.called
-
-      it 'emits end event', ->
-        @emitSpy.should.have.called
+        it 'should only emit end event once', ->
+          @end.should.have.calledOnce
 
   context 'with env vars set', ->
 
@@ -374,47 +395,84 @@ describe '#Dialogue', ->
 
   context 'with 10ms timeout', ->
 
-    beforeEach (done) ->
-      @timeoutSpy = sinon.spy()
-      @endSpy = sinon.spy()
-      @dialogue = new Dialogue @res, timeout: 10
-      @dialogue.on 'timeout', @timeoutSpy
-      @dialogue.on 'end', @endSpy
-      Q.delay(15).done -> done()
+    describe '.startTimeout (on countdown expiring)', ->
 
-    afterEach ->
-      @dialogue.end()
-
-    describe '.startTimeout (expiring)', ->
+      beforeEach ->
+        @timeout = sinon.spy()
+        @end = sinon.spy()
+        @dialogue = new Dialogue @res, timeout: 10
+        @dialogue.on 'timeout', @timeout
+        @dialogue.on 'end', @end
+        @dialogue.startTimeout()
+        Q.delay 15
 
       it 'emits timeout event', ->
-        @timeoutSpy.should.have.calledOnce
+        @timeout.should.have.calledOnce
 
-      it 'calls onTimeout with response object', ->
+      it 'emits end event', ->
+        @end.should.have.calledOnce
+
+      it 'calls onTimeout', ->
         @spy.onTimeout.should.have.calledOnce
-        @spy.onTimeout.should.have.calledWith @res
 
       it 'calls .end', ->
         @spy.end.should.have.calledOnce
 
     describe '.onTimeout', ->
 
-      it 'sends timout message to room', ->
-        @room.messages.should.eql [
-          [ 'user1', 'hubot ping' ]
-          [ 'hubot', '@user1 pong' ]
-          [ 'hubot', @dialogue.config.timeoutLine ]
-        ]
+      context 'default method', ->
 
-    describe '.end', ->
+        beforeEach ->
+          @dialogue = new Dialogue @res, timeout: 10
+          @dialogue.startTimeout()
+          Q.delay 15
 
-      it 'emits end event with false complete status', ->
-        @endSpy.should.have.calledWith false
+        it 'sends timout message to room', ->
+          @room.messages.pop().should.eql [
+            'hubot', @dialogue.config.timeoutLine
+          ]
 
-      it 'clear timeout should not ever be called', ->
-        @spy.clearTimeout.should.not.have.called
+      context 'method override (as argument)', ->
 
-# @TODO : .receive ends dialogue when no more choices
-# @TODO : and ended dialogue cannot receive
+        beforeEach ->
+          @override = sinon.spy()
+          @dialogue = new Dialogue @res, timeout: 10
+          @dialogue.onTimeout.restore() # remove original spy
+          @dialogue.onTimeout @override
+          @dialogue.startTimeout()
+          Q.delay 15
+
+        it 'calls the override method', ->
+          @override.should.have.calledOnce
+
+        it 'does not send the default timeout message', ->
+          @room.messages.pop().should.not.eql [
+            'hubot', @dialogue.config.timeoutLine
+          ]
+
+      context 'method override (by assignment)', ->
+
+        beforeEach ->
+          @override = sinon.spy()
+          @dialogue = new Dialogue @res, timeout: 10
+          @dialogue.onTimeout = @override
+          @dialogue.startTimeout()
+          Q.delay 15
+
+        it 'calls the override method', ->
+          @override.should.have.calledOnce
+
+      # TODO: Test exception without throwing
+      # context 'method override with invalid function', ->
+
+        # beforeEach ->
+        #   @dialogue = new Dialogue @res, timeout: 10
+        #   @dialogue.onTimeout -> throw new Error "Test exception"
+        #   @override = sinon.spy @dialogue, 'onTimeout'
+        #   @dialogue.startTimeout()
+        #   Q.delay 15
+
+        # it 'throws exception', ->
+        #   @override.should.have.thrown()
 
 # TODO: Ended dialogue will not receive or allow choices to be added - log error
