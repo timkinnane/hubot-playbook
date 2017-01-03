@@ -36,6 +36,8 @@
     "handlebars": "^4.0.5",
     "handlebars-intl": "^1.1.2",
     "q": "^1.4.1",
+    "randomstring": "^1.1.5",
+    "slug": "^0.9.1",
     "underscore": "^1.8.3",
     "yamljs": "^0.2.8"
   },

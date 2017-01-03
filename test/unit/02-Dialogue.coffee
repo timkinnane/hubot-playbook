@@ -57,9 +57,9 @@ describe '#Dialogue', ->
       it 'has the logger from response object robot', ->
         @dialogue.logger.should.eql @room.robot.logger
 
-      it 'has an empty choices array', ->
-        @dialogue.choices.should.be.an 'array'
-        @dialogue.choices.length.should.equal 0
+      it 'has an empty branches array', ->
+        @dialogue.branches.should.be.an 'array'
+        @dialogue.branches.length.should.equal 0
 
       it 'has config with defaults of correct type', ->
         @dialogue.config.should.be.an 'object'
@@ -69,7 +69,7 @@ describe '#Dialogue', ->
       it 'has not started the timeout', ->
         should.not.exist @dialogue.countdown
 
-    describe '.choice', ->
+    describe '.branch', ->
 
       beforeEach ->
         @errorSpy = sinon.spy @room.robot.logger, 'error'
@@ -77,12 +77,12 @@ describe '#Dialogue', ->
       context 'with a reply string', ->
 
         beforeEach ->
-          @dialogue.choice /.*/, 'foo'
+          @dialogue.branch /.*/, 'foo'
 
         it 'has object with regex and handler', ->
-          @dialogue.choices[0].should.be.an 'object'
-          @dialogue.choices[0].regex.should.be.instanceof RegExp
-          @dialogue.choices[0].handler.should.be.a 'function'
+          @dialogue.branches[0].should.be.an 'object'
+          @dialogue.branches[0].regex.should.be.instanceof RegExp
+          @dialogue.branches[0].handler.should.be.a 'function'
 
         it 'does not clear (non-existent) timeout', ->
           @spy.clearTimeout.should.not.have.called
@@ -94,22 +94,22 @@ describe '#Dialogue', ->
       context 'with a custom handler callback', ->
 
         beforeEach ->
-          @dialogue.choice /.*/, () -> null
+          @dialogue.branch /.*/, () -> null
 
         it 'has object with regex and handler', ->
-          @dialogue.choices[0].should.be.an 'object'
-          @dialogue.choices[0].regex.should.be.instanceof RegExp
-          @dialogue.choices[0].handler.should.be.a 'function'
+          @dialogue.branches[0].should.be.an 'object'
+          @dialogue.branches[0].regex.should.be.instanceof RegExp
+          @dialogue.branches[0].handler.should.be.a 'function'
 
       context 'with a reply and handler', ->
 
         beforeEach ->
-          @dialogue.choice /.*/, 'foo', () -> null
+          @dialogue.branch /.*/, 'foo', () -> null
 
         it 'has object with regex and handler', ->
-          @dialogue.choices[0].should.be.an 'object'
-          @dialogue.choices[0].regex.should.be.instanceof RegExp
-          @dialogue.choices[0].handler.should.be.a 'function'
+          @dialogue.branches[0].should.be.an 'object'
+          @dialogue.branches[0].regex.should.be.instanceof RegExp
+          @dialogue.branches[0].handler.should.be.a 'function'
 
         it 'starts the timeout', ->
           @spy.startTimeout.should.have.calledOnce
@@ -119,45 +119,45 @@ describe '#Dialogue', ->
 
         beforeEach ->
           unmute = mute() # remove error logs from test
-          @dialogue.choice /.*/, null
-          @dialogue.choice /.*/, null, () -> null
-          @dialogue.choice 'foo', 'bar', () -> null
+          @dialogue.branch /.*/, null
+          @dialogue.branch /.*/, null, () -> null
+          @dialogue.branch 'foo', 'bar', () -> null
           unmute()
 
         it 'log an error for each incorrect call', ->
           @errorSpy.should.have.calledThrice
 
-        it 'does not have any choices loaded', ->
-          @dialogue.choices.length.should.equal 0
+        it 'does not have any branches loaded', ->
+          @dialogue.branches.length.should.equal 0
 
         it 'does not clear or start timeout', ->
           @spy.clearTimeout.should.not.have.called
           @spy.startTimeout.should.not.have.called
           should.not.exist @dialogue.countdown
 
-      context 'with consecutive added choices', ->
+      context 'with consecutive added branches', ->
 
         beforeEach ->
-          @dialogue.choice /.*/, 'foo'
-          @dialogue.choice /.*/, 'bar'
+          @dialogue.branch /.*/, 'foo'
+          @dialogue.branch /.*/, 'bar'
 
-        it 'has kept both choices', ->
-          @dialogue.choices.should.be.an 'array'
-          @dialogue.choices.length.should.equal 2
+        it 'has kept both branches', ->
+          @dialogue.branches.should.be.an 'array'
+          @dialogue.branches.length.should.equal 2
 
         it 'clears and restarts the timeout', ->
           @spy.clearTimeout.should.have.calledOnce
           @spy.startTimeout.should.have.calledTwice
 
-      context 'with a handler that adds another choice', ->
+      context 'with a handler that adds another branch', ->
 
         beforeEach ->
           @yesSpy = sinon.spy()
-          @dialogue.choice /confirm/, => @dialogue.choice /yes/, @yesSpy
+          @dialogue.branch /confirm/, => @dialogue.branch /yes/, @yesSpy
           @room.user.say 'user1', 'confirm'
 
-        it 'has new choice after matching original', ->
-          @dialogue.choices.length.should.equal 1
+        it 'has new branch after matching original', ->
+          @dialogue.branches.length.should.equal 1
 
         it 'calls second callback after matching sequence', ->
           @room.user.say 'user1', 'yes'
@@ -168,45 +168,45 @@ describe '#Dialogue', ->
         beforeEach ->
           unmute = mute()
           @dialogue.end()
-          @size = @dialogue.choices.length
-          @result = @dialogue.choice /.*/, 'testing'
+          @size = @dialogue.branches.length
+          @result = @dialogue.branch /.*/, 'testing'
           unmute()
 
         it 'should return false', ->
           @result.should.be.false
 
-        it 'should not have added the choice', ->
-          @dialogue.choices.length.should.equal @size
+        it 'should not have added the branch', ->
+          @dialogue.branches.length.should.equal @size
 
-    describe '.clearChoices', ->
+    describe '.clearBranches', ->
 
       beforeEach ->
-        @choiceSpy = sinon.spy()
-        @dialogue.choice /.*/, @choiceSpy
-        @dialogue.clearChoices()
+        @branchespy = sinon.spy()
+        @dialogue.branch /.*/, @branchespy
+        @dialogue.clearBranches()
         @room.user.say 'user1', 'test'
 
-      it 'clears the array of choices', ->
-        @dialogue.choices.should.be.an 'array'
-        @dialogue.choices.length.should.equal 0
+      it 'clears the array of branches', ->
+        @dialogue.branches.should.be.an 'array'
+        @dialogue.branches.length.should.equal 0
 
-      it 'does not respond to prior added choices', ->
-        @choiceSpy.should.not.have.called
+      it 'does not respond to prior added branches', ->
+        @branchespy.should.not.have.called
 
     describe '.receive', ->
 
       beforeEach ->
-        @dialogue.choice /1/, 'got 1'
-        @handler1 = sinon.spy @dialogue.choices[0], 'handler'
+        @dialogue.branch /1/, 'got 1'
+        @handler1 = sinon.spy @dialogue.branches[0], 'handler'
         @handler2 = sinon.spy()
-        @dialogue.choice /2/, @handler2
+        @dialogue.branch /2/, @handler2
         @handler3 = sinon.spy()
-        @dialogue.choice /3/, 'got 3', @handler3
+        @dialogue.branch /3/, 'got 3', @handler3
 
       afterEach ->
         @handler1.restore()
 
-      context 'match for choice with reply string', ->
+      context 'match for branch with reply string', ->
 
         beforeEach ->
           @match = sinon.spy()
@@ -225,7 +225,7 @@ describe '#Dialogue', ->
         it 'sends the response', ->
           @room.messages.pop().should.eql [ 'hubot', 'got 1' ]
 
-      context 'matching choice with no reply and custom handler', ->
+      context 'matching branch with no reply and custom handler', ->
 
         beforeEach ->
           @match = sinon.spy()
@@ -241,7 +241,7 @@ describe '#Dialogue', ->
         it 'hubot does not reply', ->
           @room.messages.pop().should.eql [ 'user1', '2' ]
 
-      context 'matching choice with reply and custom handler', ->
+      context 'matching branch with reply and custom handler', ->
 
         beforeEach ->
           @match = sinon.spy()
@@ -257,22 +257,22 @@ describe '#Dialogue', ->
         it 'sends the response', ->
           @room.messages.pop().should.eql [ 'hubot', 'got 3' ]
 
-        it 'clears choices after match', ->
-          @spy.clearChoices.should.have.calledOnce
+        it 'clears branches after match', ->
+          @spy.clearBranches.should.have.calledOnce
 
-      context 'received matching choices consecutively', ->
+      context 'received matching branches consecutively', ->
 
         beforeEach ->
           @room.user.say 'user1', '1'
           @room.user.say 'user1', '2'
 
-        it 'clears choices after first only', ->
-          @spy.clearChoices.should.have.calledOnce
+        it 'clears branches after first only', ->
+          @spy.clearBranches.should.have.calledOnce
 
         it 'does not reply to the second', ->
           @room.messages.pop().should.eql [ 'hubot', 'got 1' ]
 
-      context 'when choice is matched and none added', ->
+      context 'when branch is matched and none added', ->
 
         beforeEach ->
           @room.user.say 'user1', '1'
@@ -280,7 +280,7 @@ describe '#Dialogue', ->
         it 'ends dialogue', ->
           @spy.end.should.have.called
 
-      context 'when choice is not matched', ->
+      context 'when branch is not matched', ->
 
         beforeEach ->
           @match = sinon.spy()
@@ -330,11 +330,11 @@ describe '#Dialogue', ->
     describe '.end', ->
 
       beforeEach ->
-        @dialogue.choice /.*/, () -> null
+        @dialogue.branch /.*/, () -> null
         @end = sinon.spy()
         @dialogue.on 'end', @end
 
-      context 'when choices remain', ->
+      context 'when branches remain', ->
 
         beforeEach ->
           @dialogue.end()
@@ -348,7 +348,7 @@ describe '#Dialogue', ->
         it 'clears the timeout', ->
           @spy.clearTimeout.should.have.calledOnce
 
-      context 'when triggered by last choice match', ->
+      context 'when triggered by last branch match', ->
 
         beforeEach ->
           @room.user.say 'user1', '1'
@@ -362,7 +362,7 @@ describe '#Dialogue', ->
         it 'clears the timeout only once (from match)', ->
           @spy.clearTimeout.should.have.calledOnce
 
-      context 'when already ended (by last choice match)', ->
+      context 'when already ended (by last branch match)', ->
 
         beforeEach ->
           @room.user.say 'user1', '1'

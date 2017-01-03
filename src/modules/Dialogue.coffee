@@ -1,6 +1,8 @@
 # credit to lmarkus/hubot-conversation for the original concept
 
 _ = require 'underscore'
+randomstring = require 'randomstring'
+slug = require 'slug'
 {inspect} = require 'util'
 {EventEmitter} = require 'events'
 
@@ -11,7 +13,9 @@ _ = require 'underscore'
 class Dialogue extends EventEmitter
   constructor: (@res, options={}) ->
     @logger = @res.robot.logger
-    @choices = []
+    @paths = {}
+    @currentPath = null
+    @branches = []
     @ended = false
     @config = _.defaults options, # use defaults for any missing options
       timeout: parseInt process.env.DIALOGUE_TIMEOUT or 30000
@@ -38,21 +42,39 @@ class Dialogue extends EventEmitter
     else
       @send @config.timeoutLine if @config.timeoutLine?
 
-  # add a choice branch with string response and/or callback
-  # 1: .choice( regex, response ) reply with response on regex match
-  # 2: .choice( regex, callback ) trigger callback on regex match
-  # 3: .choice( regex, response, callback ) reply and do callback
+  # helper used by path, generate key from slugifying or random string
+  keygen = (source='') -> if source isnt '' then slug source else generate 12
+
+  # add a dialogue path - a prompt with one or more branches to follow
+  # @param prompt, string to send to user presenting the options
+  # @param branches, 2D array of arguments to create branches
+  # @param key, (optional) string reference for querying results of path
+  path: (prompt, branches, key) ->
+
+    key ?= keygen prompt # generate key if not provided
+
+    # TODO: Add unit tests for keygen, then...
+    # add path key -> object to @paths
+    # clear branches
+    # set current path to this
+    # add branches
+    # send prompt if not ''
+
+  # add a dialogue branch (usually through path) with response and/or callback
+  # 1: .branch( regex, response ) reply with response on regex match
+  # 2: .branch( regex, callback ) trigger callback on regex match
+  # 3: .branch( regex, response, callback ) reply and do callback
   # @param regex, expression to match
   # @param {string} response message text (optional)
   # @param {function} handler function when matched (optional)
-  choice: (regex, args...) ->
+  branch: (regex, args...) ->
     if @ended
-      @logger.error 'attempted to add choice after dialogue completed'
+      @logger.error 'attempted to add branch after dialogue completed'
       return false
 
     # validate arguments
     if not _.isRegExp regex
-      @logger.error 'invalid regex given for choice'
+      @logger.error 'invalid regex given for branch'
       return false
     if typeof args[0] is 'function'
       handler = args[0]
@@ -61,19 +83,19 @@ class Dialogue extends EventEmitter
         @send args[0]
         args[1] res if typeof args[1] is 'function'
     else
-      @logger.error 'wrong args given for choice'
+      @logger.error 'wrong args given for branch'
       return false
 
-    # new choice restarts the countdown
+    # new branch restarts the countdown
     @clearTimeout() if @countdown?
     @startTimeout()
-    @choices.push # return new choices length
+    @branches.push # return new branches length
       regex: regex,
       handler: handler
 
-  clearChoices: -> @choices = []
+  clearBranches: -> @branches = []
 
-  # accept an incoming message, match against the registered choices
+  # accept an incoming message, match against the registered branches
   # if matched, deliver response, restart timeout and end dialogue
   # @param res, the message object to match against
   receive: (res) ->
@@ -84,24 +106,24 @@ class Dialogue extends EventEmitter
     match = false
 
     # stop at the first match in the order in which they were added
-    @choices.some (choice) =>
-      if match = line.match choice.regex
-        @logger.debug "`#{ line }` matched #{ inspect choice.regex }"
-        @emit 'match', res.message.user, line, match, choice.regex
+    @branches.some (branch) =>
+      if match = line.match branch.regex
+        @logger.debug "`#{ line }` matched #{ inspect branch.regex }"
+        @emit 'match', res.message.user, line, match, branch.regex
 
         # match found, clear this step
-        @clearChoices()
+        @clearBranches()
         @clearTimeout()
 
         res.match = match # override the original match from hubot listener
-        choice.handler res # may add additional choices / restarting timeout
+        branch.handler res # may add additional branches / restarting timeout
         return true # don't process further matches
 
     # report if nothing matched
     @emit 'mismatch', res.message.user, line if not match
 
     # end if nothing left to do
-    @end() if @choices.length is 0
+    @end() if @branches.length is 0
 
   # Send response using original response object
   # Address the audience appropriately (i.e. @user reply or send to channel)
@@ -110,7 +132,7 @@ class Dialogue extends EventEmitter
   # shut it down - emit status for scene to disengage participants
   end: ->
     return false if @ended
-    complete = @choices.length is 0
+    complete = @branches.length is 0
     @logger.debug "Dialog ended #{ if not complete then 'in' }complete"
     @clearTimeout() if @countdown?
     @emit 'end', complete
@@ -118,9 +140,9 @@ class Dialogue extends EventEmitter
 
 module.exports = Dialogue
 
-# TODO: Refactor choice as (path>branch/prompt) store prior message as prompt
 # Accept key name for path, or generate unique ID
 # Keep history of key and corresponding branch match
-# Path contains the message "prompt" that preceed choices and each "branch"
+# Path contains the message "prompt" that preceed branches
 # Each choice answered, resets the current path
 # Debounce or queue consquetive receive calls to process messages synchronously
+# Save branch matches and mismatches against current path
