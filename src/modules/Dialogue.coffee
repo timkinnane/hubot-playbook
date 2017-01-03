@@ -21,8 +21,7 @@ class Dialogue extends EventEmitter
   startTimeout: ->
     @countdown = setTimeout () =>
       @emit 'timeout'
-  #try @onTimeout() catch e then @logger.error "onTimeout error: #{ inspect e}"
-      @onTimeout()
+      try @onTimeout() catch e then @logger.error "onTimeout: #{ inspect e }"
       delete @countdown
       @end()
     , @config.timeout

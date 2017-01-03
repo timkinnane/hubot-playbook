@@ -462,17 +462,21 @@ describe '#Dialogue', ->
         it 'calls the override method', ->
           @override.should.have.calledOnce
 
-      # TODO: Test exception without throwing
-      # context 'method override with invalid function', ->
+      context 'method override with invalid function', ->
 
-        # beforeEach ->
-        #   @dialogue = new Dialogue @res, timeout: 10
-        #   @dialogue.onTimeout -> throw new Error "Test exception"
-        #   @override = sinon.spy @dialogue, 'onTimeout'
-        #   @dialogue.startTimeout()
-        #   Q.delay 15
+        beforeEach ->
+          unmute = mute()
+          @dialogue = new Dialogue @res, timeout: 10
+          @dialogue.onTimeout -> throw new Error "Test exception"
+          @override = sinon.spy @dialogue, 'onTimeout'
+          @dialogue.startTimeout()
+          Q.delay 15
+          .then -> unmute()
 
-        # it 'throws exception', ->
-        #   @override.should.have.thrown()
+        it 'throws exception (caught by timeout)', ->
+          @override.should.have.threw
+
+        it 'continues to execute and end', ->
+          @spy.end.should.have.called
 
 # TODO: Ended dialogue will not receive or allow choices to be added - log error
