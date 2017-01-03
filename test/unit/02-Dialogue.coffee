@@ -163,6 +163,21 @@ describe '#Dialogue', ->
           @room.user.say 'user1', 'yes'
           .then => @yesSpy.should.have.calledOnce
 
+      context 'when already ended', ->
+
+        beforeEach ->
+          unmute = mute()
+          @dialogue.end()
+          @size = @dialogue.choices.length
+          @result = @dialogue.choice /.*/, 'testing'
+          unmute()
+
+        it 'should return false', ->
+          @result.should.be.false
+
+        it 'should not have added the choice', ->
+          @dialogue.choices.length.should.equal @size
+
     describe '.clearChoices', ->
 
       beforeEach ->
@@ -478,5 +493,3 @@ describe '#Dialogue', ->
 
         it 'continues to execute and end', ->
           @spy.end.should.have.called
-
-# TODO: Ended dialogue will not receive or allow choices to be added - log error

@@ -46,6 +46,9 @@ class Dialogue extends EventEmitter
   # @param {string} response message text (optional)
   # @param {function} handler function when matched (optional)
   choice: (regex, args...) ->
+    if @ended
+      @logger.error 'attempted to add choice after dialogue completed'
+      return false
 
     # validate arguments
     if not _.isRegExp regex
