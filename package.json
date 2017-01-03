@@ -30,13 +30,14 @@
   },
   "homepage": "https://github.com/timkinnane/hubot-playbook#readme",
   "dependencies": {
-    "q": "^1.4.1",
+    "coffee-script": "^1.12.2",
+    "conditioner-regex": "0.1.2",
     "dotenv": "^2.0.0",
-    "yamljs": "^0.2.8",
     "handlebars": "^4.0.5",
     "handlebars-intl": "^1.1.2",
+    "q": "^1.4.1",
     "underscore": "^1.8.3",
-    "conditioner-regex": "0.1.2"
+    "yamljs": "^0.2.8"
   },
   "devDependencies": {
     "boolify-string": "^2.0.2",
