@@ -57,9 +57,19 @@ describe '#Dialogue', ->
       it 'has the logger from response object robot', ->
         @dialogue.logger.should.eql @room.robot.logger
 
+      it 'has empty paths object', ->
+        @dialogue.paths.should.be.an 'object'
+        _.size(@paths).should.equal 0
+
+      it 'has a null value for current path', ->
+        should.equal @dialogue.currentPath, null
+
       it 'has an empty branches array', ->
         @dialogue.branches.should.be.an 'array'
         @dialogue.branches.length.should.equal 0
+
+      it 'has an ended status of false', ->
+        @dialogue.ended.should.be.false
 
       it 'has config with defaults of correct type', ->
         @dialogue.config.should.be.an 'object'
