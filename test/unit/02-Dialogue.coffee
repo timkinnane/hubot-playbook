@@ -69,6 +69,58 @@ describe '#Dialogue', ->
       it 'has not started the timeout', ->
         should.not.exist @dialogue.countdown
 
+    describe '.keygen', ->
+
+      context 'with a source string', ->
+
+        beforeEach ->
+          @result = @dialogue.keygen '%.test @# String!'
+
+        it 'converts or removes unsafe characters', ->
+          @result.should.equal 'test-String'
+
+      context 'without source', ->
+
+        beforeEach ->
+          @result = @dialogue.keygen()
+
+        it 'creates a string of 12 random characters', ->
+          @result.length.should.equal 12
+
+    describe '.path', ->
+
+      context 'with a prompt, branches and key', ->
+
+        beforeEach ->
+          @dialogue.path 'Turn left or right?', [
+            [ /left/, 'Ok, going left!' ]
+            [ /right/, 'Ok, going right!' ]
+          ], 'which-way'
+
+        it 'does not create a key', ->
+          @spy.keygen.should.not.have.called
+
+      context 'with a prompt and branches (no key)', ->
+
+        beforeEach ->
+          @dialogue.path 'Pick door 1 or 2?', [
+            [ /1/, 'You get cake!' ]
+            [ /2/, 'You get cake!' ]
+          ]
+
+        it 'creates a key from the prompt', ->
+          @spy.keygen.should.have.calledWith 'Pick door 1 or 2?'
+
+      context 'with an empty prompt and branches', ->
+        beforeEach ->
+          @dialogue.path '', [
+            [ /1/, 'You get cake!' ]
+            [ /2/, 'You get cake!' ]
+          ]
+
+        it 'creates a random key', ->
+          @spy.keygen.should.have.calledWith ''
+
     describe '.branch', ->
 
       beforeEach ->

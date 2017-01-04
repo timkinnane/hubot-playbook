@@ -1,7 +1,7 @@
 # credit to lmarkus/hubot-conversation for the original concept
 
 _ = require 'underscore'
-randomstring = require 'randomstring'
+{generate} = require 'randomstring'
 slug = require 'slug'
 {inspect} = require 'util'
 {EventEmitter} = require 'events'
@@ -43,7 +43,7 @@ class Dialogue extends EventEmitter
       @send @config.timeoutLine if @config.timeoutLine?
 
   # helper used by path, generate key from slugifying or random string
-  keygen = (source='') -> if source isnt '' then slug source else generate 12
+  keygen: (source='') -> if source isnt '' then slug source else generate 12
 
   # add a dialogue path - a prompt with one or more branches to follow
   # @param prompt, string to send to user presenting the options
@@ -51,9 +51,8 @@ class Dialogue extends EventEmitter
   # @param key, (optional) string reference for querying results of path
   path: (prompt, branches, key) ->
 
-    key ?= keygen prompt # generate key if not provided
+    key ?= @keygen prompt # generate key if not provided
 
-    # TODO: Add unit tests for keygen, then...
     # add path key -> object to @paths
     # clear branches
     # set current path to this
