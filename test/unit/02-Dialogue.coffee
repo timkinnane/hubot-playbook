@@ -62,7 +62,7 @@ describe '#Dialogue', ->
         _.size(@paths).should.equal 0
 
       it 'has a null value for current path', ->
-        should.equal @dialogue.currentPath, null
+        should.equal @dialogue.pathKey, null
 
       it 'has an empty branches array', ->
         @dialogue.branches.should.be.an 'array'
@@ -110,6 +110,12 @@ describe '#Dialogue', ->
         it 'does not create a key', ->
           @spy.keygen.should.not.have.called
 
+        it 'clears branches', ->
+          @spy.clearBranches.should.have.calledOnce
+
+        # TODO: finish .path tests and refactor .choice tests with .record usage
+        it ''
+
       context 'with a prompt and branches (no key)', ->
 
         beforeEach ->
@@ -131,6 +137,19 @@ describe '#Dialogue', ->
         it 'creates a random key', ->
           @spy.keygen.should.have.calledWith ''
 
+      context 'with a key that already exists', ->
+
+        beforeEach ->
+          @r1 = @dialogue.path 'Say anything...', [
+            [ /.*/, 'You said things!' ]
+          ], 'test'
+          @r2 = @dialogue.path 'Keep talking...', [
+            [ /.*/, 'You said more things!' ]
+          ], 'test'
+
+        it 'returns false', ->
+          @r2.should.be.false
+
     describe '.branch', ->
 
       beforeEach ->
@@ -139,7 +158,7 @@ describe '#Dialogue', ->
       context 'with a reply string', ->
 
         beforeEach ->
-          @dialogue.branch /.*/, 'foo'
+          @result = @dialogue.branch /.*/, 'foo'
 
         it 'has object with regex and handler', ->
           @dialogue.branches[0].should.be.an 'object'
@@ -152,6 +171,9 @@ describe '#Dialogue', ->
         it 'starts the timeout', ->
           @spy.startTimeout.should.have.calledOnce
           @dialogue.countdown.should.be.instanceof Timeout
+
+        it 'returns true', ->
+          @result.should.be.true
 
       context 'with a custom handler callback', ->
 
@@ -181,9 +203,9 @@ describe '#Dialogue', ->
 
         beforeEach ->
           unmute = mute() # remove error logs from test
-          @dialogue.branch /.*/, null
-          @dialogue.branch /.*/, null, () -> null
-          @dialogue.branch 'foo', 'bar', () -> null
+          @r1 = @dialogue.branch /.*/, null
+          @r2 = @dialogue.branch /.*/, null, () -> null
+          @r3 = @dialogue.branch 'foo', 'bar', () -> null
           unmute()
 
         it 'log an error for each incorrect call', ->
@@ -196,6 +218,11 @@ describe '#Dialogue', ->
           @spy.clearTimeout.should.not.have.called
           @spy.startTimeout.should.not.have.called
           should.not.exist @dialogue.countdown
+
+        it 'returns false', ->
+          @r1.should.be.false
+          @r2.should.be.false
+          @r3.should.be.false
 
       context 'with consecutive added branches', ->
 

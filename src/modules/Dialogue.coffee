@@ -1,4 +1,6 @@
 # credit to lmarkus/hubot-conversation for the original concept
+# TODO: queue consquetive receive calls to process messages synchronously
+# TODO: save transcript to brain (here or in scene)
 
 _ = require 'underscore'
 {generate} = require 'randomstring'
@@ -13,10 +15,10 @@ slug = require 'slug'
 class Dialogue extends EventEmitter
   constructor: (@res, options={}) ->
     @logger = @res.robot.logger
-    @paths = {}
-    @currentPath = null
-    @branches = []
-    @ended = false
+    @paths = {} # builds as dialogue progresses
+    @pathKey = null # pointer for current path
+    @branches = [] # options within current path
+    @ended = false # state of dialogue completion
     @config = _.defaults options, # use defaults for any missing options
       timeout: parseInt process.env.DIALOGUE_TIMEOUT or 30000
       timeoutLine: process.env.DIALOGUE_TIMEOUT_LINE or
@@ -51,13 +53,23 @@ class Dialogue extends EventEmitter
   # @param key, (optional) string reference for querying results of path
   path: (prompt, branches, key) ->
 
-    key ?= @keygen prompt # generate key if not provided
+    # generate key if not provided and make sure its unique
+    key ?= @keygen prompt
+    console.log key, _.keys @paths
+    if key in _.keys @paths
+      @logger.error "Path key '#{ key }' already exists, cannot overwrite"
+      return false
 
-    # add path key -> object to @paths
-    # clear branches
-    # set current path to this
-    # add branches
-    # send prompt if not ''
+    # setup new path object and dialogue state
+    @clearBranches()
+    @pathKey = key
+    @paths[key] =
+      prompt: prompt
+      status: _.map branches, (args) => @branch args...
+      transcript: []
+
+    # kick-off dialogue exchange
+    @send prompt if prompt isnt ''
 
   # add a dialogue branch (usually through path) with response and/or callback
   # 1: .branch( regex, response ) reply with response on regex match
@@ -88,9 +100,10 @@ class Dialogue extends EventEmitter
     # new branch restarts the countdown
     @clearTimeout() if @countdown?
     @startTimeout()
-    @branches.push # return new branches length
+    @branches.push
       regex: regex,
       handler: handler
+    return true # for .path to record success
 
   clearBranches: -> @branches = []
 
@@ -107,10 +120,8 @@ class Dialogue extends EventEmitter
     # stop at the first match in the order in which they were added
     @branches.some (branch) =>
       if match = line.match branch.regex
-        @logger.debug "`#{ line }` matched #{ inspect branch.regex }"
-        @emit 'match', res.message.user, line, match, branch.regex
-
         # match found, clear this step
+        @record 'match', res.message.user, line, match, branch.regex
         @clearBranches()
         @clearTimeout()
 
@@ -118,15 +129,29 @@ class Dialogue extends EventEmitter
         branch.handler res # may add additional branches / restarting timeout
         return true # don't process further matches
 
-    # report if nothing matched
-    @emit 'mismatch', res.message.user, line if not match
-
-    # end if nothing left to do
-    @end() if @branches.length is 0
+    # record and report if nothing matched
+    @record 'mismatch', res.message.user, line if not match
+    @end() if @branches.length is 0 # end if nothing left to do
 
   # Send response using original response object
   # Address the audience appropriately (i.e. @user reply or send to channel)
-  send: (line) -> if @config.reply then @res.reply line else @res.send line
+  send: (line) ->
+    if @config.reply then @res.reply line else @res.send line
+    @record 'send', 'bot', line
+
+  # record and report sends, matches or mismatches
+  # adds interactions to transcript if currently executing a named path
+  record: (type, user, content, match, regex) ->
+    @paths[@pathKey].transcript.push [ type, user, content ] if @pathKey?
+    switch type
+      when 'match'
+        @logger.debug "Received \"#{ content }\" matched #{ inspect regex }"
+        @emit 'match', user, content, match, regex
+      when 'mismatch'
+        @logger.debug "Received \"#{ content }\" matched nothing"
+        @emit 'mismatch', user, content
+      when 'send'
+        @logger.debug "Sent \"#{ content }\""
 
   # shut it down - emit status for scene to disengage participants
   end: ->
@@ -138,10 +163,3 @@ class Dialogue extends EventEmitter
     @ended = true
 
 module.exports = Dialogue
-
-# Accept key name for path, or generate unique ID
-# Keep history of key and corresponding branch match
-# Path contains the message "prompt" that preceed branches
-# Each choice answered, resets the current path
-# Debounce or queue consquetive receive calls to process messages synchronously
-# Save branch matches and mismatches against current path
