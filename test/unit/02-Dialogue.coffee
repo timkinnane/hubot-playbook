@@ -33,7 +33,7 @@ describe '#Dialogue', ->
     @room.robot.on 'receive', (res) => @rec = res # store every message received
     @spy = _.mapObject Dialogue.prototype, (val, key) ->
       sinon.spy Dialogue.prototype, key # spy on all the class methods
-    @room.user.say 'user1', 'hubot ping' # create first response
+    @room.user.say 'tester', 'hubot ping' # create first response
 
   afterEach ->
     _.invoke @spy, 'restore' # restore all the methods
@@ -101,11 +101,15 @@ describe '#Dialogue', ->
 
       context 'with a prompt, branches and key', ->
 
-        beforeEach ->
-          @dialogue.path 'Turn left or right?', [
-            [ /left/, 'Ok, going left!' ]
-            [ /right/, 'Ok, going right!' ]
-          ], 'which-way'
+        beforeEach (done) ->
+          @observer.next().then -> done() # watch for prompt before proceeding
+          @result = @dialogue.path
+            prompt: 'Turn left or right?'
+            branches: [
+              [ /left/, 'Ok, going left!' ]
+              [ /right/, 'Ok, going right!' ]
+            ]
+            key: 'which-way'
 
         it 'does not create a key', ->
           @spy.keygen.should.not.have.called
@@ -113,42 +117,139 @@ describe '#Dialogue', ->
         it 'clears branches', ->
           @spy.clearBranches.should.have.calledOnce
 
-        # TODO: finish .path tests and refactor .choice tests with .record usage
-        it ''
+        it 'creates branches with branch property array elements', ->
+          @spy.branch.should.have.calledWith /left/, 'Ok, going left!'
+          @spy.branch.should.have.calledWith /right/, 'Ok, going right!'
+
+        it 'returns the key', ->
+          @result.should.equal 'which-way'
+
+        it 'returned key corresponds to a path object', ->
+          @dialogue.paths[@result].should.be.an.object
+          @dialogue.paths[@result].should.have.property 'prompt'
+          @dialogue.paths[@result].should.have.property 'status'
+          @dialogue.paths[@result].should.have.property 'transcript'
+
+        it 'path object has prompt', ->
+          @dialogue.paths[@result].prompt.should.equal 'Turn left or right?'
+
+        it 'path object has status of branch adds (both success)', ->
+          @dialogue.paths[@result].status.should.eql [ true, true ]
+
+        it 'path object has transcript containing sent prompt', ->
+          @dialogue.paths[@result].transcript.should.eql [[
+            'send'
+            'bot'
+            'Turn left or right?'
+          ]]
+
+        it 'sends the prompt to room', ->
+          @room.messages.pop().should.eql [ 'hubot', 'Turn left or right?' ]
 
       context 'with a prompt and branches (no key)', ->
 
-        beforeEach ->
-          @dialogue.path 'Pick door 1 or 2?', [
-            [ /1/, 'You get cake!' ]
-            [ /2/, 'You get cake!' ]
-          ]
+        beforeEach (done) ->
+          @observer.next().then -> done() # watch for prompt before proceeding
+          @result = @dialogue.path
+            prompt: 'Pick door 1 or 2?'
+            branches: [
+              [ /1/, 'You get cake!' ]
+              [ /2/, 'You get cake!' ]
+            ]
 
         it 'creates a key from the prompt', ->
           @spy.keygen.should.have.calledWith 'Pick door 1 or 2?'
 
-      context 'with an empty prompt and branches', ->
+        it 'returns generated key (prompt slug)', ->
+          @result.should.equal 'Pick-door-1-or-2'
+
+        it 'returned key corresponds to a path object', ->
+          @dialogue.paths[@result].should.be.an.object
+          @dialogue.paths[@result].should.have.property 'prompt'
+          @dialogue.paths[@result].should.have.property 'status'
+          @dialogue.paths[@result].should.have.property 'transcript'
+
+        it 'sends the prompt', ->
+          @spy.send.should.have.calledWith 'Pick door 1 or 2?'
+
+      context 'without a prompt or key (branches only)', ->
+
         beforeEach ->
-          @dialogue.path '', [
+          @result = @dialogue.path
+            branches: [
+              [ /1/, 'You get cake!' ]
+              [ /2/, 'You get cake!' ]
+            ]
+
+        it 'creates a random key', ->
+          @spy.keygen.should.have.calledWith()
+
+        it 'creates branches with branch property array elements', ->
+          @spy.branch.should.have.calledWith /1/, 'You get cake!'
+          @spy.branch.should.have.calledWith /2/, 'You get cake!'
+
+        it 'returned key corresponds to a path object', ->
+          @dialogue.paths[@result].should.be.an.object
+          @dialogue.paths[@result].should.have.property 'prompt'
+          @dialogue.paths[@result].should.have.property 'status'
+          @dialogue.paths[@result].should.have.property 'transcript'
+
+        it 'sends nothing', ->
+          @spy.send.should.not.have.called
+
+        it 'path object has empty transcript array', ->
+          @dialogue.paths[@result].transcript.should.eql []
+
+      context 'with only branches, as array argument', ->
+
+        beforeEach ->
+          @result = @dialogue.path [
             [ /1/, 'You get cake!' ]
             [ /2/, 'You get cake!' ]
           ]
 
         it 'creates a random key', ->
-          @spy.keygen.should.have.calledWith ''
+          @spy.keygen.should.have.calledWith()
 
-      context 'with a key that already exists', ->
+        it 'creates branches with array elements', ->
+          @spy.branch.should.have.calledWith /1/, 'You get cake!'
+          @spy.branch.should.have.calledWith /2/, 'You get cake!'
+
+        it 'returned key corresponds to a path object', ->
+          @dialogue.paths[@result].should.be.an.object
+          @dialogue.paths[@result].should.have.property 'prompt'
+          @dialogue.paths[@result].should.have.property 'status'
+          @dialogue.paths[@result].should.have.property 'transcript'
+
+        it 'sends nothing', ->
+          @spy.send.should.not.have.called
+
+      context 'twice with the same key', ->
 
         beforeEach ->
-          @r1 = @dialogue.path 'Say anything...', [
-            [ /.*/, 'You said things!' ]
-          ], 'test'
-          @r2 = @dialogue.path 'Keep talking...', [
-            [ /.*/, 'You said more things!' ]
-          ], 'test'
+          unmute = mute()
+          @dialogue.path
+            prompt: 'Say anything...'
+            branches: [
+              [ /.*/, 'You said things!' ]
+            ]
+            key: 'testKey'
+          @result = @dialogue.path
+            prompt: 'Keep talking...'
+            branches: [
+              [ /.*/, 'You said more things!' ]
+            ]
+            key: 'testKey'
+          unmute()
 
-        it 'returns false', ->
-          @r2.should.be.false
+        it 'returns false the second', ->
+          @result.should.be.false
+
+        it 'clears branches only once', ->
+          @spy.clearBranches.should.have.calledOnce
+
+        it 'does not setup new path', ->
+          _.size(@dialogue.paths).should.equal 1
 
     describe '.branch', ->
 
@@ -243,13 +344,13 @@ describe '#Dialogue', ->
         beforeEach ->
           @yesSpy = sinon.spy()
           @dialogue.branch /confirm/, => @dialogue.branch /yes/, @yesSpy
-          @room.user.say 'user1', 'confirm'
+          @room.user.say 'tester', 'confirm'
 
         it 'has new branch after matching original', ->
           @dialogue.branches.length.should.equal 1
 
         it 'calls second callback after matching sequence', ->
-          @room.user.say 'user1', 'yes'
+          @room.user.say 'tester', 'yes'
           .then => @yesSpy.should.have.calledOnce
 
       context 'when already ended', ->
@@ -273,10 +374,9 @@ describe '#Dialogue', ->
         @branchespy = sinon.spy()
         @dialogue.branch /.*/, @branchespy
         @dialogue.clearBranches()
-        @room.user.say 'user1', 'test'
+        @room.user.say 'tester', 'test'
 
       it 'clears the array of branches', ->
-        @dialogue.branches.should.be.an 'array'
         @dialogue.branches.length.should.equal 0
 
       it 'does not respond to prior added branches', ->
@@ -298,15 +398,14 @@ describe '#Dialogue', ->
       context 'match for branch with reply string', ->
 
         beforeEach ->
-          @match = sinon.spy()
-          @dialogue.on 'match', @match
-          @room.user.say 'user1', '1'
+          @room.user.say 'tester', '1'
 
-        it 'emits match event', ->
-          @match.should.have.calledOnce
-
-        it 'event has user, line, match and regex', ->
-          @match.should.have.calledWith @rec.message.user,'1','1'.match('1'),/1/
+        it 'records the match (with user, line, match, regex)', ->
+          @spy.record.should.have.calledWith 'match',
+          @rec.message.user,
+          '1',
+          '1'.match('1'),
+          /1/
 
         it 'calls the created handler', ->
           @handler1.should.have.calledOnce
@@ -317,28 +416,32 @@ describe '#Dialogue', ->
       context 'matching branch with no reply and custom handler', ->
 
         beforeEach ->
-          @match = sinon.spy()
-          @dialogue.on 'match', @match
-          @room.user.say 'user1', '2'
+          @room.user.say 'tester', '2'
 
-        it 'event has user, line, match and regex', ->
-          @match.should.have.calledWith @rec.message.user,'2','2'.match('2'),/2/
+        it 'records the match (with user, line, match, regex)', ->
+          @spy.record.should.have.calledWith 'match',
+          @rec.message.user,
+          '2',
+          '2'.match('2'),
+          /2/
 
         it 'calls the custom handler', ->
           @handler2.should.have.calledOnce
 
         it 'hubot does not reply', ->
-          @room.messages.pop().should.eql [ 'user1', '2' ]
+          @room.messages.pop().should.eql [ 'tester', '2' ]
 
       context 'matching branch with reply and custom handler', ->
 
         beforeEach ->
-          @match = sinon.spy()
-          @dialogue.on 'match', @match
-          @room.user.say 'user1', '3'
+          @room.user.say 'tester', '3'
 
-        it 'event has user, line, match and regex', ->
-          @match.should.have.calledWith @rec.message.user,'3','3'.match('3'),/3/
+        it 'records the match (with user, line, match, regex)', ->
+          @spy.record.should.have.calledWith 'match',
+          @rec.message.user,
+          '3',
+          '3'.match('3'),
+          /3/
 
         it 'calls the custom handler', ->
           @handler3.should.have.calledOnce
@@ -352,8 +455,8 @@ describe '#Dialogue', ->
       context 'received matching branches consecutively', ->
 
         beforeEach ->
-          @room.user.say 'user1', '1'
-          @room.user.say 'user1', '2'
+          @room.user.say 'tester', '1'
+          @room.user.say 'tester', '2'
 
         it 'clears branches after first only', ->
           @spy.clearBranches.should.have.calledOnce
@@ -364,7 +467,7 @@ describe '#Dialogue', ->
       context 'when branch is matched and none added', ->
 
         beforeEach ->
-          @room.user.say 'user1', '1'
+          @room.user.say 'tester', '1'
 
         it 'ends dialogue', ->
           @spy.end.should.have.called
@@ -372,20 +475,12 @@ describe '#Dialogue', ->
       context 'when branch is not matched', ->
 
         beforeEach ->
-          @match = sinon.spy()
-          @mismatch = sinon.spy()
-          @dialogue.on 'match', @match
-          @dialogue.on 'mismatch', @mismatch
-          @room.user.say 'user1', '?'
+          @room.user.say 'tester', '?'
 
-        it 'does not emit match event', ->
-          @match.should.not.have.called
-
-        it 'emits mismatch event', ->
-          @mismatch.should.have.called
-
-        it 'mismatch event has user and line', ->
-          @mismatch.should.have.calledWith @rec.message.user,'?'
+        it 'records mismatch (with user, line)', ->
+          @spy.record.should.have.calledWith 'mismatch',
+          @rec.message.user,
+          '?'
 
         it 'does not call end', ->
           @spy.end.should.not.have.called
@@ -393,10 +488,8 @@ describe '#Dialogue', ->
       context 'when already ended', ->
 
         beforeEach ->
-          @match = sinon.spy()
-          @dialogue.on 'match', @match
           @dialogue.end()
-          @room.user.say 'user1', '1'
+          @room.user.say 'tester', '1'
 
         it 'returns false', ->
           @result.should.be.false
@@ -404,8 +497,8 @@ describe '#Dialogue', ->
         it 'does not call the handler', ->
           @handler1.should.not.have.called
 
-        it 'does not emit match event', ->
-          @match.should.not.have.called
+        it 'does not record anything', ->
+          @spy.record.should.not.have.called
 
     describe '.send', ->
 
@@ -415,6 +508,61 @@ describe '#Dialogue', ->
 
       it 'sends to the room from original res', ->
         @room.messages.pop().should.eql [ 'hubot', 'test' ]
+
+    describe '.record', ->
+
+      beforeEach ->
+        @match = sinon.spy()
+        @mismatch = sinon.spy()
+        @dialogue.on 'match', @match
+        @dialogue.on 'mismatch', @mismatch
+        @result = @dialogue.path
+          prompt: 'Turn left or right?'
+          branches: [
+            [ /left/, 'Ok, going left!' ]
+            [ /right/, 'Ok, going right!' ]
+          ]
+          key: 'which-way'
+          error: 'Bzz. Left or right only!'
+
+      context 'with arguments from the sent prompt', ->
+
+        it 'adds match type, "bot" and content to transcript', ->
+          @dialogue.paths[@result].transcript[0].should.eql [
+            'send'
+            'bot'
+            'Turn left or right?'
+          ]
+
+      context 'with arguments from a matched choice', ->
+
+        beforeEach ->
+          @room.user.say 'tester', 'left'
+
+        it 'adds match type, user and content to transcript', ->
+          @dialogue.paths[@result].transcript[1].should.eql [
+            'match'
+            @rec.message.user
+            'left'
+          ]
+
+        it 'emits mismatch event with user, content', ->
+          @match.should.have.calledWith @rec.message.user, 'left'
+
+      context 'with arguments from a mismatched choice', ->
+
+        beforeEach ->
+          @room.user.say 'tester', 'up'
+
+        it 'adds match type, user and content to transcript', ->
+          @dialogue.paths[@result].transcript[1].should.eql [
+            'mismatch'
+            @rec.message.user
+            'up'
+          ]
+
+        it 'emits mismatch event with user, content', ->
+          @mismatch.should.have.calledWith @rec.message.user, 'up'
 
     describe '.end', ->
 
@@ -440,7 +588,7 @@ describe '#Dialogue', ->
       context 'when triggered by last branch match', ->
 
         beforeEach ->
-          @room.user.say 'user1', '1'
+          @room.user.say 'tester', '1'
 
         it 'emits end event with unsuccessful status', ->
           @end.should.have.calledWith true
@@ -454,7 +602,7 @@ describe '#Dialogue', ->
       context 'when already ended (by last branch match)', ->
 
         beforeEach ->
-          @room.user.say 'user1', '1'
+          @room.user.say 'tester', '1'
           .then => @result = @dialogue.end()
 
         it 'should not process consecutively', ->

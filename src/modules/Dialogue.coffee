@@ -14,7 +14,7 @@ slug = require 'slug'
 # @param {object} options key/vals for config, e.g overide timeout default
 class Dialogue extends EventEmitter
   constructor: (@res, options={}) ->
-    @logger = @res.robot.logger
+    @log = @res.robot.logger
     @paths = {} # builds as dialogue progresses
     @pathKey = null # pointer for current path
     @branches = [] # options within current path
@@ -27,7 +27,7 @@ class Dialogue extends EventEmitter
   startTimeout: ->
     @countdown = setTimeout () =>
       @emit 'timeout'
-      try @onTimeout() catch e then @logger.error "onTimeout: #{ inspect e }"
+      try @onTimeout() catch e then @log.error "onTimeout: #{ inspect e }"
       delete @countdown
       @end()
     , @config.timeout
@@ -45,31 +45,33 @@ class Dialogue extends EventEmitter
       @send @config.timeoutLine if @config.timeoutLine?
 
   # helper used by path, generate key from slugifying or random string
-  keygen: (source='') -> if source isnt '' then slug source else generate 12
+  keygen: (source) -> if source? then slug source else generate 12
 
   # add a dialogue path - a prompt with one or more branches to follow
-  # @param prompt, string to send to user presenting the options
-  # @param branches, 2D array of arguments to create branches
-  # @param key, (optional) string reference for querying results of path
-  path: (prompt, branches, key) ->
+  # @param opts.prompt, (optional) string to send presenting the branches
+  # @param opts.branches, 2D array of arguments to create branches
+  # @param opts.key, (optional) string reference for querying results of path
+  path: (opts) ->
+    opts = branches: opts if _.isArray opts
 
     # generate key if not provided and make sure its unique
-    key ?= @keygen prompt
-    console.log key, _.keys @paths
-    if key in _.keys @paths
-      @logger.error "Path key '#{ key }' already exists, cannot overwrite"
+    opts.key ?= @keygen opts.prompt
+    if opts.key in _.keys @paths
+      @log.error "Path key '#{ opts.key }' already exists, cannot overwrite"
       return false
 
     # setup new path object and dialogue state
     @clearBranches()
-    @pathKey = key
-    @paths[key] =
-      prompt: prompt
-      status: _.map branches, (args) => @branch args...
+    @pathKey = opts.key
+    @paths[opts.key] =
+      prompt: opts.prompt
+      status: _.map opts.branches, (args) => @branch args...
       transcript: []
 
     # kick-off dialogue exchange
-    @send prompt if prompt isnt ''
+    @send opts.prompt if opts.prompt?
+
+    return opts.key # allow path to be queried by key
 
   # add a dialogue branch (usually through path) with response and/or callback
   # 1: .branch( regex, response ) reply with response on regex match
@@ -80,12 +82,12 @@ class Dialogue extends EventEmitter
   # @param {function} handler function when matched (optional)
   branch: (regex, args...) ->
     if @ended
-      @logger.error 'attempted to add branch after dialogue completed'
+      @log.error 'attempted to add branch after dialogue completed'
       return false
 
     # validate arguments
     if not _.isRegExp regex
-      @logger.error 'invalid regex given for branch'
+      @log.error 'invalid regex given for branch'
       return false
     if typeof args[0] is 'function'
       handler = args[0]
@@ -94,7 +96,7 @@ class Dialogue extends EventEmitter
         @send args[0]
         args[1] res if typeof args[1] is 'function'
     else
-      @logger.error 'wrong args given for branch'
+      @log.error 'wrong args given for branch'
       return false
 
     # new branch restarts the countdown
@@ -114,7 +116,7 @@ class Dialogue extends EventEmitter
     return false if @ended # dialogue is over, don't process
 
     line = res.message.text
-    @logger.debug "Dialogue received #{ line }"
+    @log.debug "Dialogue received #{ line }"
     match = false
 
     # stop at the first match in the order in which they were added
@@ -145,19 +147,19 @@ class Dialogue extends EventEmitter
     @paths[@pathKey].transcript.push [ type, user, content ] if @pathKey?
     switch type
       when 'match'
-        @logger.debug "Received \"#{ content }\" matched #{ inspect regex }"
+        @log.debug "Received \"#{ content }\" matched #{ inspect regex }"
         @emit 'match', user, content, match, regex
       when 'mismatch'
-        @logger.debug "Received \"#{ content }\" matched nothing"
+        @log.debug "Received \"#{ content }\" matched nothing"
         @emit 'mismatch', user, content
       when 'send'
-        @logger.debug "Sent \"#{ content }\""
+        @log.debug "Sent \"#{ content }\""
 
   # shut it down - emit status for scene to disengage participants
   end: ->
     return false if @ended
     complete = @branches.length is 0
-    @logger.debug "Dialog ended #{ if not complete then 'in' }complete"
+    @log.debug "Dialog ended #{ if not complete then 'in' }complete"
     @clearTimeout() if @countdown?
     @emit 'end', complete
     @ended = true
