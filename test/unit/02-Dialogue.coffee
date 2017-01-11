@@ -12,7 +12,6 @@ helper = new Helper '../scripts/ping.coffee'
 Observer = require '../utils/observer'
 
 Dialogue = require '../../src/modules/Dialogue'
-{TextMessage, User, Response} = require 'hubot'
 {EventEmitter} = require 'events'
 Timeout = setTimeout () ->
   null
@@ -55,7 +54,7 @@ describe '#Dialogue', ->
         @dialogue.emit.should.be.a 'function'
 
       it 'has the logger from response object robot', ->
-        @dialogue.logger.should.eql @room.robot.logger
+        @dialogue.log.should.eql @room.robot.logger
 
       it 'has empty paths object', ->
         @dialogue.paths.should.be.an 'object'
@@ -118,8 +117,8 @@ describe '#Dialogue', ->
           @spy.clearBranches.should.have.calledOnce
 
         it 'creates branches with branch property array elements', ->
-          @spy.branch.should.have.calledWith /left/, 'Ok, going left!'
-          @spy.branch.should.have.calledWith /right/, 'Ok, going right!'
+          @spy.branch.getCall(0).should.have.calledWith /left/, 'Ok, going left!'
+          @spy.branch.getCall(1).should.have.calledWith /right/, 'Ok, going right!'
 
         it 'returns the key', ->
           @result.should.equal 'which-way'
@@ -253,9 +252,6 @@ describe '#Dialogue', ->
 
     describe '.branch', ->
 
-      beforeEach ->
-        @errorSpy = sinon.spy @room.robot.logger, 'error'
-
       context 'with a reply string', ->
 
         beforeEach ->
@@ -308,9 +304,6 @@ describe '#Dialogue', ->
           @r2 = @dialogue.branch /.*/, null, () -> null
           @r3 = @dialogue.branch 'foo', 'bar', () -> null
           unmute()
-
-        it 'log an error for each incorrect call', ->
-          @errorSpy.should.have.calledThrice
 
         it 'does not have any branches loaded', ->
           @dialogue.branches.length.should.equal 0

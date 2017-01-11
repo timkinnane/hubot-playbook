@@ -1,5 +1,6 @@
 # credit to lmarkus/hubot-conversation for the original concept
-
+_ = require 'underscore'
+{inspect} = require 'util'
 Dialogue = require './Dialogue'
 
 # handles array of participants engaged in dialogue
@@ -15,73 +16,69 @@ class Scene
       throw new Error "invalid scene type given"
 
     @engaged = {} # dialogues of each engaged audience
-    @logger = @robot.logger
+    @log = @robot.logger
 
     # hubot middleware re-routes to internal matching while engaged
     @robot.receiveMiddleware (context, next, done) =>
       res = context.response
-      audience = @whoSpeaks res.message
+      audience = @whoSpeaks res
 
       # check if incoming messages are part of active scene
       if audience of @engaged
-        @logger.debug "#{ audience } is engaged in dialogue, routing dialogue."
+        @log.debug "#{ audience } is engaged in dialogue, routing dialogue."
         res.finish() # don't process regular listeners
         @engaged[audience].receive res # let dialogue handle the response
         done() # don't process further middleware.
       else
-        @logger.debug "#{ audience } not engaged, continue as normal."
+        @log.debug "#{ audience } not engaged, continue as normal."
         next done
 
   # return the source of a message (ID of user or room)
-  whoSpeaks: (msg) ->
+  whoSpeaks: (res) ->
     switch @type
-      when 'user' then return msg.user.id
-      when 'room' then return msg.room
-      when 'userRoom' then return "#{ msg.user.id }:#{ msg.room }"
+      when 'room' then return res.envelope.room
+      when 'user' then return res.envelope.user.id
+      when 'userRoom' then return "#{res.envelope.user.id}_#{res.envelope.room}"
 
   # engage the audience in dialogue
   # @param res, the response object
-  # @param {string} reply message text (optional)
-  # @param {object} options key/vals for config, e.g overide timeout default
-  enter: (res, args...) ->
-    if typeof args[0] is 'string'
-      reply = args[0]
-      options = args[1]
-    else
-      options = args[0]
-
-    # extend any missing options with defaults
-    reply ?= if @type is 'room' then false else true
+  # @param options, key/vals for dialogue config, e.g overide timeout default
+  enter: (res, opts={}) ->
+    # extend options with defaults (passed to dialogue)
+    opts = _.defaults opts,
+      reply: if @type is 'room' then true else false # '@user hello' vs 'hello'
 
     # setup dialogue to handle choices for response branching
-    audience = @whoSpeaks res.message
-    @logger.debug "Engaging #{ @type } #{ audience } in dialogue"
-    @engaged[audience] = new Dialogue res, options
+    audience = @whoSpeaks res
+    @log.info "Engaging #{ @type } #{ audience } in dialogue"
+    @engaged[audience] = new Dialogue res, opts
 
     # remove audience from engaged participants on timeout or completion
-    @engaged[audience].on 'timeout', => @exit res, 'timed out'
-    @engaged[audience].on 'complete', => @exit res, 'completed'
-
-    # send first line of dialogue if provided
-    if reply? then res.reply reply
-
-    # return started dialogue
-    @engaged[audience]
+    @engaged[audience].on 'timeout', => @exit res, 'timeout'
+    @engaged[audience].on 'end', (completed) =>
+      if completed
+        @exit res, 'complete'
+      else
+        @exit res, 'incomplete'
+    return @engaged[audience] # return started dialogue
 
   # disengage an audience from dialogue (can help in case of error)
-  exit: (res, reason) ->
-    audience = @whoSpeaks res.message
+  exit: (res, reason='unknown') ->
+    audience = @whoSpeaks res
     if @engaged[audience]?
-      @logger.debug "Disengaging #{ @type } #{ audience } from scene"
-      @logger.debug "Disengaged because dialogue #{ reason }" if reason?
+      @log.info "Disengaging #{ @type } #{ audience } because #{ reason }"
       @engaged[audience].clearTimeout()
       delete @engaged[audience]
-      true
-    else
-      @logger.debug "Cannot disengage #{ audience }, not in #{ @type } scene"
-      false
+      return true
+
+    # user may have been already removed by timeout event before end:incomplete
+    @log.debug "Cannot disengage #{ audience }, not in #{ @type } scene"
+    return false
 
   # return the dialogue for an engaged audience
-  dialogue: (audience) -> return @engaged[audience]
+  dialogue: (audience) -> return @engaged[audience] or null
+
+  # return the engaged status for an audience
+  inDialogue: (audience) -> return audience in _.keys @engaged
 
 module.exports = Scene

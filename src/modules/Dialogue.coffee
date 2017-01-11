@@ -11,15 +11,16 @@ slug = require 'slug'
 # multiple-choice dialogue interactions
 # the timeout will trigger a timeout message if nothing matches in time
 # @param res, incoming message initiating dialogue
-# @param {object} options key/vals for config, e.g overide timeout default
+# @param opts, key/vals for config, e.g overide timeout default
 class Dialogue extends EventEmitter
-  constructor: (@res, options={}) ->
+  constructor: (@res, opts={}) ->
     @log = @res.robot.logger
     @paths = {} # builds as dialogue progresses
     @pathKey = null # pointer for current path
-    @branches = [] # options within current path
+    @branches = [] # branch options within current path
     @ended = false # state of dialogue completion
-    @config = _.defaults options, # use defaults for any missing options
+    @config = _.defaults opts, # use defaults for any missing options
+      reply: false # will send without addressing reply to sender
       timeout: parseInt process.env.DIALOGUE_TIMEOUT or 30000
       timeoutLine: process.env.DIALOGUE_TIMEOUT_LINE or
         'Timed out! Please start again.'
@@ -51,6 +52,7 @@ class Dialogue extends EventEmitter
   # @param opts.prompt, (optional) string to send presenting the branches
   # @param opts.branches, 2D array of arguments to create branches
   # @param opts.key, (optional) string reference for querying results of path
+  # NB: Can be called with just the branches array, not required as object param
   path: (opts) ->
     opts = branches: opts if _.isArray opts
 

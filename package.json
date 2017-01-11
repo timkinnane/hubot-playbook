@@ -8,6 +8,8 @@
   },
   "scripts": {
     "test": "gulp test",
+    "watch": "gulp watch",
+    "kill": "kill -9 `ps ax | grep hubot | awk '{print $1}'`",
     "coveralls": "gulp test && cat coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
   },
   "repository": {
