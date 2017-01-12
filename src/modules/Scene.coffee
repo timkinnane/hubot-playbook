@@ -50,6 +50,7 @@ class Scene
 
     # setup dialogue to handle choices for response branching
     audience = @whoSpeaks res
+    return null if @inDialogue audience
     @log.info "Engaging #{ @type } #{ audience } in dialogue"
     @engaged[audience] = new Dialogue res, opts
 

@@ -13,11 +13,10 @@ Observer = require '../utils/observer'
 
 Dialogue = require "../../src/modules/Dialogue"
 Scene = require "../../src/modules/Scene"
-{EventEmitter} = require 'events'
 
 describe '#Scene', ->
 
-  # Create bot and initiate a response to test with
+  # create room and initiate a response to test with
   beforeEach ->
     @room = helper.createRoom name: 'testing'
     @observer = new Observer @room.messages
@@ -140,6 +139,29 @@ describe '#Scene', ->
 
         it 'calls .exit once with "complete"', ->
           @spy.exit.should.have.calledWith @res, 'complete'
+
+      context 're-enter currently engaged audience', ->
+
+        beforeEach ->
+          unmute = mute()
+          @dialogueA = @scene.enter @res
+          @dialogueB = @scene.enter @res
+          unmute()
+
+        it 'returns null the second time', ->
+          should.equal @dialogueB, null
+
+      context 're-enter previously engaged audience', ->
+
+        beforeEach ->
+          unmute = mute()
+          @dialogueA = @scene.enter @res
+          @scene.exit @res, 'testing'
+          @dialogueB = @scene.enter @res
+          unmute()
+
+        it 'returns Dialogue instance (as per normal)', ->
+          @dialogueB.should.be.instanceof Dialogue
 
     describe '.exit', ->
 
@@ -298,13 +320,4 @@ describe '#Scene', ->
       it 'returns false with username', ->
         @userEngaged.should.be.false
 
-  # TODO: message tests dialogue choices allow matching from
-  # - user scene = user in any room
-  # - room scene = anyone in room, not other rooms
-  # - userRoom scene = user in room, not other rooms
-  # - Use examples from hubot-conversation and strato index
-  # - engage user in room, should ignore other users
-  # - engage two separate users in room, run parallel dialogues without conflict
-
-# TODO: Add test that user scene dialogue will only "respond", group will "hear"
 # TODO: Matched choices through during scene are saved to array - can be got
