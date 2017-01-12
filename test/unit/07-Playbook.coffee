@@ -19,19 +19,25 @@ describe '#Playbook', ->
     @playbook = new Playbook @robot
     @spy = _.mapObject Playbook.prototype, (val, key) ->
       sinon.spy Playbook.prototype, key # spy on all the class methods
+    require('../scripts/ping.coffee') @robot # run hubot through basic script
+    @robot.on 'respond', (res) => @res = res # store every response sent
+    @room.user.say 'tester', 'hubot ping' # create first response
 
-  context '.dialogue' ->
+  afterEach ->
+    _.invoke @spy, 'restore' # restore all the methods
+
+  context '.dialogue', ->
 
     beforeEach ->
-      @dialogue = @playbook.dialogue()
+      @dialogue = @playbook.dialogue @res
 
     it 'creates Dialogue instance', ->
-      @dialogue.should.be.instanceof Scene
+      @dialogue.should.be.instanceof Dialogue
 
-    it 'did not throw any errors', ->
+    it 'does not throw any errors', ->
       @spy.dialogue.should.not.have.threw
 
-  context '.scene' ->
+  context '.scene', ->
 
     beforeEach ->
       @scene = @playbook.scene()
@@ -39,7 +45,7 @@ describe '#Playbook', ->
     it 'makes a Scene :P', ->
       @scene.should.be.instanceof Scene
 
-    it 'did not throw any errors', ->
+    it 'does not throw any errors', ->
       @spy.scene.should.not.have.threw
 
 # describe 'Usage (general messaging test cases)', ->
