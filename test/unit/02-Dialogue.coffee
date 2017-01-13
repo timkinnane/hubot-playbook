@@ -32,7 +32,7 @@ describe '#Dialogue', ->
     @room.robot.on 'receive', (res) => @rec = res # store every message received
     @spy = _.mapObject Dialogue.prototype, (val, key) ->
       sinon.spy Dialogue.prototype, key # spy on all the class methods
-    @room.user.say 'tester', 'hubot ping' # create first response
+    @room.user.say 'tester', 'hubot ping' # trigger first response
 
   afterEach ->
     _.invoke @spy, 'restore' # restore all the methods

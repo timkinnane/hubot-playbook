@@ -24,7 +24,7 @@ describe '#Scene', ->
     @room.robot.on 'receive', (res) => @rec = res # store every message received
     @spy = _.mapObject Scene.prototype, (val, key) ->
       sinon.spy Scene.prototype, key # spy on all the class methods
-    @room.user.say 'tester', 'hubot ping' # create first response
+    @room.user.say 'tester', 'hubot ping' # trigger first response
 
   afterEach ->
     _.invoke @spy, 'restore' # restore all the methods
@@ -39,7 +39,7 @@ describe '#Scene', ->
 
     describe "constructor", ->
 
-      it 'has no errors when not given type', ->
+      it 'does not throw when not given type', ->
         @constructor.should.not.have.threw
 
       it 'defaults to `user` type', ->
@@ -112,33 +112,36 @@ describe '#Scene', ->
       context 'dialogue allowed to timeout after branch added', ->
 
         beforeEach (done) ->
-          unmute = mute()
+          # unmute = mute()
           @dialogue = @scene.enter @res,
             timeout: 10,
             timeoutLine: null
           @dialogue.on 'end', ->
-            unmute()
+            # unmute()
             done()
           @dialogue.branch /.*/, ''
 
-        it 'calls .exit twice, on "timeout" then "incomplete"', ->
-          @spy.exit.should.have.calledWith @res, 'timeout'
-          @spy.exit.should.have.calledWith @res, 'incomplete'
+        it 'calls .exit first on "timeout"', ->
+          @spy.exit.getCall(0).should.have.calledWith @res, 'timeout'
+
+        it 'calls .exit again on "incomplete"', ->
+          @spy.exit.getCall(1).should.have.calledWith @res, 'incomplete'
 
       context 'dialogue completed (by message matching branch)', ->
 
-        beforeEach (done) ->
+        beforeEach ->
           unmute = mute()
           @dialogue = @scene.enter @res
-          @dialogue.on 'end', ->
-            unmute()
-            done()
           @dialogue.branch /.*/, '' # match anything
           @room.user.say 'tester', 'test'
-          return # hack to avoid returning promise
+          @room.user.say 'tester', 'testing again'
+          .then -> unmute()
 
         it 'calls .exit once with "complete"', ->
           @spy.exit.should.have.calledWith @res, 'complete'
+
+        it 'dialogue not continue receiving after scene exit', ->
+          @spy.middleware.should.have.called
 
       context 're-enter currently engaged audience', ->
 
@@ -156,7 +159,7 @@ describe '#Scene', ->
         beforeEach ->
           unmute = mute()
           @dialogueA = @scene.enter @res
-          @scene.exit @res, 'testing'
+          @scene.exit @res # no reason given
           @dialogueB = @scene.enter @res
           unmute()
 
@@ -319,5 +322,20 @@ describe '#Scene', ->
 
       it 'returns false with username', ->
         @userEngaged.should.be.false
+
+    context 'with invalid type', ->
+
+      describe 'constructor', ->
+
+        beforeEach ->
+          unmute = mute()
+          namespace = Scene: require "../../src/modules/Scene"
+          try
+            @constructor = sinon.spy namespace, 'Scene'
+            @scene = new namespace.Scene @room.robot, 'monkey'
+          unmute()
+
+        it 'throws error when given invalid type', ->
+          @constructor.should.have.threw
 
 # TODO: Matched choices through during scene are saved to array - can be got

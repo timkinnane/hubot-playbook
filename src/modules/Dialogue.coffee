@@ -54,7 +54,7 @@ class Dialogue extends EventEmitter
   # @param opts.key, (optional) string reference for querying results of path
   # NB: Can be called with just the branches array, not required as object param
   path: (opts) ->
-    opts = branches: opts if _.isArray opts
+    opts = branches: opts if _.isArray opts # move branches array into property
 
     # generate key if not provided and make sure its unique
     opts.key ?= @keygen opts.prompt
@@ -118,6 +118,11 @@ class Dialogue extends EventEmitter
     return false if @ended # dialogue is over, don't process
 
     line = res.message.text
+    if typeof line is 'undefined'
+      console.log ">>>> \n"
+      console.log res
+      console.log "<<<< \n"
+
     @log.debug "Dialogue received #{ line }"
     match = false
 

@@ -19,26 +19,31 @@ class Scene
     @log = @robot.logger
 
     # hubot middleware re-routes to internal matching while engaged
-    @robot.receiveMiddleware (context, next, done) =>
-      res = context.response
-      audience = @whoSpeaks res
+    @robot.receiveMiddleware (c, n, d) => @middleware @, c, n, d
 
-      # check if incoming messages are part of active scene
-      if audience of @engaged
-        @log.debug "#{ audience } is engaged in dialogue, routing dialogue."
-        res.finish() # don't process regular listeners
-        @engaged[audience].receive res # let dialogue handle the response
-        done() # don't process further middleware.
-      else
-        @log.debug "#{ audience } not engaged, continue as normal."
-        next done
+  # this is not called directly, but passed as a property
+  middleware:  (scene, context, next, done) =>
+    console.log context.response.message.text
+    console.log scene.engaged.length
+    res = context.response
+    audience = @whoSpeaks res
+
+    # check if incoming messages are part of active scene
+    if audience of scene.engaged
+      scene.log.debug "#{ audience } is engaged in dialogue, routing dialogue."
+      res.finish() # don't process regular listeners
+      scene.engaged[audience].receive res # let dialogue handle the response
+      done() # don't process further middleware.
+    else
+      scene.log.debug "#{ audience } not engaged, continue as normal."
+      next done
 
   # return the source of a message (ID of user or room)
   whoSpeaks: (res) ->
     switch @type
-      when 'room' then return res.envelope.room
-      when 'user' then return res.envelope.user.id
-      when 'userRoom' then return "#{res.envelope.user.id}_#{res.envelope.room}"
+      when 'room' then return res.message.room
+      when 'user' then return res.message.user.id
+      when 'userRoom' then return "#{res.message.user.id}_#{res.message.room}"
 
   # engage the audience in dialogue
   # @param res, the response object
@@ -75,6 +80,13 @@ class Scene
     # user may have been already removed by timeout event before end:incomplete
     @log.debug "Cannot disengage #{ audience }, not in #{ @type } scene"
     return false
+
+  # end all engaged dialogues
+  # TODO: write tests
+  exitAll: ->
+    @log.info "Disengaging all in #{ @type } scene"
+    _.invoke @engaged, 'clearTimeout'
+    @engaged = []
 
   # return the dialogue for an engaged audience
   dialogue: (audience) -> return @engaged[audience] or null
