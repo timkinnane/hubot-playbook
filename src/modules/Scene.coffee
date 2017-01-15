@@ -21,10 +21,8 @@ class Scene
     # hubot middleware re-routes to internal matching while engaged
     @robot.receiveMiddleware (c, n, d) => @middleware @, c, n, d
 
-  # this is not called directly, but passed as a property
+  # not called as method, but copied as a property
   middleware:  (scene, context, next, done) =>
-    console.log context.response.message.text
-    console.log scene.engaged.length
     res = context.response
     audience = @whoSpeaks res
 

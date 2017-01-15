@@ -1,3 +1,5 @@
+# credit to lmarkus/hubot-conversation for the original concept
+
 Q = require 'q'
 _ = require 'underscore'
 mute = require 'mute'
@@ -10,7 +12,6 @@ chai.use require 'sinon-chai'
 Helper = require 'hubot-test-helper'
 helper = new Helper "../scripts/ping.coffee"
 Observer = require '../utils/observer'
-
 Dialogue = require "../../src/modules/Dialogue"
 Scene = require "../../src/modules/Scene"
 
@@ -112,12 +113,12 @@ describe '#Scene', ->
       context 'dialogue allowed to timeout after branch added', ->
 
         beforeEach (done) ->
-          # unmute = mute()
+          unmute = mute()
           @dialogue = @scene.enter @res,
             timeout: 10,
             timeoutLine: null
           @dialogue.on 'end', ->
-            # unmute()
+            unmute()
             done()
           @dialogue.branch /.*/, ''
 

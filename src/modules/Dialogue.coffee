@@ -72,7 +72,6 @@ class Dialogue extends EventEmitter
 
     # kick-off dialogue exchange
     @send opts.prompt if opts.prompt?
-
     return opts.key # allow path to be queried by key
 
   # add a dialogue branch (usually through path) with response and/or callback
@@ -118,11 +117,6 @@ class Dialogue extends EventEmitter
     return false if @ended # dialogue is over, don't process
 
     line = res.message.text
-    if typeof line is 'undefined'
-      console.log ">>>> \n"
-      console.log res
-      console.log "<<<< \n"
-
     @log.debug "Dialogue received #{ line }"
     match = false
 

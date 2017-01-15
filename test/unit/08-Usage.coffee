@@ -8,38 +8,48 @@ chai = require 'chai'
 should = chai.should()
 chai.use require 'sinon-chai'
 
-{Robot, TextMessage, User} = require 'hubot'
+{Robot, User, TextMessage} = require 'hubot'
 Playbook = require '../../src/Playbook'
 
 describe 'Playbook usage (messaging test cases)', ->
 
   before ->
-
     # helper to send messages to bot, returns promise
     @send = (user, text) =>
       deferred = Q.defer()
-      msg = new TextMessage user, text, generate 12 # hash message ID
+      msg = new TextMessage user, text, generate 6 # random id
       @robot.receive msg, -> deferred.resolve() # resolve as callback
       return deferred.promise
-
     # same username in two rooms should be recognised as same user
-    @nimaInFoo = new User 'nima', room: 'foo'
-    @pemaInFoo = new User 'pema', room: 'foo'
-    @nemaInBar = new User 'nima', room: 'bar'
-    @pemaInFoo = new User 'pema', room: 'bar'
+    @nimaInFoo = new User 1,
+      name: 'nima'
+      room: '#foo'
+    @pemaInFoo = new User 2,
+      name: 'pema'
+      room: '#foo'
+    @nimaInBar = new User 1,
+      name: 'nima'
+      room: '#bar'
+    @pemaInBar = new User 2,
+      name: 'pema'
+      room: '#bar'
 
   beforeEach ->
+    # prepare robot to store every message
+    @messages = []
     @robot = new Robot 'hubot/src/adapters', 'shell'
+    require('../scripts/ping.coffee') @robot # run hubot through test script
+    @robot.on 'receive', (res) =>
+      msg = res.message if res.message instanceof TextMessage
+      @messages.push [ msg.room, msg.user.name, msg.text ] if msg?
+    @robot.on 'respond', (res, strings) =>
+      msg = res.message if res.message instanceof TextMessage and strings?
+      @messages.push [ msg.room, 'hubot', strings[0] ] if msg?
+
     @playbook = new Playbook @robot
     @spy = _.mapObject Playbook.prototype, (val, key) ->
       sinon.spy Playbook.prototype, key # spy on all the class methods
-    require('../scripts/ping.coffee') @robot # run hubot through test script
-    @messages = [] # store every listen and response...
-    @robot.on 'receive', (res) =>
-      @messages.push [res.message.room, res.message.user.name, res.message.text]
-    @robot.on 'respond', (res, strings) =>
-      console.log '<>><>><'
-      @messages.push [res.message.room, 'hubot', strings]
+    @messages = [] # reset store of receits and responses
 
   afterEach ->
     _.invoke @spy, 'restore' # restore all the methods
@@ -55,29 +65,61 @@ describe 'Playbook usage (messaging test cases)', ->
       @scene.exitAll()
       unmute()
 
-    context 'user enters dialogue, they and another user respond to prompt', ->
+    context 'enter dialogue and another user responds to prompt', ->
 
       beforeEach ->
-        # unmute = mute()
-        @robot.hear /knock/, (res1) =>
-          @dialogue = @scene.enter res1
-          @dialogue.branch /.*/, (res2) =>
-            @dialogue.send "#{ res2.match[0] } who?"
+        unmute = mute()
+        @robot.hear /knock/, (res) =>
+          @dialogue = @scene.enter res
+          @dialogue.send "Who's there?"
+          @dialogue.branch /.*/, (res) =>
+            @dialogue.send "#{ res.match[0] } who?"
             @dialogue.branch /.*/, "hahaha, good one."
 
         @send @nimaInFoo, 'knock knock' # who's there?
-        @send @pemaInFoo, 'Pema' # ignored
-        @send @nimaInFoo, 'Nima' # Nima who?
-        @send @nimaInFoo, 'Nima in Foo' # haha
-        # .then -> unmute()
+        .then => @send @pemaInFoo, 'Pema' # ignored
+        .then => @send @nimaInFoo, 'Nima' # Nima who?
+        .then => @send @nimaInFoo, 'Nima in Foo' # haha
+        .then -> unmute()
 
       it 'responds to first user only', ->
-        console.log inspect @messages
+        @messages.should.eql [
+          [ '#foo', 'nima', 'knock knock' ],
+          [ '#foo', 'hubot', 'Who\'s there?' ],
+          [ '#foo', 'pema', 'Pema' ],
+          [ '#foo', 'nima', 'Nima' ],
+          [ '#foo', 'hubot', 'Nima who?' ],
+          [ '#foo', 'nima', 'Nima in Foo' ],
+          [ '#foo', 'hubot', 'hahaha, good one.' ]
+        ]
 
-  #   it 'responds to the first user outside the room', ->
-  #
-  #   it 'does not respond to other users', ->
-  #
+    context 'enter dialogue and continue in another room', ->
+
+      beforeEach ->
+        unmute = mute()
+        @robot.hear /knock/, (res) =>
+          @dialogue = @scene.enter res
+          @dialogue.send "Who's there?"
+          @dialogue.branch /.*/, (res) =>
+            @dialogue.send "Hi #{ res.match[0] }"
+
+        @send @nimaInFoo, 'knock knock' # who's there?
+        .then => @send @pemaInFoo, 'Pema in Foo' # ignored
+        .then => @send @nimaInBar, 'Nima in Bar' # Nima who? (in other room)
+        .then => @send @pemaInBar, 'Pema in Bar' # ignored
+        .then -> unmute()
+
+      it 'responds to the first user only', ->
+        @messages.should.eql [
+          [ '#foo', 'nima', 'knock knock' ],
+          [ '#foo', 'hubot', 'Who\'s there?' ],
+          [ '#foo', 'pema', 'Pema in Foo' ],
+          [ '#bar', 'nima', 'Nima in Bar' ],
+          [ '#foo', 'hubot', 'Hi Nima in Bar' ],
+          [ '#bar', 'pema', 'Pema in Bar' ]
+        ]
+
+
   # context 'scene type "room"', ->
   #
   #   beforeEach ->
