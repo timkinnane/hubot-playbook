@@ -21,18 +21,18 @@ describe 'Playbook usage (messaging test cases)', ->
       @robot.receive msg, -> deferred.resolve() # resolve as callback
       return deferred.promise
     # same username in two rooms should be recognised as same user
-    @nimaInFoo = new User 1,
+    @nimaInA = new User 1,
       name: 'nima'
-      room: '#foo'
-    @pemaInFoo = new User 2,
+      room: '#A'
+    @pemaInA = new User 2,
       name: 'pema'
-      room: '#foo'
-    @nimaInBar = new User 1,
+      room: '#A'
+    @nimaInB = new User 1,
       name: 'nima'
-      room: '#bar'
-    @pemaInBar = new User 2,
+      room: '#B'
+    @pemaInB = new User 2,
       name: 'pema'
-      room: '#bar'
+      room: '#B'
 
   beforeEach ->
     # prepare robot to store every message
@@ -55,80 +55,76 @@ describe 'Playbook usage (messaging test cases)', ->
     _.invoke @spy, 'restore' # restore all the methods
     @robot.shutdown()
 
-  context 'scene type "user"', ->
+  context 'knock knock test - user scene', ->
 
     beforeEach ->
+      unmute = mute()
       @scene = @playbook.scene 'user'
+      @robot.hear /knock/, (res) =>
+        @dialogue = @scene.enter res
+        @dialogue.send "Who's there?"
+        @dialogue.branch /.*/, (res) =>
+          @dialogue.send "#{ res.match[0] } who?"
+          @dialogue.branch /.*/, "Hello #{ res.match[0] }"
+      unmute()
 
     afterEach ->
       unmute = mute()
       @scene.exitAll()
       unmute()
 
-    context 'enter dialogue and another user responds to prompt', ->
+    context 'Nima begins in A, continues in B, Pema tries in both', ->
 
       beforeEach ->
         unmute = mute()
-        @robot.hear /knock/, (res) =>
-          @dialogue = @scene.enter res
-          @dialogue.send "Who's there?"
-          @dialogue.branch /.*/, (res) =>
-            @dialogue.send "#{ res.match[0] } who?"
-            @dialogue.branch /.*/, "hahaha, good one."
-
-        @send @nimaInFoo, 'knock knock' # who's there?
-        .then => @send @pemaInFoo, 'Pema' # ignored
-        .then => @send @nimaInFoo, 'Nima' # Nima who?
-        .then => @send @nimaInFoo, 'Nima in Foo' # haha
+        @send @nimaInA, 'knock knock' # ...Who's there?
+        .then => @send @pemaInA, 'Pema in A' # ...ignored
+        .then => @send @nimaInB, 'Nima in B' # ...Nima in B who?
+        .then => @send @pemaInB, 'Pema in B' # ...ignored
         .then -> unmute()
 
-      it 'responds to first user only', ->
+      it 'responds to Nima in both, ignores Pema in both', ->
         @messages.should.eql [
-          [ '#foo', 'nima', 'knock knock' ],
-          [ '#foo', 'hubot', 'Who\'s there?' ],
-          [ '#foo', 'pema', 'Pema' ],
-          [ '#foo', 'nima', 'Nima' ],
-          [ '#foo', 'hubot', 'Nima who?' ],
-          [ '#foo', 'nima', 'Nima in Foo' ],
-          [ '#foo', 'hubot', 'hahaha, good one.' ]
+          [ '#A', 'nima', 'knock knock' ],
+          [ '#A', 'hubot', 'Who\'s there?' ],
+          [ '#A', 'pema', 'Pema in A' ],
+          [ '#B', 'nima', 'Nima in B' ],
+          [ '#A', 'hubot', 'Nima in B who?' ],
+          [ '#B', 'pema', 'Pema in B' ]
         ]
 
-    context 'enter dialogue and continue in another room', ->
+  context 'scene type "room"', ->
+
+    beforeEach ->
+      @scene = @playbook.scene 'room'
+
+    afterEach ->
+      unmute = mute()
+      @scene.exitAll()
+      unmute()
+
+    context 'Nima begins in A, continues in B, Pema responds in A', ->
 
       beforeEach ->
         unmute = mute()
-        @robot.hear /knock/, (res) =>
-          @dialogue = @scene.enter res
-          @dialogue.send "Who's there?"
-          @dialogue.branch /.*/, (res) =>
-            @dialogue.send "Hi #{ res.match[0] }"
-
-        @send @nimaInFoo, 'knock knock' # who's there?
-        .then => @send @pemaInFoo, 'Pema in Foo' # ignored
-        .then => @send @nimaInBar, 'Nima in Bar' # Nima who? (in other room)
-        .then => @send @pemaInBar, 'Pema in Bar' # ignored
+        @send @nimaInA, 'knock knock' # ...Who's there?
+        .then => @send @pemaInA, 'Pema' # ...Pema who?
+        .then => @send @pemaInB, 'Pema in B' # ...Pema who?
+        .then => @send @nimaInB, 'No it\'s Nima' # No it's Nima who?
+        .then => @send @pemaInB, 'Hey!?' # ...ignored
         .then -> unmute()
 
-      it 'responds to the first user only', ->
+      it 'responds to Nima or Pema in A, ignores in B', ->
         @messages.should.eql [
-          [ '#foo', 'nima', 'knock knock' ],
-          [ '#foo', 'hubot', 'Who\'s there?' ],
-          [ '#foo', 'pema', 'Pema in Foo' ],
-          [ '#bar', 'nima', 'Nima in Bar' ],
-          [ '#foo', 'hubot', 'Hi Nima in Bar' ],
-          [ '#bar', 'pema', 'Pema in Bar' ]
+          [ '#A', 'nima', 'knock knock' ],
+          [ '#A', 'hubot', 'Who\'s there?' ],
+          [ '#A', 'pema', 'Pema' ],
+          [ '#A', 'hubot', 'Pema who?' ],
+          [ '#B', 'pema', 'Pema in B' ],
+          [ '#A', 'nima', 'No it\'s Nima' ],
+          [ '#A', 'hubot', 'No it\'s Nima who?' ],
+          [ '#A', 'pema', 'Hey!?' ]
         ]
-
-
-  # context 'scene type "room"', ->
-  #
-  #   beforeEach ->
-  #
-  #   it 'responds to the first user in the room', ->
-  #
-  #   it 'responds to other users in the room', ->
-  #
-  #   it 'does not respond in other rooms', ->
   #
   # context 'scene type "userRoom"', ->
   #
