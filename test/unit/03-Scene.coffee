@@ -218,6 +218,29 @@ describe '#Scene', ->
         it 'returns false', ->
           @result.should.be.false
 
+    describe '.exitAll', ->
+
+      context 'with two users in scene', ->
+
+        beforeEach ->
+          unmute = mute()
+          @room.user.say 'testerA', 'hubot ping' # trigger new response
+          .then => @dialogueA = @scene.enter @res
+          @room.user.say 'testerB', 'hubot ping' # trigger second response
+          .then => @dialogueB = @scene.enter @res
+          @scene.exitAll()
+          unmute()
+
+        it 'created two dialogues', ->
+          @dialogueA.should.be.instanceof Dialogue
+          @dialogueB.should.be.instanceof Dialogue
+
+        it 'calls clearTimeout twice', ->
+          @spy.clearTimeout.should.have.calledTwice
+
+        it 'has no remaining engaged dialogues', ->
+          @scene.engaged.length.should.equal 2
+
     describe '.dialogue', ->
 
       context 'with user in scene', ->
