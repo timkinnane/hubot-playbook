@@ -46,19 +46,18 @@ describe 'Playbook usage (messaging test cases)', ->
       msg = res.message if res.message instanceof TextMessage and strings?
       @messages.push [ msg.room, 'hubot', strings[0] ] if msg?
 
+    # fire it up
     @playbook = new Playbook @robot
-    @spy = _.mapObject Playbook.prototype, (val, key) ->
-      sinon.spy Playbook.prototype, key # spy on all the class methods
-    @messages = [] # reset store of receits and responses
 
   afterEach ->
-    _.invoke @spy, 'restore' # restore all the methods
+    unmute = mute()
+    @playbook.shutdown()
     @robot.shutdown()
+    unmute()
 
   context 'knock knock test - user scene', ->
 
     beforeEach ->
-      unmute = mute()
       @scene = @playbook.scene 'user'
       @robot.hear /knock/, (res) =>
         @dialogue = @scene.enter res
@@ -66,12 +65,6 @@ describe 'Playbook usage (messaging test cases)', ->
         @dialogue.branch /.*/, (res) =>
           @dialogue.send "#{ res.match[0] } who?"
           @dialogue.branch /.*/, "Hello #{ res.match[0] }"
-      unmute()
-
-    afterEach ->
-      unmute = mute()
-      @scene.exitAll()
-      unmute()
 
     context 'Nima begins in A, continues in B, Pema tries in both', ->
 
@@ -93,53 +86,81 @@ describe 'Playbook usage (messaging test cases)', ->
           [ '#B', 'pema', 'Pema in B' ]
         ]
 
-  context 'scene type "room"', ->
+  context 'knock knock test - room scene', ->
 
     beforeEach ->
       @scene = @playbook.scene 'room'
-
-    afterEach ->
-      unmute = mute()
-      @scene.exitAll()
-      unmute()
+      @robot.hear /knock/, (res) =>
+        @dialogue = @scene.enter res
+        @dialogue.send "Who's there?"
+        @dialogue.branch /.*/, (res) =>
+          @dialogue.send "#{ res.match[0] } who?"
+          @dialogue.branch /.*/, (res) =>
+            @dialogue.send "Hello #{ res.match[0] }"
 
     context 'Nima begins in A, continues in B, Pema responds in A', ->
 
       beforeEach ->
         unmute = mute()
         @send @nimaInA, 'knock knock' # ...Who's there?
+        .then => @send @nimaInB, 'Nima' # ...ignored
         .then => @send @pemaInA, 'Pema' # ...Pema who?
-        .then => @send @pemaInB, 'Pema in B' # ...Pema who?
-        .then => @send @nimaInB, 'No it\'s Nima' # No it's Nima who?
-        .then => @send @pemaInB, 'Hey!?' # ...ignored
+        .then => @send @pemaInB, 'Pema in B' # ...ignored
+        .then => @send @nimaInA, 'No it\'s Nima' # No it's Nima who?
+        .then => @send @pemaInA, 'Hey!?' # ...ignored
         .then -> unmute()
 
       it 'responds to Nima or Pema in A, ignores in B', ->
         @messages.should.eql [
           [ '#A', 'nima', 'knock knock' ],
           [ '#A', 'hubot', 'Who\'s there?' ],
+          [ '#B', 'nima', 'Nima' ],
           [ '#A', 'pema', 'Pema' ],
           [ '#A', 'hubot', 'Pema who?' ],
           [ '#B', 'pema', 'Pema in B' ],
           [ '#A', 'nima', 'No it\'s Nima' ],
-          [ '#A', 'hubot', 'No it\'s Nima who?' ],
+          [ '#A', 'hubot', 'Hello No it\'s Nima' ],
           [ '#A', 'pema', 'Hey!?' ]
         ]
-  #
-  # context 'scene type "userRoom"', ->
-  #
-  #   it 'responds to the first user in the room', ->
-  #
-  #   it 'does not respond to the first user in other rooms', ->
-  #
-  #   it 'does not respond in other rooms', ->
 
-  # TODO: message tests dialogue choices allow matching from
-  # - user scene = user in any room
-  # - room scene = anyone in room, not other rooms
-  # - userRoom scene = user in room, not other rooms
-  # - Use examples from hubot-conversation and strato index
-  # - engage user in room, should ignore other users
+  context 'knock knock test - userRoom scene', ->
+
+    beforeEach ->
+      @scene = @playbook.scene 'userRoom'
+      @robot.hear /knock/, (res) =>
+        @dialogue = @scene.enter res
+        @dialogue.send "Who's there?"
+        @dialogue.branch /.*/, (res) =>
+          @dialogue.send "#{ res.match[0] } who?"
+          @dialogue.branch /.*/, (res) =>
+            @dialogue.send "Hello #{ res.match[0] }"
+
+    context 'Nima begins in A, continues in both, Pema responds in A', ->
+
+      beforeEach ->
+        unmute = mute()
+        @send @nimaInA, 'knock knock' # ...Who's there?
+        .then => @send @nimaInB, 'Nima' # ...ignored
+        .then => @send @pemaInA, 'Pema' # ...ignored
+        .then => @send @pemaInB, 'Pema in B' # ...ignored
+        .then => @send @nimaInA, 'Nima' # Nima who?
+        .then => @send @nimaInA, 'Nima in A' # Hello Nima in A
+        .then -> unmute()
+
+      it 'responds only to Nima in A, ignores both in B', ->
+        @messages.should.eql [
+          [ '#A', 'nima', 'knock knock' ],
+          [ '#A', 'hubot', 'Who\'s there?' ],
+          [ '#B', 'nima', 'Nima' ],
+          [ '#A', 'pema', 'Pema' ],
+          [ '#B', 'pema', 'Pema in B' ],
+          [ '#A', 'nima', 'Nima' ],
+          [ '#A', 'hubot', 'Nima who?' ],
+          [ '#A', 'nima', 'Nima in A' ],
+          [ '#A', 'hubot', 'Hello Nima in A' ]
+        ]
+
+  # TODO: examples from hubot-conversation and strato index
   # - engage two separate users in room, run parallel dialogues without conflict
 
 # TODO: Add test that user scene dialogue will only "respond", group will "hear"

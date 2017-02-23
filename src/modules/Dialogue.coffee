@@ -127,7 +127,6 @@ class Dialogue extends EventEmitter
         @record 'match', res.message.user, line, match, branch.regex
         @clearBranches()
         @clearTimeout()
-
         res.match = match # override the original match from hubot listener
         branch.handler res # may add additional branches / restarting timeout
         return true # don't process further matches
