@@ -22,7 +22,7 @@ class Scene
     @robot.receiveMiddleware (c, n, d) => @middleware @, c, n, d
 
   # not called as method, but copied as a property
-  middleware:  (scene, context, next, done) =>
+  middleware: (scene, context, next, done) =>
     res = context.response
     audience = @whoSpeaks res
 
@@ -60,10 +60,7 @@ class Scene
     # remove audience from engaged participants on timeout or completion
     @engaged[audience].on 'timeout', => @exit res, 'timeout'
     @engaged[audience].on 'end', (completed) =>
-      if completed
-        @exit res, 'complete'
-      else
-        @exit res, 'incomplete'
+      @exit res, "#{ if completed then 'complete' else 'incomplete' }"
     return @engaged[audience] # return started dialogue
 
   # disengage an audience from dialogue (can help in case of error)

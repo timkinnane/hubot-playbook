@@ -58,109 +58,142 @@ describe 'Playbook usage (messaging test cases)', ->
   context 'knock knock test - user scene', ->
 
     beforeEach ->
-      @scene = @playbook.scene 'user'
       @robot.hear /knock/, (res) =>
-        @dialogue = @scene.enter res
-        @dialogue.send "Who's there?"
-        @dialogue.branch /.*/, (res) =>
-          @dialogue.send "#{ res.match[0] } who?"
-          @dialogue.branch /.*/, "Hello #{ res.match[0] }"
+        dialogue = @playbook.enterScene 'user', res
+        dialogue.send "Who's there?"
+        dialogue.branch /.*/, (res) =>
+          dialogue.send "#{ res.match[0] } who?"
+          dialogue.branch /.*/, "Hello #{ res.match[0] }"
 
     context 'Nima begins in A, continues in B, Pema tries in both', ->
 
       beforeEach ->
         unmute = mute()
-        @send @nimaInA, 'knock knock' # ...Who's there?
-        .then => @send @pemaInA, 'Pema in A' # ...ignored
-        .then => @send @nimaInB, 'Nima in B' # ...Nima in B who?
-        .then => @send @pemaInB, 'Pema in B' # ...ignored
+        @send @nimaInA, "knock knock" # ...Who's there?
+        .then => @send @pemaInA, "Pema in A" # ...ignored
+        .then => @send @nimaInB, "Nima in B" # ...Nima in B who?
+        .then => @send @pemaInB, "Pema in B" # ...ignored
         .then -> unmute()
 
       it 'responds to Nima in both, ignores Pema in both', ->
         @messages.should.eql [
-          [ '#A', 'nima', 'knock knock' ],
-          [ '#A', 'hubot', 'Who\'s there?' ],
-          [ '#A', 'pema', 'Pema in A' ],
-          [ '#B', 'nima', 'Nima in B' ],
-          [ '#A', 'hubot', 'Nima in B who?' ],
-          [ '#B', 'pema', 'Pema in B' ]
+          [ '#A', 'nima', "knock knock" ],
+          [ '#A', 'hubot', "Who's there?" ],
+          [ '#A', 'pema', "Pema in A" ],
+          [ '#B', 'nima', "Nima in B" ],
+          [ '#A', 'hubot', "Nima in B who?" ],
+          [ '#B', 'pema', "Pema in B" ]
         ]
 
   context 'knock knock test - room scene', ->
 
     beforeEach ->
-      @scene = @playbook.scene 'room'
       @robot.hear /knock/, (res) =>
-        @dialogue = @scene.enter res
-        @dialogue.send "Who's there?"
-        @dialogue.branch /.*/, (res) =>
-          @dialogue.send "#{ res.match[0] } who?"
-          @dialogue.branch /.*/, (res) =>
-            @dialogue.send "Hello #{ res.match[0] }"
+        dialogue = @playbook.enterScene 'room', res
+        dialogue.send "Who's there?"
+        dialogue.branch /.*/, (res) =>
+          dialogue.send "#{ res.match[0] } who?"
+          dialogue.branch /.*/, (res) =>
+            dialogue.send "Hello #{ res.match[0] }"
 
     context 'Nima begins in A, continues in B, Pema responds in A', ->
 
       beforeEach ->
         unmute = mute()
-        @send @nimaInA, 'knock knock' # ...Who's there?
-        .then => @send @nimaInB, 'Nima' # ...ignored
-        .then => @send @pemaInA, 'Pema' # ...Pema who?
-        .then => @send @pemaInB, 'Pema in B' # ...ignored
-        .then => @send @nimaInA, 'No it\'s Nima' # No it's Nima who?
-        .then => @send @pemaInA, 'Hey!?' # ...ignored
+        @send @nimaInA, "knock knock" # ...Who's there?
+        .then => @send @nimaInB, "Nima" # ...ignored
+        .then => @send @pemaInA, "Pema" # ...Pema who?
+        .then => @send @pemaInB, "Pema in B" # ...ignored
+        .then => @send @nimaInA, "No it's Nima" # No it"s Nima who?
+        .then => @send @pemaInA, "Hey!?" # ...ignored
         .then -> unmute()
 
       it 'responds to Nima or Pema in A, ignores in B', ->
         @messages.should.eql [
-          [ '#A', 'nima', 'knock knock' ],
-          [ '#A', 'hubot', 'Who\'s there?' ],
-          [ '#B', 'nima', 'Nima' ],
-          [ '#A', 'pema', 'Pema' ],
-          [ '#A', 'hubot', 'Pema who?' ],
-          [ '#B', 'pema', 'Pema in B' ],
-          [ '#A', 'nima', 'No it\'s Nima' ],
-          [ '#A', 'hubot', 'Hello No it\'s Nima' ],
-          [ '#A', 'pema', 'Hey!?' ]
+          [ '#A', 'nima', "knock knock" ],
+          [ '#A', 'hubot', "Who's there?" ],
+          [ '#B', 'nima', "Nima" ],
+          [ '#A', 'pema', "Pema" ],
+          [ '#A', 'hubot', "Pema who?" ],
+          [ '#B', 'pema', "Pema in B" ],
+          [ '#A', 'nima', "No it's Nima" ],
+          [ '#A', 'hubot', "Hello No it's Nima" ],
+          [ '#A', 'pema', "Hey!?" ]
         ]
 
   context 'knock knock test - userRoom scene', ->
 
     beforeEach ->
-      @scene = @playbook.scene 'userRoom'
       @robot.hear /knock/, (res) =>
-        @dialogue = @scene.enter res
-        @dialogue.send "Who's there?"
-        @dialogue.branch /.*/, (res) =>
-          @dialogue.send "#{ res.match[0] } who?"
-          @dialogue.branch /.*/, (res) =>
-            @dialogue.send "Hello #{ res.match[0] }"
+        dialogue = @playbook.enterScene 'userRoom', res
+        dialogue.send "Who's there?"
+        dialogue.branch /.*/, (res) =>
+          dialogue.send "#{ res.match[0] } who?"
+          dialogue.branch /.*/, (res) =>
+            dialogue.send "Hello #{ res.match[0] }"
 
     context 'Nima begins in A, continues in both, Pema responds in A', ->
 
       beforeEach ->
         unmute = mute()
-        @send @nimaInA, 'knock knock' # ...Who's there?
-        .then => @send @nimaInB, 'Nima' # ...ignored
-        .then => @send @pemaInA, 'Pema' # ...ignored
-        .then => @send @pemaInB, 'Pema in B' # ...ignored
-        .then => @send @nimaInA, 'Nima' # Nima who?
-        .then => @send @nimaInA, 'Nima in A' # Hello Nima in A
+        @send @nimaInA, "knock knock" # ...Who's there?
+        .then => @send @nimaInB, "Nima" # ...ignored
+        .then => @send @pemaInA, "Pema" # ...ignored
+        .then => @send @pemaInB, "Pema in B" # ...ignored
+        .then => @send @nimaInA, "Nima" # Nima who?
+        .then => @send @nimaInA, "Nima in A" # Hello Nima in A
         .then -> unmute()
 
       it 'responds only to Nima in A, ignores both in B', ->
         @messages.should.eql [
-          [ '#A', 'nima', 'knock knock' ],
-          [ '#A', 'hubot', 'Who\'s there?' ],
-          [ '#B', 'nima', 'Nima' ],
-          [ '#A', 'pema', 'Pema' ],
-          [ '#B', 'pema', 'Pema in B' ],
-          [ '#A', 'nima', 'Nima' ],
-          [ '#A', 'hubot', 'Nima who?' ],
-          [ '#A', 'nima', 'Nima in A' ],
-          [ '#A', 'hubot', 'Hello Nima in A' ]
+          [ '#A', 'nima', "knock knock" ],
+          [ '#A', 'hubot', "Who's there?" ],
+          [ '#B', 'nima', "Nima" ],
+          [ '#A', 'pema', "Pema" ],
+          [ '#B', 'pema', "Pema in B" ],
+          [ '#A', 'nima', "Nima" ],
+          [ '#A', 'hubot', "Nima who?" ],
+          [ '#A', 'nima', "Nima in A" ],
+          [ '#A', 'hubot', "Hello Nima in A" ],
         ]
 
-  # TODO: examples from hubot-conversation and strato index
-  # - engage two separate users in room, run parallel dialogues without conflict
+  context 'knock knock test - parallel userRoom scenes + reply', ->
 
-# TODO: Add test that user scene dialogue will only "respond", group will "hear"
+    beforeEach ->
+      @robot.hear /knock/, (res) =>
+        dialogue = @playbook.enterScene 'userRoom', res, reply: true
+        dialogue.send "Who's there?"
+        dialogue.branch /.*/, (res) =>
+          dialogue.send "#{ res.match[0] } who?"
+          dialogue.branch /.*/, (res) =>
+            dialogue.send "Hello #{ res.match[0] }"
+
+    context 'Nima begins, Pema begins, both continue in same room', ->
+
+      beforeEach ->
+        unmute = mute()
+        @send @nimaInA, "knock knock" # ...Who's there?
+        .then => @send @pemaInA, "knock knock" # ...Who's there?
+        .then => @send @nimaInA, "Nima" # ...Nima who?
+        .then => @send @pemaInA, "Pema" # ...Pema who?
+        .then => @send @pemaInA, "Pema in A" # Hello Pema in A
+        .then => @send @nimaInA, "Nima in A" # Hello Pema in A
+        .then -> unmute()
+
+      it 'responds to both without conflict', ->
+        @messages.should.eql [
+          [ '#A', 'nima', "knock knock" ],
+          [ '#A', 'hubot', "Who's there?" ],
+          [ '#A', 'pema', "knock knock" ],
+          [ '#A', 'hubot', "Who's there?" ],
+          [ '#A', 'nima', "Nima" ],
+          [ '#A', 'hubot', "Nima who?" ],
+          [ '#A', 'pema', "Pema" ],
+          [ '#A', 'hubot', "Pema who?" ],
+          [ '#A', 'pema', "Pema in A" ],
+          [ '#A', 'hubot', "Hello Pema in A" ],
+          [ '#A', 'nima', "Nima in A" ],
+          [ '#A', 'hubot', "Hello Nima in A" ],
+        ]
+
+# TODO: examples from hubot-conversation and strato index

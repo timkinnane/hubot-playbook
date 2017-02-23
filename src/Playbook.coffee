@@ -9,9 +9,15 @@ class Playbook
     @scenes = []
     @dialogues = []
 
-  scene: (args...) ->
-    @scenes.push new Scene @robot, args...
+  # create and return scene
+  scene: (type) ->
+    @scenes.push new Scene @robot, type
     _.last @scenes
+
+  # create and enter scene, returns dialogue
+  enterScene: (type, args...) ->
+    @scenes.push new Scene @robot, type
+    _.last(@scenes).enter args...
 
   dialogue: (args...) ->
     @dialogues.push new Dialogue args...
