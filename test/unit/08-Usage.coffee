@@ -58,12 +58,11 @@ describe 'Playbook usage (messaging test cases)', ->
   context 'knock knock test - user scene', ->
 
     beforeEach ->
-      @robot.hear /knock/, (res) =>
-        dialogue = @playbook.enterScene 'user', res
-        dialogue.send "Who's there?"
-        dialogue.branch /.*/, (res) =>
-          dialogue.send "#{ res.match[0] } who?"
-          dialogue.branch /.*/, "Hello #{ res.match[0] }"
+      @playbook.promptScene 'hear', /knock/, 'user', ->
+        @send "Who's there?"
+        @branch /.*/, (res) =>
+          @send "#{ res.match[0] } who?"
+          @branch /.*/, "Hello #{ res.match[0] }"
 
     context 'Nima begins in A, continues in B, Pema tries in both', ->
 
@@ -88,13 +87,12 @@ describe 'Playbook usage (messaging test cases)', ->
   context 'knock knock test - room scene', ->
 
     beforeEach ->
-      @robot.hear /knock/, (res) =>
-        dialogue = @playbook.enterScene 'room', res
-        dialogue.send "Who's there?"
-        dialogue.branch /.*/, (res) =>
-          dialogue.send "#{ res.match[0] } who?"
-          dialogue.branch /.*/, (res) =>
-            dialogue.send "Hello #{ res.match[0] }"
+      @playbook.promptScene 'hear', /knock/, 'room', ->
+        @send "Who's there?"
+        @branch /.*/, (res) =>
+          @send "#{ res.match[0] } who?"
+          @branch /.*/, (res) =>
+            @send "Hello #{ res.match[0] }"
 
     context 'Nima begins in A, continues in B, Pema responds in A', ->
 
@@ -124,13 +122,12 @@ describe 'Playbook usage (messaging test cases)', ->
   context 'knock knock test - userRoom scene', ->
 
     beforeEach ->
-      @robot.hear /knock/, (res) =>
-        dialogue = @playbook.enterScene 'userRoom', res
-        dialogue.send "Who's there?"
-        dialogue.branch /.*/, (res) =>
-          dialogue.send "#{ res.match[0] } who?"
-          dialogue.branch /.*/, (res) =>
-            dialogue.send "Hello #{ res.match[0] }"
+      @playbook.promptScene 'hear', /knock/, 'userRoom', ->
+        @send "Who's there?"
+        @branch /.*/, (res) =>
+          @send "#{ res.match[0] } who?"
+          @branch /.*/, (res) =>
+            @send "Hello #{ res.match[0] }"
 
     context 'Nima begins in A, continues in both, Pema responds in A', ->
 
@@ -160,13 +157,12 @@ describe 'Playbook usage (messaging test cases)', ->
   context 'knock knock test - parallel userRoom scenes + reply', ->
 
     beforeEach ->
-      @robot.hear /knock/, (res) =>
-        dialogue = @playbook.enterScene 'userRoom', res, reply: true
-        dialogue.send "Who's there?"
-        dialogue.branch /.*/, (res) =>
-          dialogue.send "#{ res.match[0] } who?"
-          dialogue.branch /.*/, (res) =>
-            dialogue.send "Hello #{ res.match[0] }"
+      @playbook.promptScene 'hear', /knock/, 'userRoom', reply: true, ->
+        @send "Who's there?"
+        @branch /.*/, (res) =>
+          @send "#{ res.match[0] } who?"
+          @branch /.*/, (res) =>
+            @send "Hello #{ res.match[0] }"
 
     context 'Nima begins, Pema begins, both continue in same room', ->
 

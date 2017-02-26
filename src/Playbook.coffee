@@ -24,13 +24,15 @@ class Playbook
   # create scene and setup listener callback to enter
   # final param is another callback passing the dialogue and response on enter
   # returns the scene
-  promptScene: (listenType, type, regex, callback) ->
+  promptScene: (listenType, regex, args..., callback) ->
     throw new Error "Invalid listenType" if listenType not in ['hear','respond']
-    scene = @scene type
+    scene = @scene args...
     @robot[listenType] regex, (res) ->
       dialogue = scene.enter res
-      callback dialogue, res
+      callback.call dialogue, res # pass in dialogue as new this
     return scene
+
+  func: (test) => null
 
   dialogue: (args...) ->
     @dialogues.push new Dialogue args...

@@ -109,9 +109,10 @@ describe '#Playbook', ->
       unmute = mute()
       @playbook = new Playbook @robot
       @cbSpy = sinon.spy()
+      cbSpy = @cbSpy
       @robot.hear /.*/, (@res) => null # get any response for comparison
-      @scene = @playbook.promptScene 'hear', 'user', /test/, (@dialogue, res) =>
-        @cbSpy @dialogue, res
+      @scene = @playbook.promptScene 'hear', /test/, 'user', (res) ->
+        cbSpy @, res
         done()
       @room.user.say 'tester', 'test'
       return
@@ -122,11 +123,11 @@ describe '#Playbook', ->
     it 'called the enter callback from listener', ->
       @cbSpy.should.have.calledOnce
 
-    it 'creates Dialogue instance, passed to callback', ->
-      @dialogue.should.be.instanceof Dialogue
+    it 'creates Dialogue instance, replaces "this" in callback', ->
+      @cbSpy.args[0][0].should.be.instanceof Dialogue
 
     it 'passed along response object from listener', ->
-      @cbSpy.should.have.calledWith @dialogue, @res
+      @cbSpy.args[0][1].should.eql @res
 
   describe '.dialogue', ->
 
