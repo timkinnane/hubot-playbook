@@ -19,6 +19,7 @@ class Dialogue extends EventEmitter
     @pathKey = null # pointer for current path
     @branches = [] # branch options within current path
     @ended = false # state of dialogue completion
+
     @config = _.defaults opts, # use defaults for any missing options
       reply: false # will send without addressing reply to sender
       timeout: parseInt process.env.DIALOGUE_TIMEOUT or 30000
@@ -52,6 +53,7 @@ class Dialogue extends EventEmitter
   # @param opts.prompt, (optional) string to send presenting the branches
   # @param opts.branches, 2D array of arguments to create branches
   # @param opts.key, (optional) string reference for querying results of path
+  # returns key (either the one given or computed) for future reference
   # NB: Can be called with just the branches array, not required as object param
   path: (opts) ->
     opts = branches: opts if _.isArray opts # move branches array into property
@@ -136,7 +138,7 @@ class Dialogue extends EventEmitter
     @end() if @branches.length is 0 # end if nothing left to do
 
   # Send response using original response object
-  # Address the audience appropriately (i.e. @user reply or send to channel)
+  # Address the participants appropriately (i.e. @user reply or send to channel)
   send: (line) ->
     if @config.reply then @res.reply line else @res.send line
     @record 'send', 'bot', line

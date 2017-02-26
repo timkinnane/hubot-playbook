@@ -2,6 +2,7 @@ _ = require 'underscore'
 Dialogue = require './modules/Dialogue'
 Scene = require './modules/Scene'
 
+# TODO: Refactor class and usage as singleton
 # A container class for modules provided by the Playbook library
 # For modules that require the robot as an argument, Playbook will pass it first
 class Playbook
@@ -15,7 +16,8 @@ class Playbook
     _.last @scenes
 
   # create and enter scene, returns dialogue
-  enterScene: (type, args...) ->
+  enterScene: (args...) ->
+    type = args.shift() if typeof args[0] is 'string'
     @scenes.push new Scene @robot, type
     _.last(@scenes).enter args...
 

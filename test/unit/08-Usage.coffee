@@ -108,7 +108,7 @@ describe 'Playbook usage (messaging test cases)', ->
         .then => @send @pemaInA, "Hey!?" # ...ignored
         .then -> unmute()
 
-      it 'responds to Nima or Pema in A, ignores in B', ->
+      it 'responds to Nima or Pema in A, ignores both in B', ->
         @messages.should.eql [
           [ '#A', 'nima', "knock knock" ],
           [ '#A', 'hubot', "Who's there?" ],
