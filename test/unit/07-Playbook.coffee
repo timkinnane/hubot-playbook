@@ -103,6 +103,31 @@ describe '#Playbook', ->
         @playbook.scenes[0].should.be.instanceof Scene
         @playbook.scenes[0].type.should.equal 'user'
 
+  describe '.promptScene', ->
+
+    beforeEach (done) ->
+      unmute = mute()
+      @playbook = new Playbook @robot
+      @cbSpy = sinon.spy()
+      @robot.hear /.*/, (@res) => null # get any response for comparison
+      @scene = @playbook.promptScene 'hear', 'user', /test/, (@dialogue, res) =>
+        @cbSpy @dialogue, res
+        done()
+      @room.user.say 'tester', 'test'
+      return
+
+    it 'creates Scene instance', ->
+      @scene.should.be.instanceof Scene
+
+    it 'called the enter callback from listener', ->
+      @cbSpy.should.have.calledOnce
+
+    it 'creates Dialogue instance, passed to callback', ->
+      @dialogue.should.be.instanceof Dialogue
+
+    it 'passed along response object from listener', ->
+      @cbSpy.should.have.calledWith @dialogue, @res
+
   describe '.dialogue', ->
 
     beforeEach ->
