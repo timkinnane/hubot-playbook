@@ -9,17 +9,20 @@ class Playbook
   constructor: (@robot) ->
     @scenes = []
     @dialogues = []
+    return @
 
   # create and return scene
   scene: (type) ->
     @scenes.push new Scene @robot, type
-    _.last @scenes
+    return _.last @scenes
 
   # create and enter scene, returns dialogue
   enterScene: (args...) ->
     type = args.shift() if typeof args[0] is 'string'
     @scenes.push new Scene @robot, type
-    _.last(@scenes).enter args...
+    dialogue = _.last @scenes
+      .enter args...
+    return dialogue
 
   # create scene and setup listener callback to enter
   # final param is another callback passing the dialogue and response on enter
@@ -32,14 +35,13 @@ class Playbook
       callback.call dialogue, res # pass in dialogue as new this
     return scene
 
-  func: (test) => null
-
   dialogue: (args...) ->
     @dialogues.push new Dialogue args...
-    _.last @dialogues
+    return _.last @dialogues
 
   shutdown: ->
     _.invoke @scenes, 'exitAll'
     _.invoke @dialogues, 'end'
+    return
 
 module.exports = Playbook

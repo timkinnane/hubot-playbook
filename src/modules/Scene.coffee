@@ -44,6 +44,8 @@ class Scene
     # hubot middleware re-routes to internal matching while engaged
     @robot.receiveMiddleware (c, n, d) => @middleware @, c, n, d
 
+    return @
+
   # not called as method, but copied as a property
   middleware: (scene, context, next, done) =>
     res = context.response
@@ -58,16 +60,14 @@ class Scene
     else
       scene.log.debug "#{ participants } not engaged, continue as normal."
       next done
+    return
 
   # return the source of a message (ID of user or room)
   whoSpeaks: (res) ->
-    switch @type
+    return switch @type
       when 'room' then return res.message.room
       when 'user' then return res.message.user.id
       when 'userRoom' then return "#{res.message.user.id}_#{res.message.room}"
-
-  # setup listener for scene entrance
-  intro: (listenType, regex) ->
 
   # engage the participants in dialogue
   # @param res, the response object
@@ -97,6 +97,7 @@ class Scene
       @engaged[participants].clearTimeout()
       delete @engaged[participants]
       return true
+    return false
 
     # user may have been already removed by timeout event before end:incomplete
     @log.debug "Cannot disengage #{ participants }, not in #{ @type } scene"
@@ -107,6 +108,7 @@ class Scene
     @log.info "Disengaging all in #{ @type } scene"
     _.invoke @engaged, 'clearTimeout'
     @engaged = []
+    return
 
   # return the dialogue for an engaged participants
   dialogue: (participants) -> return @engaged[participants] or null

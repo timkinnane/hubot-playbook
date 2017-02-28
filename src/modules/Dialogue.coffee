@@ -25,6 +25,7 @@ class Dialogue extends EventEmitter
       timeout: parseInt process.env.DIALOGUE_TIMEOUT or 30000
       timeoutLine: process.env.DIALOGUE_TIMEOUT_LINE or
         'Timed out! Please start again.'
+    return @
 
   startTimeout: ->
     @countdown = setTimeout () =>
@@ -33,10 +34,12 @@ class Dialogue extends EventEmitter
       delete @countdown
       @end()
     , @config.timeout
+    return @countdown
 
   clearTimeout: ->
     clearTimeout @countdown
     delete @countdown
+    return
 
   # default timeout method sends line unless null or method overriden
   # can override by passing in a function, or reassigning the property
@@ -45,9 +48,12 @@ class Dialogue extends EventEmitter
       @onTimeout = override
     else
       @send @config.timeoutLine if @config.timeoutLine?
+    return
 
   # helper used by path, generate key from slugifying or random string
-  keygen: (source) -> if source? then slug source else generate 12
+  keygen: (source) ->
+    key = if source? then slug source else generate 12
+    return key
 
   # add a dialogue path - a prompt with one or more branches to follow
   # @param opts.prompt, (optional) string to send presenting the branches
@@ -110,7 +116,9 @@ class Dialogue extends EventEmitter
       handler: handler
     return true # for .path to record success
 
-  clearBranches: -> @branches = []
+  clearBranches: ->
+    @branches = []
+    return
 
   # accept an incoming message, match against the registered branches
   # if matched, deliver response, restart timeout and end dialogue
@@ -136,18 +144,20 @@ class Dialogue extends EventEmitter
     # record and report if nothing matched
     @record 'mismatch', res.message.user, line if not match
     @end() if @branches.length is 0 # end if nothing left to do
+    return
 
   # Send response using original response object
   # Address the participants appropriately (i.e. @user reply or send to channel)
   send: (line) ->
     if @config.reply then @res.reply line else @res.send line
     @record 'send', 'bot', line
+    return
 
   # record and report sends, matches or mismatches
   # adds interactions to transcript if currently executing a named path
   record: (type, user, content, match, regex) ->
     @paths[@pathKey].transcript.push [ type, user, content ] if @pathKey?
-    switch type
+    return switch type
       when 'match'
         @log.debug "Received \"#{ content }\" matched #{ inspect regex }"
         @emit 'match', user, content, match, regex
@@ -165,5 +175,6 @@ class Dialogue extends EventEmitter
     @clearTimeout() if @countdown?
     @emit 'end', complete
     @ended = true
+    return @ended
 
 module.exports = Dialogue
