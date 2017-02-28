@@ -60,7 +60,7 @@ class Dialogue extends EventEmitter
   # @param opts.branches, 2D array of arguments to create branches
   # @param opts.key, (optional) string reference for querying results of path
   # returns key (either the one given or computed) for future reference
-  # NB: Can be called with just the branches array, not required as object param
+  # Can be called with just the branches array, not required as object param
   path: (opts) ->
     opts = branches: opts if _.isArray opts # move branches array into property
 

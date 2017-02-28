@@ -103,7 +103,7 @@ describe '#Playbook', ->
         @playbook.scenes[0].should.be.instanceof Scene
         @playbook.scenes[0].type.should.equal 'user'
 
-  describe '.promptScene', ->
+  describe '.introScene', ->
 
     beforeEach (done) ->
       unmute = mute()
@@ -111,7 +111,7 @@ describe '#Playbook', ->
       @cbSpy = sinon.spy()
       cbSpy = @cbSpy
       @robot.hear /.*/, (@res) => null # get any response for comparison
-      @scene = @playbook.promptScene 'hear', /test/, 'user', (res) ->
+      @scene = @playbook.introScene 'hear', /test/, 'user', (res) ->
         cbSpy @, res
         done()
       @room.user.say 'tester', 'test'

@@ -10,7 +10,7 @@ chai.use require 'sinon-chai'
 # Tests for unaltered hubot and its listeners
 # This just provide a baseline measure before doing anything complicated
 # Really I'm just trying different patterns and utils for testing Hubot
-# NB: @bot.receive tests use `done` callback, @room.say tests return promise
+# Note: @bot.receive tests use `done` callback, @room.say tests return promise
 
 Helper = require 'hubot-test-helper'
 module = "../../src/diagnostics"
@@ -43,7 +43,7 @@ describe '#Diagnostics', ->
       @spy.respond.args[0][1].should.be.function
 
     it 'registers a hear listener with RegExp and callback', ->
-      # NB: .hear is also called internally by respond, so test the second call
+      # .hear is also called internally by respond, so test the second call
       @spy.hear.args[1][0].should.be.instanceof RegExp
       @spy.hear.args[1][1].should.be.function
 
@@ -88,7 +88,6 @@ describe '#Diagnostics', ->
       @res = @cb.args[0][0] # get res from callback
       @res.should.be.instanceof @spy.response
 
-  # TODO: why isn't this covering branch?
   context 'bot responds to its alias', ->
 
     # rerun module (recreating bot and listeners) with bot alias
