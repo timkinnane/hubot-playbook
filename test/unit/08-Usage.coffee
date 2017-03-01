@@ -58,7 +58,7 @@ describe 'Playbook usage (messaging test cases)', ->
   context 'knock knock test - user scene', ->
 
     beforeEach ->
-      @playbook.introScene 'hear', /knock/, 'user', ->
+      @playbook.sceneHear /knock/, 'user', ->
         @send "Who's there?"
         @branch /.*/, (res) =>
           @send "#{ res.match[0] } who?"
@@ -87,7 +87,7 @@ describe 'Playbook usage (messaging test cases)', ->
   context 'knock knock test - room scene', ->
 
     beforeEach ->
-      @playbook.introScene 'hear', /knock/, 'room', ->
+      @playbook.sceneHear /knock/, 'room', ->
         @send "Who's there?"
         @branch /.*/, (res) =>
           @send "#{ res.match[0] } who?"
@@ -122,7 +122,7 @@ describe 'Playbook usage (messaging test cases)', ->
   context 'knock knock test - userRoom scene', ->
 
     beforeEach ->
-      @playbook.introScene 'hear', /knock/, 'userRoom', ->
+      @playbook.sceneHear /knock/, 'userRoom', ->
         @send "Who's there?"
         @branch /.*/, (res) =>
           @send "#{ res.match[0] } who?"
@@ -157,7 +157,7 @@ describe 'Playbook usage (messaging test cases)', ->
   context 'knock knock test - parallel userRoom scenes + reply', ->
 
     beforeEach ->
-      @playbook.introScene 'hear', /knock/, 'userRoom', reply: true, ->
+      @playbook.sceneHear /knock/, 'userRoom', reply: true, ->
         @send "Who's there?"
         @branch /.*/, (res) =>
           @send "#{ res.match[0] } who?"

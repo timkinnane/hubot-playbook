@@ -112,6 +112,57 @@ describe '#Scene', ->
       it 'throws error when given invalid type', ->
         @constructor.should.have.threw
 
+  describe '.listen', ->
+
+    beforeEach (done) ->
+      unmute = mute()
+      @cbSpy = sinon.spy()
+      cbSpy = @cbSpy
+      @scene = new Scene @robot, 'user'
+      @robot.hear /.*/, (@res) => null # get any response for comparison
+      @robotHear = sinon.spy @robot, 'hear'
+      @scene.listen 'hear', /test/, (res) ->
+        cbSpy @, res
+        done()
+        unmute()
+      @room.user.say 'tester', 'test'
+      return
+
+    it 'registers a robot listener with regex and callback', ->
+      @robotHear.getCall(0).should.be.calledWith /test/, sinon.match.func
+
+    it 'calls the enter callback from listener', ->
+      @cbSpy.should.have.calledOnce
+
+    it 'creates Dialogue instance, replaces "this" in callback', ->
+      @cbSpy.args[0][0].should.be.instanceof Dialogue
+
+    it 'passes response object from listener', ->
+      @cbSpy.args[0][1].should.eql @res
+
+    it 'stores the listener type and regex', ->
+      @scene.listeners[0].should.eql ['hear', /test/]
+
+  describe '.hear', ->
+
+    beforeEach ->
+      @scene = new Scene @robot, 'user'
+      @scene.hear /test/, (res) ->
+
+    it 'calls .listen with hear listen type and arguments', ->
+      args = ['hear', /test/, sinon.match.func]
+      @spy.listen.getCall(0).should.have.calledWith args...
+
+  describe '.respond', ->
+
+    beforeEach ->
+      @scene = new Scene @robot, 'user'
+      @scene.respond /test/, (res) ->
+
+    it 'calls .listen with respond listen type and arguments', ->
+      args = ['respond', /test/, sinon.match.func]
+      @spy.listen.getCall(0).should.have.calledWith args...
+
   describe '.whoSpeaks', ->
 
     context 'user scene', ->

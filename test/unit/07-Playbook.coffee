@@ -55,14 +55,14 @@ describe '#Playbook', ->
     it 'does not throw any errors', ->
       @spy.scene.should.not.have.threw
 
-  describe '.enterScene', ->
+  describe '.sceneEnter', ->
 
     context 'with type, without options args', ->
 
       beforeEach ->
         unmute = mute()
         @playbook = new Playbook @robot
-        @dialogue = @playbook.enterScene 'room', @res
+        @dialogue = @playbook.sceneEnter 'room', @res
         unmute()
 
       it 'makes a Scene (stored, not returned)', ->
@@ -82,7 +82,7 @@ describe '#Playbook', ->
       beforeEach ->
         unmute = mute()
         @playbook = new Playbook @robot
-        @dialogue = @playbook.enterScene 'room', @res, reply: false
+        @dialogue = @playbook.sceneEnter 'room', @res, reply: false
         unmute()
 
       it 'used the given room type', ->
@@ -96,38 +96,84 @@ describe '#Playbook', ->
       beforeEach ->
         unmute = mute()
         @playbook = new Playbook @robot
-        @dialogue = @playbook.enterScene @res
+        @dialogue = @playbook.sceneEnter @res
         unmute()
 
       it 'makes scene with default user type', ->
         @playbook.scenes[0].should.be.instanceof Scene
         @playbook.scenes[0].type.should.equal 'user'
 
-  describe '.introScene', ->
+  describe '.sceneListen', ->
 
-    beforeEach (done) ->
+    context 'with scene args', ->
+
+      beforeEach ->
+        unmute = mute()
+        @playbook = new Playbook @robot
+        @robot.hear /.*/, (@res) => null # get any response for comparison
+        opts = reply: false
+        @listenSpy = sinon.spy Scene.prototype, 'listen'
+        @scene = @playbook.sceneListen 'hear', /test/, 'room', opts, (res) ->
+        unmute()
+
+      afterEach ->
+        @listenSpy.restore()
+
+      it 'creates Scene instance', ->
+        @scene.should.be.instanceof Scene
+
+      it 'passed args to the scene', ->
+        @spy.scene.getCall(0).should.have.calledWith 'room', reply: false
+
+      it 'calls .listen on the scene with type, regex and callback', ->
+        args = ['hear', /test/, sinon.match.func]
+        @listenSpy.getCall(0).should.have.calledWith args...
+
+    context 'without scene args', ->
+
+      beforeEach ->
+        unmute = mute()
+        @playbook = new Playbook @robot
+        @listenSpy = sinon.spy Scene.prototype, 'listen'
+        @scene = @playbook.sceneListen 'hear', /test/, (res) ->
+        unmute()
+
+      afterEach ->
+        @listenSpy.restore()
+
+      it 'creates Scene instance', ->
+        @scene.should.be.instanceof Scene
+
+      it 'passed no args to the scene', ->
+        @spy.scene.getCall(0).should.have.calledWith()
+
+      it 'calls .listen on the scene with type, regex and callback', ->
+        args = ['hear', /test/, sinon.match.func]
+        @listenSpy.getCall(0).should.have.calledWith args...
+
+  describe '.sceneHear', ->
+
+    beforeEach ->
       unmute = mute()
       @playbook = new Playbook @robot
-      @cbSpy = sinon.spy()
-      cbSpy = @cbSpy
-      @robot.hear /.*/, (@res) => null # get any response for comparison
-      @scene = @playbook.introScene 'hear', /test/, 'user', (res) ->
-        cbSpy @, res
-        done()
-      @room.user.say 'tester', 'test'
-      return
+      @playbook.sceneHear /test/, 'room', (res) ->
+      unmute()
 
-    it 'creates Scene instance', ->
-      @scene.should.be.instanceof Scene
+    it 'calls .sceneListen with hear type and any other args', ->
+      args = ['hear', /test/, 'room', sinon.match.func]
+      @spy.sceneListen.getCall(0).should.have.calledWith args...
 
-    it 'called the enter callback from listener', ->
-      @cbSpy.should.have.calledOnce
+  describe '.sceneRespond', ->
 
-    it 'creates Dialogue instance, replaces "this" in callback', ->
-      @cbSpy.args[0][0].should.be.instanceof Dialogue
+    beforeEach ->
+      unmute = mute()
+      @playbook = new Playbook @robot
+      @playbook.sceneRespond /test/, 'room', (res) ->
+      unmute()
 
-    it 'passed along response object from listener', ->
-      @cbSpy.args[0][1].should.eql @res
+    it 'calls .sceneListen with respond type and any other args', ->
+      args = ['respond', /test/, 'room', sinon.match.func]
+      @spy.sceneListen.getCall(0).should.have.calledWith args...
 
   describe '.dialogue', ->
 

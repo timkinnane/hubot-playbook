@@ -17,7 +17,7 @@ class Playbook
     return _.last @scenes
 
   # create and enter scene, returns dialogue
-  enterScene: (args...) ->
+  sceneEnter: (args...) ->
     type = args.shift() if typeof args[0] is 'string'
     @scenes.push new Scene @robot, type
     dialogue = _.last @scenes
@@ -27,18 +27,25 @@ class Playbook
   # create scene and setup listener callback to enter
   # final param is another callback passing the dialogue and response on enter
   # returns the scene
-  introScene: (listenType, regex, args..., callback) ->
-    throw new Error "Invalid listenType" if listenType not in ['hear','respond']
+  sceneListen: (listenType, regex, args..., callback) ->
     scene = @scene args...
-    @robot[listenType] regex, (res) ->
-      dialogue = scene.enter res
-      callback.call dialogue, res # pass in dialogue as new this
+    scene.listen listenType, regex, callback
     return scene
 
+  # alias of sceneListen with hear as specified type
+  sceneHear: (args...) ->
+    return @sceneListen 'hear', args...
+
+  # alias of sceneListen with respond as specified type
+  sceneRespond: (args...) ->
+    return @sceneListen 'respond', args...
+
+  # create stand-alone dialogue (not within scene)
   dialogue: (args...) ->
     @dialogues.push new Dialogue args...
     return _.last @dialogues
 
+  # exit all scenes and end all dialogues
   shutdown: ->
     _.invoke @scenes, 'exitAll'
     _.invoke @dialogues, 'end'

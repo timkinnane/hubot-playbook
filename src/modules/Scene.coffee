@@ -38,6 +38,7 @@ class Scene
     @config.reply = true if @config.reply? and @config.reply is 'true'
     @config.reply = false if @config.reply? and @config.reply is 'false'
 
+    @listeners = [] # array of prompts that will enter sceen
     @engaged = {} # dialogues of each engaged participants
     @log = @robot.logger
 
@@ -61,6 +62,21 @@ class Scene
       scene.log.debug "#{ participants } not engaged, continue as normal."
       next done
     return
+
+  # setup listener callback to enter scene
+  listen: (listenType, regex, callback) ->
+    throw new Error "Invalid listenType" if listenType not in ['hear','respond']
+    @robot[listenType] regex, (res) =>
+      dialogue = @enter res
+      callback.call dialogue, res # dialogue in callback will be 'this'
+    @listeners.push [listenType, regex]
+    return
+
+  # alias of .listen with hear as specified type
+  hear: (args...) -> return @listen 'hear', args...
+
+  # alias of .listen with respond as specified type
+  respond: (args...) -> return @listen 'respond', args...
 
   # return the source of a message (ID of user or room)
   whoSpeaks: (res) ->
@@ -97,7 +113,6 @@ class Scene
       @engaged[participants].clearTimeout()
       delete @engaged[participants]
       return true
-    return false
 
     # user may have been already removed by timeout event before end:incomplete
     @log.debug "Cannot disengage #{ participants }, not in #{ @type } scene"
