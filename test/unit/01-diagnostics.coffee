@@ -132,5 +132,5 @@ describe '#Diagnostics', ->
 
     afterEach -> @room.destroy()
 
-    it 'reply to qustions confirming Hubot listening', ->
+    it 'replies to questions confirming Hubot listening', ->
       @room.messages.length.should.equal 8

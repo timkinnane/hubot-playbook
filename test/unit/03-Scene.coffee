@@ -93,10 +93,10 @@ describe '#Scene', ->
       it 'does not throw when given type without options', ->
         @constructor.should.not.have.threw
 
-      it 'accepted given room type', ->
+      it 'accepts given room type', ->
         @scene.type.should.equal 'room'
 
-      it 'stored config with default options for type', ->
+      it 'stores config with default options for type', ->
         @scene.config.reply.should.be.true
 
     context 'with invalid type', ->
