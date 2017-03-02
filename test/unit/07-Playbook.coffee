@@ -9,9 +9,9 @@ chai.use require 'sinon-chai'
 
 Helper = require 'hubot-test-helper'
 helper = new Helper "../scripts/ping.coffee"
-Playbook = require '../../src/Playbook'
 Dialogue = require '../../src/modules/Dialogue'
 Scene = require '../../src/modules/Scene'
+Playbook = require '../../src/Playbook'
 
 describe '#Playbook', ->
 
