@@ -138,7 +138,6 @@ describe '#Dialogue', ->
 
     beforeEach ->
       @dialogue = new Dialogue @res
-      @robot.hear /.*/, (res) => @result = @dialogue.receive res # hear all
 
     context 'with a source string', ->
 

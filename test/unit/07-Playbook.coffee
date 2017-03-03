@@ -30,9 +30,11 @@ describe '#Playbook', ->
   describe 'constructor', ->
 
     beforeEach ->
+      unmute = mute()
       namespace = Playbook: require "../../src/Playbook"
       @constructor = sinon.spy namespace, 'Playbook'
       @playbook = new namespace.Playbook @robot
+      unmute()
 
     it 'does not throw', ->
       @constructor.should.not.have.threw
@@ -46,8 +48,10 @@ describe '#Playbook', ->
   describe '.scene', ->
 
     beforeEach ->
+      unmute = mute()
       @playbook = new Playbook @robot
       @scene = @playbook.scene()
+      unmute()
 
     it 'makes a Scene :P', ->
       @scene.should.be.instanceof Scene
@@ -178,8 +182,10 @@ describe '#Playbook', ->
   describe '.dialogue', ->
 
     beforeEach ->
+      unmute = mute()
       @playbook = new Playbook @robot
       @dialogue = @playbook.dialogue @res
+      unmute()
 
     it 'creates Dialogue instance', ->
       @dialogue.should.be.instanceof Dialogue

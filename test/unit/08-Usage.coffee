@@ -47,7 +47,9 @@ describe 'Playbook usage (messaging test cases)', ->
       @messages.push [ msg.room, 'hubot', strings[0] ] if msg?
 
     # fire it up
+    unmute = mute()
     @playbook = new Playbook @robot
+    unmute()
 
   afterEach ->
     unmute = mute()

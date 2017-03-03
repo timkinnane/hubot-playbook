@@ -98,15 +98,21 @@ class Dialogue extends EventEmitter
     if not _.isRegExp regex
       @log.error 'invalid regex given for branch'
       return false
-    if typeof args[0] is 'function'
-      handler = args[0]
-    else if typeof args[0] is 'string'
-      handler = (res) =>
-        @send args[0]
-        args[1] res if typeof args[1] is 'function'
-    else
-      @log.error 'wrong args given for branch'
+
+    # take first arg as response (if string), use remaining as callback if given
+    response = args.shift() if _.isString args[0]
+    callback = args[0] if _.isFunction args[0]
+    if not (response? or callback?)
+      @log.error "Wrong args given for branch with regex #{ inspect regex }"
       return false
+
+    # call callback after sending response (if specified) or just call callback
+    if response?
+      handler = (res) =>
+        @send response
+        callback res if callback?
+    else
+      handler = callback
 
     # new branch restarts the countdown
     @clearTimeout() if @countdown?

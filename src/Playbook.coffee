@@ -7,9 +7,10 @@ Scene = require './modules/Scene'
 # For modules that require the robot as an argument, Playbook will pass it first
 class Playbook
   constructor: (@robot) ->
+    @log = @robot.logger
+    @log.info 'Playbook starting up'
     @scenes = []
     @dialogues = []
-    return @
 
   # create and return scene
   scene: (type) ->
@@ -47,6 +48,7 @@ class Playbook
 
   # exit all scenes and end all dialogues
   shutdown: ->
+    @log.info 'Playbook shutting down'
     _.invoke @scenes, 'exitAll'
     _.invoke @dialogues, 'end'
     return

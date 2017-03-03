@@ -9,18 +9,14 @@ Dialogue = require './Dialogue'
 # entering a room scene will engage the whole room
 # entering a userRoom scene will engage the user in that room only
 # @param robot, a hubot instance
-# @param type (optional), participants - room, user (default) or userRoom
+# @param type (optional), participant type; room, user (default) or userRoom
 # @param opts (optional), key/vals for dialogue config, e.g overide reply method
 class Scene
   constructor: (@robot, args...) ->
 
     # validate arguments / assume defaults
-    if args[0]?
-      if _.isString args[0] # type given
-        @type = args[0]
-        opts = args[1]? or {} # opts maybe given
-      else if _.isObject args[0] # no type, but opts given
-        opts = args[0]
+    @type = args.shift() if _.isString args[0]
+    opts = args[0] if _.isObject args[0]
     @type ?= 'user' # type fallback
     opts ?= {} # opts fallback
 
@@ -44,8 +40,6 @@ class Scene
 
     # hubot middleware re-routes to internal matching while engaged
     @robot.receiveMiddleware (c, n, d) => @middleware @, c, n, d
-
-    return @
 
   # not called as method, but copied as a property
   middleware: (scene, context, next, done) =>
