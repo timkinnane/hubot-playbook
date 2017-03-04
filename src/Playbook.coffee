@@ -17,7 +17,7 @@ class Playbook
     @scenes.push new Scene @robot, type
     return _.last @scenes
 
-  # create and enter scene, returns dialogue
+  # create and enter scene, returns dialogue, or false if failed to enter
   sceneEnter: (args...) ->
     type = args.shift() if typeof args[0] is 'string'
     @scenes.push new Scene @robot, type

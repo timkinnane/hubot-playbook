@@ -38,6 +38,7 @@
     "dotenv": "^4.0.0",
     "handlebars": "^4.0.5",
     "handlebars-intl": "^1.1.2",
+    "hooker": "^0.2.3",
     "q": "^1.4.1",
     "randomstring": "^1.1.5",
     "slug": "^0.9.1",

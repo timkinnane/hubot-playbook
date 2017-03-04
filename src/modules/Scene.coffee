@@ -61,8 +61,8 @@ class Scene
   listen: (listenType, regex, callback) ->
     throw new Error "Invalid listenType" if listenType not in ['hear','respond']
     @robot[listenType] regex, (res) =>
-      dialogue = @enter res
-      callback.call dialogue, res # dialogue in callback will be 'this'
+      dialogue = @enter res # may fail if enter hooks override
+      callback.call dialogue, res if dialogue? # in callback dialogue is 'this'
     @listeners.push [listenType, regex]
     return
 
