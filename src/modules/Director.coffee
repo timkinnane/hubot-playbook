@@ -5,95 +5,83 @@ hooker = require 'hooker'
 slug = require 'slug'
 {EventEmitter} = require 'events'
 
-# Adds middleware to authorise bot interactions, global or attached to scene
-# will receive the username, room and full response object to return wether that
-# user can access the current scene - e.g. 'hasAdminRole'
-# TODO: save/restore black/whitelists in hubot brain against key if provided
+# Control listener access, such as, but not limited to, any attached to a scene
+# Can operate as a blacklist or a whitelist, also allowing external logic
+# accepts an authorise function to determine access (lists can overide):
+# - will be passed either user or room name, to return bool to allow/deny
+# without an authorise function:
+# - if type is whitelist, ONLY those on it are allowed
+# - if type is blacklist, ONLY those on it are denied
+# use environment to set global behaviour for all directors
+# - DENIED_REPLY for when user denied access
+# - WHITELIST_USERNAMES inherited by whitelist type and username scope directors
+# - WHITELIST_ROOMS inherited by whitelist type and room scope directors
+# - BLACKLIST_USERNAMES inherited by blacklist type and username scope directors
+# - BLACKLIST_ROOMS inherited by blacklist type and room scope directors
 class Director extends EventEmitter
 
   # @param robot {Object} the hubot instance
-  # @param key (optional) {String} name for references to Director, e.g. logs
+  # @param key (optional) {String} name for references to instance, e.g. logs
   # @param opts (optional) {Object} key/vals for config overides, e.g.
-  # - deniedReply: 'What to say when user denied access'
+  # - type: whitelist or blacklist (default: whitelist)
+  # - scope: user or room (default: user)
+  # - reply: when user denied access (default: "Sorry, I can't do that.")
   # @param authorise (optional) {Function} function for controlling access
-  # without an authorise function:
-  # - if a whitelist exists, ONLY those on it are allowed
-  # - if a blacklist exists, ONLY those on it are denied
-  # with an authorise function: function returns access, but lists will overide
-  # - will be passed [username, room, res] to return bool to allow/deny access
+  # will receive the user or room name and response object to control access
+  # e.g. 'hasAdminRole' with user scope could lookup the passed user's role
   constructor: (@robot, args...) ->
+    @log = @robot.logger
+    @names = []
 
-    # take first argument as key if its a string, use leftover args as options
+    # take args of the stack in param order, for all optional arguments
     @key = if _.isString args[0] then @keygen args.shift() else @keygen()
     opts = if _.isObject args[0] then opts = args.shift() else {}
     @authorise = if _.isFunction args[0] then args.shift()
 
-    @log = @robot.logger
-    @whitelist = usernames: [], rooms: []
-    @blacklist = usernames: [], rooms: []
-
-    # allow setting black/whitelisted usernames and rooms from env var (csv)
-    if process.env.WHITELIST_USERS?
-      @whitelist.usernames = process.env.WHITELIST_USERS.split ','
-    if process.env.WHITELIST_ROOMS?
-      @whitelist.rooms = process.env.WHITELIST_ROOMS.split ','
-    if process.env.BLACKLIST_USERS?
-      @blacklist.usernames = process.env.BLACKLIST_USERS.split ','
-    if process.env.BLACKLIST_ROOMS?
-      @blacklist.rooms = process.env.BLACKLIST_ROOMS.split ','
-
     # extend options with defaults
     @config = _.defaults opts,
-      deniedReply: process.env.DENIED_RESPONSE or "Sorry, I can't do that."
-      # TODO: parse Playbook messages for template tags e.g. hi {{ username }}
+      type: 'whitelist'
+      scope: 'username'
+      reply: process.env.DENIED_REPLY or "Sorry, I can't do that."
 
-    @log.info """
-      New Director #{ @key } responds '#{ @config.deniedReply }' to denied
-    """
+    # allow setting black/whitelisted names from env var (csv)
+    if @config.type is 'whitelist'
+      if @config.scope is 'username' and process.env.WHITELIST_USERNAMES?
+        @names = process.env.WHITELIST_USERNAMES.split ','
+      else if @config.scope is 'room' and process.env.WHITELIST_ROOMS?
+        @names = process.env.WHITELIST_ROOMS.split ','
+    else if @config.type is 'blacklist'
+      if @config.scope is 'username' and process.env.BLACKLIST_USERNAMES?
+        @names = process.env.BLACKLIST_USERNAMES.split ','
+      else if @config.scope is 'room' and process.env.BLACKLIST_ROOMS?
+        @names = process.env.BLACKLIST_ROOMS.split ','
+
+    # validate loaded config
+    if @config.type not in ['whitelist','blacklist']
+      throw new Error "Invalid type - accepts only whitelist or blacklist"
+    if @config.scope not in ['username','room']
+      throw new Error "Invalid scope - accepts only username or room"
+
+    @log.info "New #{ @config.scope } Director #{ @config.type }: #{ @key }"
+    if @config.reply?
+      @log.info "replies '#{ @config.reply }' if denied"
 
   # helper used by path, generate key from slugifying or random string
   keygen: (source) ->
-    key = if source? then slug source else generate 12
-    return key
+    return if source? then slug source else generate 12
 
-  # merge new usernames/rooms with whitelisted (allowed) array
-  whitelistAdd: (group, names) ->
-    if group not in ['usernames','rooms']
-      throw new Error "Invalid access group - accepts only usernames, rooms"
-    if @blacklist[group].length
-      throw new Error "Already has a #{group} blacklist, cannot use whitelist"
-    @log.info "Adding #{ inspect names } to #{ @key } whitelist"
+  # merge new usernames/rooms with listed names
+  add: (names) ->
+    @log.info "Adding #{ inspect names } to #{ @key } #{ @config.type }"
     names = [names] if not _.isArray names # cast single as array
-    @whitelist[group] = _.union @whitelist[group], names
+    @names = _.union @names, names
     return
 
-  # remove usernames/rooms from whitelisted (allowed) array
-  whitelistRemove: (group, names) ->
-    if group not in ['usernames','rooms']
-      throw new Error "Invalid access group - accepts only usernames, rooms"
-    @log.info "Removing #{ inspect names } from #{ @key } whitelist"
+  # remove usernames/rooms from listed names
+  remove: (names) ->
+    @log.info "Removing #{ inspect names } from #{ @key } #{ @config.type }"
     names = [names] if not _.isArray names # cast single as array
-    @whitelist[group] = _.without @whitelist[group], names...
-    return
-
-  # merge new usernames/rooms with blacklist (denied) array
-  blacklistAdd: (group, names) ->
-    if group not in ['usernames','rooms']
-      throw new Error "Invalid access group - accepts only usernames, rooms"
-    if @whitelist[group].length
-      throw new Error "Already has a #{group} whitelist, cannot use blacklist"
-    @log.info "Adding #{ inspect names } to #{ @key } blacklist"
-    names = [names] if not _.isArray names # cast single as array
-    @blacklist[group] = _.union @blacklist[group], names
-    return
-
-  # remove usernames/rooms from blacklist (denied) array
-  blacklistRemove: (group, names) ->
-    if group not in ['usernames','rooms']
-      throw new Error "Invalid access group - accepts only usernames, rooms"
-    @log.info "Removing #{ inspect names } from #{ @key } blacklist"
-    names = [names] if not _.isArray names # cast single as array
-    @blacklist[group] = _.without @blacklist[group], names...
+    @names = _.without @names, names...
     return
 
   # let this director control access to a given scene
@@ -105,29 +93,31 @@ class Director extends EventEmitter
     # hook into .enter to control access for manually entered scenes
     hooker.hook scene, 'enter', pre: (res) =>
       if not @canEnter res
-        res.reply @config.deniedReply if @config.deniedReply isnt ''
+        res.reply @config.reply if @config.reply isnt ''
         return hooker.preempt false
 
   # determine if user has access, checking against usernames and rooms
   canEnter: (res) ->
-    username = res.message.user.name
-    room = res.message.room
+    name = switch @config.scope
+      when 'username' then res.message.user.name
+      when 'room' then res.message.room
 
-    # let some through regardless, block anyone else
-    if @whitelist.usernames.length
-      return true if username in @whitelist.usernames
-      return true if room in @whitelist.rooms
+    # let whitelist names through, block anyone else (if not using authorise)
+    if @config.type is 'whitelist'
+      return true if name in @names
       return false if not @authorise?
 
-    # block some regardless, let anyone else through
-    if @blacklist.usernames.length
-      return false if username in @blacklist.usernames
-      return false if room in @blacklist.room
+    # block blacklist names, let anyone else through (if not using authorise)
+    if @config.type is 'blacklist'
+      return false if name in @names
       return true if not @authorise?
 
-    # custom method/function can determine access if lists didn't
-    return @authorise username, room, res if @authorise?
+    # authorise function can determine access if lists didn't
+    return @authorise name, res if @authorise?
 
-    return true # no reason not to
+    return true # no reason not to - but should never reach here
 
 module.exports = Director
+
+# TODO: save/restore config in hubot brain against key if provided
+# TODO: parse Playbook messages for template tags e.g. sorry {{ username }}

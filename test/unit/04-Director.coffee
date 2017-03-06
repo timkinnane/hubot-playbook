@@ -9,7 +9,6 @@ chai.use require 'sinon-chai'
 
 Helper = require 'hubot-test-helper'
 helper = new Helper "../scripts/ping.coffee"
-Observer = require '../utils/observer'
 Dialogue = require '../../src/modules/Dialogue'
 Scene = require '../../src/modules/Scene'
 Director = require '../../src/modules/Director'
@@ -19,12 +18,11 @@ describe '#Director', ->
 
   # create room and initiate a response to test with
   beforeEach ->
-    delete process.env.DENIED_RESPONSE # prevent interference
     @room = helper.createRoom name: 'testing'
     @robot = @room.robot
-    @observer = new Observer @room.messages
     @robot.on 'respond', (res) => @res = res # store every response sent
     @robot.on 'receive', (res) => @rec = res # store every message received
+    @robot.log.info = @robot.log.debug = -> # silence
     @spy = _.mapObject Director.prototype, (val, key) ->
       sinon.spy Director.prototype, key # spy on all the class methods
     @room.user.say 'tester', 'hubot ping' # trigger first response
@@ -35,69 +33,24 @@ describe '#Director', ->
 
   describe 'constructor', ->
 
-    context 'without key or options', ->
+    context 'without env vars or optional args', ->
 
       beforeEach ->
-        unmute = mute()
         namespace = Director: require "../../src/modules/Director"
+        @constructor = sinon.spy namespace, 'Director'
         @director = new namespace.Director @robot
-        unmute()
 
       it 'does not throw', ->
-        @director.should.not.have.threw
+        @constructor.should.not.have.threw
 
-      it 'has object of empty whitelist usernames, rooms arrays', ->
-        @director.whitelist.should.eql usernames: [], rooms: []
+      it 'has empty array names', ->
+        @director.names.should.eql []
 
-      it 'has object of empty blacklist usernames/rooms arrays', ->
-        @director.blacklist.should.eql usernames: [], rooms: []
-
-      it 'stores default fallback config', ->
-        @director.config.deniedReply.should.equal "Sorry, I can't do that."
-
-      it 'calls keygen to create a random key', ->
-        @spy.keygen.getCall(0).should.have.calledWith()
-
-    context 'without key or options, with env var for black/whitelists', ->
-
-      beforeEach ->
-        unmute = mute()
-        process.env.WHITELIST_USERS = 'Emmanuel'
-        process.env.WHITELIST_ROOMS = 'Capital'
-        process.env.BLACKLIST_USERS = 'Winston,Julia,Syme'
-        process.env.BLACKLIST_ROOMS = 'Labour'
-        namespace = Director: require "../../src/modules/Director"
-        @director = new namespace.Director @robot
-        unmute()
-
-      afterEach ->
-        delete process.env.WHITELIST_USERS
-        delete process.env.WHITELIST_ROOMS
-        delete process.env.BLACKLIST_USERS
-        delete process.env.BLACKLIST_ROOMS
-
-      it 'stores the whitelisted usernames from the env var', ->
-        @director.whitelist.usernames.should.eql ['Emmanuel']
-
-      it 'stores the whitelisted rooms in from the env var', ->
-        @director.whitelist.rooms.should.eql ['Capital']
-
-      it 'stores the blacklisted usernames in from the env var', ->
-        @director.blacklist.usernames.should.eql ['Winston','Julia','Syme']
-
-      it 'stores the blacklisted rooms in from the env var', ->
-        @director.blacklist.rooms.should.eql ['Labour']
-
-    context 'without key, with options', ->
-
-      beforeEach ->
-        unmute = mute()
-        namespace = Director: require "../../src/modules/Director"
-        @director = new namespace.Director @robot, deniedReply: "DENIED!"
-        unmute()
-
-      it 'stores passed options in config', ->
-        @director.config.deniedReply.should.equal "DENIED!"
+      it 'has default config', ->
+        @director.config.should.eql
+          type: 'whitelist'
+          scope: 'username'
+          reply: "Sorry, I can't do that."
 
       it 'calls keygen to create a random key', ->
         @spy.keygen.getCall(0).should.have.calledWith()
@@ -105,13 +58,10 @@ describe '#Director', ->
       it 'stores the generated key as an attribute', ->
         @director.key.length.should.equal 12
 
-    context 'with key and options', ->
+    context 'with key', ->
 
       beforeEach ->
-        unmute = mute()
-        namespace = Director: require "../../src/modules/Director"
-        @director = new namespace.Director @robot, 'Orson Welles'
-        unmute()
+        @director = new Director @robot, 'Orson Welles'
 
       it 'calls keygen with provided source', ->
         @spy.keygen.getCall(0).should.have.calledWith 'Orson Welles'
@@ -119,54 +69,127 @@ describe '#Director', ->
       it 'stores the slugified source key as an attribute', ->
         @director.key.should.equal 'Orson-Welles'
 
+    context 'with options', ->
+
+      beforeEach ->
+        @director = new Director @robot, deniedReply: "DENIED!"
+
+      it 'stores passed options in config', ->
+        @director.config.deniedReply.should.equal "DENIED!"
+
     context 'with authorise function', ->
 
       beforeEach ->
-        unmute = mute()
-        namespace = Director: require "../../src/modules/Director"
         @authorise = -> null
-        @director = new namespace.Director @robot, @authorise
-        unmute()
+        @director = new Director @robot, @authorise
 
       it 'stores the given function as its authorise method', ->
         @director.authorise = @authorise
 
-    context 'with env vars for config', ->
+    context 'with env var for names', ->
 
       beforeEach ->
-        unmute = mute()
-        process.env.DENIED_RESPONSE = "403 Sorry."
-        namespace = Director: require "../../src/modules/Director"
-        @director = new namespace.Director @robot
-        unmute()
+        process.env.WHITELIST_USERS = 'Emmanuel'
+        process.env.WHITELIST_ROOMS = 'Capital'
+        process.env.BLACKLIST_USERS = 'Winston,Julia,Syme'
+        process.env.BLACKLIST_ROOMS = 'Labour'
 
       afterEach ->
-        delete process.env.DENIED_RESPONSE
+        delete process.env.WHITELIST_USERS
+        delete process.env.WHITELIST_ROOMS
+        delete process.env.BLACKLIST_USERS
+        delete process.env.BLACKLIST_ROOMS
+
+      context 'whitelist type, username scope', ->
+
+        beforeEach ->
+          @director = new Director @robot,
+            type: 'whitelist'
+            scope: 'username'
+
+        it 'stores the whitelisted usernames from env', ->
+          @director.names.should.eql ['Emmanuel']
+
+      context 'whitelist type, room scope', ->
+
+        beforeEach ->
+          @director = new Director @robot,
+            type: 'whitelist'
+            scope: 'room'
+
+        it 'stores the whitelisted rooms from env', ->
+          @names.rooms.should.eql ['Capital']
+
+      context 'blacklist type, username scope', ->
+
+        beforeEach ->
+          @director = new Director @robot,
+            type: 'blacklist'
+            scope: 'username'
+
+        it 'stores the blacklisted usernames from env', ->
+          @director.names.should.eql ['Winston','Julia','Syme']
+
+      context 'blacklist type, room scope', ->
+
+        beforeEach ->
+          @director = new Director @robot,
+            type: 'blacklist'
+            scope: 'room'
+
+        it 'stores the blacklisted rooms from env', ->
+          @director.names.should.eql ['Labour']
+
+    context 'with env var for reply', ->
+
+      beforeEach ->
+        process.env.DENIED_REPLY = "403 Sorry."
+        @director = new Director @robot
+
+      afterEach ->
+        delete process.env.DENIED_REPLY
 
       it 'stores env vars in config', ->
         @director.config.deniedReply.should.equal "403 Sorry."
 
-    context 'with env vars and options', ->
+    context 'with env vars and args for reply', ->
 
       beforeEach ->
-        unmute = mute()
-        process.env.DENIED_RESPONSE = "403 Sorry."
-        namespace = Director: require "../../src/modules/Director"
-        @director = new namespace.Director @robot, deniedReply: "DENIED!"
-        unmute()
+        process.env.DENIED_REPLY = "403 Sorry."
+        @director = new Director @robot, deniedReply: "DENIED!"
 
       afterEach ->
-        delete process.env.DENIED_RESPONSE
+        delete process.env.DENIED_REPLY
 
       it 'stores passed options in config (overriding env vars)', ->
         @director.config.deniedReply.should.equal "DENIED!"
 
+    context 'with invalid option for type', ->
+
+      beforeEach ->
+        namespace = Director: require "../../src/modules/Director"
+        @constructor = sinon.spy namespace, 'Director'
+        try @director = new namespace.Director @robot,
+          type: 'pinklist'
+
+      it 'should throw error', ->
+        @constructor.should.have.threw
+
+    context 'with invalid option for scope', ->
+
+      beforeEach ->
+        namespace = Director: require "../../src/modules/Director"
+        @constructor = sinon.spy namespace, 'Director'
+        try @director = new namespace.Director @robot,
+          scope: 'robot'
+
+      it 'should throw error', ->
+        @constructor.should.have.threw
+
   describe '.keygen', ->
 
     beforeEach ->
-      unmute = mute()
       @director = new Director @robot
-      unmute()
 
     context 'with a source string', ->
 
@@ -179,227 +202,81 @@ describe '#Director', ->
     context 'without source', ->
 
       beforeEach ->
-        unmute = mute()
         @result = @director.keygen()
-        unmute()
 
       it 'creates a string of 12 random characters', ->
         @result.length.should.equal 12
 
-  describe '.whitelistAdd', ->
+  describe '.add', ->
 
-    context 'with usernames type and array of usernames', ->
+    beforeEach ->
+      @director = new Director @robot
 
-      beforeEach ->
-        unmute = mute()
-        @director = new Director @robot
-        @director.whitelistAdd 'usernames', ['pema', 'nima']
-        unmute()
-
-      it 'stores the usernames in the whitelist usernames array', ->
-        @director.whitelist.usernames.should.eql ['pema', 'nima']
-
-    context 'with usernames type and single username', ->
+    context 'given array of names', ->
 
       beforeEach ->
-        unmute = mute()
-        @director = new Director @robot
-        @director.whitelistAdd 'usernames', 'pema'
-        unmute()
+        @director.add ['pema', 'nima']
 
-      it 'stores the username in the whitelist usernames array', ->
-        @director.whitelist.usernames.should.eql ['pema']
+      it 'stores them in the names array', ->
+        @director.names.should.eql ['pema', 'nima']
 
-    context 'with usernames type and array of usernames, some existing', ->
+    context 'given single name', ->
 
       beforeEach ->
-        unmute = mute()
-        @director = new Director @robot
-        @director.whitelist.usernames = ['yeon', 'juan']
-        @director.whitelistAdd 'usernames', ['pema', 'juan']
-        unmute()
+        @director.add 'pema'
+
+      it 'stores it in the names array', ->
+        @director.names.should.eql ['pema']
+
+    context 'given array of names, some existing', ->
+
+      beforeEach ->
+        @director.add ['pema', 'juan']
 
       it 'adds any missing, not duplicating existing', ->
-        @director.whitelist.usernames.should.eql ['yeon', 'juan', 'pema']
+        @director.names.should.eql ['yeon', 'juan', 'pema']
 
-    context 'adding usernames with existing blacklist', ->
+  describe '.remove', ->
 
-      beforeEach ->
-        unmute = mute()
-        @director = new Director @robot
-        @director.blacklist.usernames = ['pema', 'juan']
-        try
-          @director.whitelistAdd 'usernames', ['yeon', 'nima']
-        unmute()
+    beforeEach ->
+      @director = new Director @robot
+      @director.names = ['yeon', 'pema', 'juan', 'nima']
 
-      it 'throws an error', ->
-        @spy.whitelistAdd.should.have.threw
-
-    context 'with invalid type', ->
+    context 'given array of names', ->
 
       beforeEach ->
-        unmute = mute()
-        @director = new Director @robot
-        try
-          @director.whitelistAdd 'names', ['pema', 'juan', 'nima']
-        unmute()
+        @director.remove ['pema','nima']
 
-      it 'throws error when given invalid type', ->
-        @spy.whitelistAdd.should.have.threw
+      it 'removes them from the names array', ->
+        @director.names.should.eql ['yeon', 'juan']
 
-  describe '.whitelistRemove', ->
-
-    context 'with usernames type and array of usernames', ->
+    context 'with single name', ->
 
       beforeEach ->
-        unmute = mute()
-        @director = new Director @robot
-        @director.whitelist.usernames = ['yeon', 'pema', 'juan', 'nima']
-        @director.whitelistRemove 'usernames', ['pema', 'nima']
-        mute()
+        @director.remove 'pema'
 
-      it 'removes the usernames from the whitelist usernames array', ->
-        @director.whitelist.usernames.should.eql ['yeon', 'juan']
+      it 'removes it from the names array', ->
+        @director.names.should.eql ['yeon', 'juan', 'nima']
 
-    context 'with usernames type and single username', ->
+    context 'with array names, some not existing', ->
 
       beforeEach ->
-        unmute = mute()
-        @director = new Director @robot
-        @director.whitelist.usernames = ['yeon', 'pema', 'juan', 'nima']
-        @director.whitelistRemove 'usernames', 'pema'
-        unmute()
+        @director.remove ['frank', 'pema', 'juan', 'nima']
 
-      it 'stores the username in the whitelist usernames array', ->
-        @director.whitelist.usernames.should.eql ['yeon', 'juan', 'nima']
-
-    context 'with usernames type and array of usernames, some not existing', ->
-
-      beforeEach ->
-        unmute = mute()
-        @director = new Director @robot
-        @director.whitelist.usernames = ['yeon', 'juan']
-        @director.whitelistRemove 'usernames', ['pema', 'juan', 'nima']
-        unmute()
-
-      it 'adds any missing, not duplicating existing', ->
-        @director.whitelist.usernames.should.eql ['yeon']
-
-    context 'with invalid type', ->
-
-      beforeEach ->
-        unmute = mute()
-        @director = new Director @robot
-        try
-          @director.whitelistRemove 'names', ['pema', 'juan', 'nima']
-        unmute()
-
-      it 'throws error when given invalid type', ->
-        @spy.whitelistRemove.should.have.threw
-
-  describe '.blacklistAdd', ->
-
-    context 'with usernames type and array of usernames', ->
-
-      beforeEach ->
-        unmute = mute()
-        @director = new Director @robot
-        @director.blacklistAdd 'usernames', ['pema', 'nima']
-        unmute()
-
-      it 'stores the usernames in the blacklist usernames array', ->
-        @director.blacklist.usernames.should.eql ['pema', 'nima']
-
-    context 'with usernames type and single username', ->
-
-      beforeEach ->
-        unmute = mute()
-        @director = new Director @robot
-        @director.blacklistAdd 'usernames', 'pema'
-        unmute()
-
-      it 'stores the username in the blacklist usernames array', ->
-        @director.blacklist.usernames.should.eql ['pema']
-
-    context 'with invalid type', ->
-
-      beforeEach ->
-        unmute = mute()
-        @director = new Director @robot
-        try
-          @director.blacklistAdd 'names', ['pema', 'juan', 'nima']
-        unmute()
-
-      it 'throws error when given invalid type', ->
-        @spy.blacklistAdd.should.have.threw
-
-    context 'adding usernames with existing blacklist', ->
-
-      beforeEach ->
-        unmute = mute()
-        @director = new Director @robot
-        @director.whitelist.usernames = ['yeon', 'nima']
-        try
-          @director.blacklistAdd 'usernames', ['pema', 'juan']
-        unmute()
-
-      it 'throws an error', ->
-        @spy.blacklistAdd.should.have.threw
-
-  describe '.blacklistRemove', ->
-
-    context 'with usernames type and array of usernames', ->
-
-      beforeEach ->
-        unmute = mute()
-        @director = new Director @robot
-        @director.blacklist.usernames = ['yeon', 'pema', 'juan', 'nima']
-        @director.blacklistRemove 'usernames', ['pema', 'nima']
-        mute()
-
-      it 'removes the usernames from the blacklist usernames array', ->
-        @director.blacklist.usernames.should.eql ['yeon', 'juan']
-
-    context 'with usernames type and single username', ->
-
-      beforeEach ->
-        unmute = mute()
-        @director = new Director @robot
-        @director.blacklist.usernames = ['yeon', 'pema', 'juan', 'nima']
-        @director.blacklistRemove 'usernames', 'pema'
-        unmute()
-
-      it 'stores the username in the blacklist usernames array', ->
-        @director.blacklist.usernames.should.eql ['yeon', 'juan', 'nima']
-
-    context 'with invalid type', ->
-
-      beforeEach ->
-        unmute = mute()
-        @director = new Director @robot
-        try
-          @director.blacklistRemove 'names', ['pema', 'juan', 'nima']
-        unmute()
-
-      it 'throws error when given invalid type', ->
-        @spy.blacklistRemove.should.have.threw
+      it 'removes any missing, ignoring others', ->
+        @director.names.should.eql ['yeon']
 
   describe '.directScene', ->
 
     beforeEach ->
-      unmute = mute()
       @director = new Director @robot
       @scene = new Scene @robot
       @director.directScene @scene
-      unmute()
 
     context 'when scene enter manually called - user not allowed', ->
 
       beforeEach ->
-        unmute = mute()
-        @director.blacklistAdd 'usernames', 'tester'
         @dialogue = @scene.enter @res
-        unmute()
 
       it 'calls .canEnter to check if origin of response can access', ->
         @spy.canEnter.getCall(0).should.have.calledWith @res
@@ -410,10 +287,8 @@ describe '#Director', ->
     context 'when scene enter manually called - user allowed', ->
 
       beforeEach ->
-        unmute = mute()
-        @director.whitelist.usernames = ['tester']
+        @director.names = ['tester']
         @dialogue = @scene.enter @res
-        unmute()
 
       it 'calls .canEnter to check if origin of response can access', ->
         @spy.canEnter.getCall(0).should.have.calledWith @res
@@ -431,123 +306,143 @@ describe '#Director', ->
 
   describe '.canEnter', ->
 
-    context 'without authorise function', ->
+    context 'whitelist without authorise function', ->
 
       beforeEach ->
-        unmute = mute()
         @director = new Director @robot
-        unmute()
 
-      context 'no whitelist or blacklist', ->
+      context 'no list', ->
 
         beforeEach ->
-          unmute = mute()
-          @director = new Director @robot
           @result = @director.canEnter @res
-          unmute()
 
         it 'returns true', ->
           @result.should.be.true
 
-      context 'whitelist exists, user on list', ->
+      context 'has list, username on list', ->
 
         beforeEach ->
-          @director.whitelist.usernames = ['tester']
+          @director.names = ['tester']
           @result = @director.canEnter @res
-
-        it 'returns true' ->
-          @result.should.be.true
-
-      context 'whitelist exists, user not on list', ->
-
-        beforeEach ->
-          @director.whitelist.usernames = ['nobody']
-          @result = @director.canEnter @res
-
-        it 'returns false' ->
-          @result.should.be.false
-
-      context 'whitelist exists, rooom on list', ->
-
-        beforeEach ->
-          @director.whitelist.rooms = ['testing']
-          @result = @director.canEnter @res
-
-        it 'returns true' ->
-          @result.should.be.true
-
-      context 'whitelist exists, room not on list', ->
-
-        beforeEach ->
-          @director.whitelist.rooms = ['nowhere']
-          @result = @director.canEnter @res
-
-        it 'returns false' ->
-          @result.should.be.false
-
-      context 'blacklist exists, user on list', ->
-
-        beforeEach ->
-          @director.blacklist.usernames = ['tester']
-          @result = @director.canEnter @res
-
-        it 'returns false' ->
-          @result.should.be.false
-
-      context 'blacklist exists, user not on list', ->
-
-        beforeEach ->
-          @director.blacklist.usernames = ['nobody']
-          @result = @director.canEnter @res
-
-        it 'returns true' ->
-          @result.should.be.true
-
-      context 'blacklist exists, rooom on list', ->
-
-        beforeEach ->
-          @director.blacklist.rooms = ['testing']
-          @result = @director.canEnter @res
-
-        it 'returns false' ->
-          @result.should.be.false
-
-      context 'blacklist exists, room not on list', ->
-
-        beforeEach ->
-          @director.blacklist.rooms = ['nowhere']
-          @result = @director.canEnter @res
-
-        it 'returns true' ->
-          @result.should.be.true
-
-    context 'with authorise function (allowing)', ->
-
-      beforeEach ->
-        unmute = mute()
-        @authorise = sinon.spy -> 'ALLOW'
-        @director = new Director @robot, @authorise
-        unmute()
-
-      context 'no whitelist or blacklist', ->
-
-        beforeEach ->
-          @result = @director.canEnter @res
-
-        it 'calls authorise function with username, room and res', ->
-          @authorise.getCall(0).should.have.calledWith 'tester', 'testing', @res
 
         it 'returns true', ->
           @result.should.be.true
 
-# TODO copy whitelist / blacklist variant tests to complete @authorise branches
+      context 'has list, username not on list', ->
 
-    context 'with authorise function (allowing)', ->
+        beforeEach ->
+          @director.names = ['nobody']
+          @result = @director.canEnter @res
+
+        it 'returns false', ->
+          @result.should.be.false
+
+    context 'blacklist without authorise function', ->
 
       beforeEach ->
-        unmute = mute()
-        @authorise = sinon.spy -> 'DENY'
+        @director = new Director @robot,
+          type: 'blacklist'
+
+      context 'no list', ->
+
+        beforeEach ->
+          @result = @director.canEnter @res
+
+        it 'returns true', ->
+          @result.should.be.true
+
+      context 'has list, username on list', ->
+
+        beforeEach ->
+          @director.names = ['tester']
+          @result = @director.canEnter @res
+
+        it 'returns false', ->
+          @result.should.be.false
+
+      context 'has list, username not on list', ->
+
+        beforeEach ->
+          @director.names = ['nobody']
+          @result = @director.canEnter @res
+
+        it 'returns true', ->
+          @result.should.be.true
+
+    context 'whitelist with authorise function', ->
+
+      beforeEach ->
+        @authorise = sinon.spy -> 'AUTHORISE'
         @director = new Director @robot, @authorise
-        unmute()
+
+      context 'no list', ->
+
+        beforeEach ->
+          @result = @director.canEnter @res
+
+        it 'calls authorise function with username and res', ->
+          @authorise.getCall(0).should.have.calledWith 'tester', @res
+
+        it 'returns value of authorise function', ->
+          @result.should.equal 'AUTHORISE'
+
+      context 'has list, username on list', ->
+
+        beforeEach ->
+          @director.names = ['tester']
+          @result = @director.canEnter @res
+
+        it 'returns true', ->
+          @result.should.be.true
+
+        it 'does not call authorise function', ->
+          @authorise.should.not.have.calledOnce
+
+      context 'has list, username not on list', ->
+
+        beforeEach ->
+          @director.names = ['nobody']
+          @result = @director.canEnter @res
+
+        it 'returns value of authorise function', ->
+          @result.should.equal 'AUTHORISE'
+
+    context 'blacklist with authorise function', ->
+
+      beforeEach ->
+        @authorise = sinon.spy -> 'AUTHORISE'
+        @director = new Director @robot, @authorise
+
+      context 'no list', ->
+
+        beforeEach ->
+          @result = @director.canEnter @res
+
+        it 'calls authorise function with username and res', ->
+          @authorise.getCall(0).should.have.calledWith 'tester', @res
+
+        it 'returns value of authorise function', ->
+          @result.should.equal 'AUTHORISE'
+
+      context 'has list, username on list', ->
+
+        beforeEach ->
+          @director.names = ['tester']
+          @result = @director.canEnter @res
+
+        it 'returns false', ->
+          @result.should.be.false
+
+        it 'does not call authorise function', ->
+          @authorise.should.not.have.calledOnce
+
+      context 'has list, username not on list', ->
+
+        beforeEach ->
+          @director.names = ['nobody']
+          @result = @director.canEnter @res
+
+        it 'returns value of authorise function', ->
+          @result.should.equal 'AUTHORISE'
 
 # TODO test that it replies when denied, through manual call or middleware
