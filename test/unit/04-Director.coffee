@@ -176,39 +176,53 @@ describe '#Director', ->
 
   describe '.whitelistAdd', ->
 
-    context 'with users type and array of usernames', ->
+    context 'with usernames type and array of usernames', ->
 
       beforeEach ->
         unmute = mute()
         @director = new Director @robot
-        @director.whitelistAdd 'users', ['pema', 'nima']
+        @director.whitelistAdd 'usernames', ['pema', 'nima']
         unmute()
 
-      it 'stores the usernames in the whitelist users array', ->
-        @director.whitelist.users.should.eql ['pema', 'nima']
+      it 'stores the usernames in the whitelist usernames array', ->
+        @director.whitelist.usernames.should.eql ['pema', 'nima']
 
-    context 'with users type and single username', ->
+    context 'with usernames type and single username', ->
 
       beforeEach ->
         unmute = mute()
         @director = new Director @robot
-        @director.whitelistAdd 'users', 'pema'
+        @director.whitelistAdd 'usernames', 'pema'
         unmute()
 
-      it 'stores the username in the whitelist users array', ->
-        @director.whitelist.users.should.eql ['pema']
+      it 'stores the username in the whitelist usernames array', ->
+        @director.whitelist.usernames.should.eql ['pema']
 
-    context 'with users type and array of users, some existing', ->
+    context 'with usernames type and array of usernames, some existing', ->
 
       beforeEach ->
         unmute = mute()
         @director = new Director @robot
-        @director.whitelist.users = ['yeon', 'juan']
-        @director.whitelistAdd 'users', ['pema', 'juan', 'nima']
+        @director.whitelist.usernames = ['yeon', 'juan']
+        @director.whitelistAdd 'usernames', ['pema', 'juan']
         unmute()
 
       it 'adds any missing, not duplicating existing', ->
-        @director.whitelist.users.should.eql ['yeon', 'juan', 'pema', 'nima']
+        @director.whitelist.usernames.should.eql ['yeon', 'juan', 'pema']
+
+    context 'adding usernames with existing blacklist', ->
+
+      beforeEach ->
+        unmute = mute()
+        @director = new Director @robot
+        @director.blacklist.usernames = ['pema', 'juan']
+        try
+          @director.whitelistAdd 'usernames', ['yeon', 'nima']
+        unmute()
+
+      it 'throws an error', ->
+        @spy.whitelistAdd.should.have.threw
+
 
     context 'with invalid type', ->
 
@@ -224,41 +238,41 @@ describe '#Director', ->
 
   describe '.whitelistRemove', ->
 
-    context 'with users type and array of usernames', ->
+    context 'with usernames type and array of usernames', ->
 
       beforeEach ->
         unmute = mute()
         @director = new Director @robot
-        @director.whitelist.users = ['yeon', 'pema', 'juan', 'nima']
-        @director.whitelistRemove 'users', ['pema', 'nima']
+        @director.whitelist.usernames = ['yeon', 'pema', 'juan', 'nima']
+        @director.whitelistRemove 'usernames', ['pema', 'nima']
         mute()
 
-      it 'removes the usernames from the whitelist users array', ->
-        @director.whitelist.users.should.eql ['yeon', 'juan']
+      it 'removes the usernames from the whitelist usernames array', ->
+        @director.whitelist.usernames.should.eql ['yeon', 'juan']
 
-    context 'with users type and single username', ->
+    context 'with usernames type and single username', ->
 
       beforeEach ->
         unmute = mute()
         @director = new Director @robot
-        @director.whitelist.users = ['yeon', 'pema', 'juan', 'nima']
-        @director.whitelistRemove 'users', 'pema'
+        @director.whitelist.usernames = ['yeon', 'pema', 'juan', 'nima']
+        @director.whitelistRemove 'usernames', 'pema'
         unmute()
 
-      it 'stores the username in the whitelist users array', ->
-        @director.whitelist.users.should.eql ['yeon', 'juan', 'nima']
+      it 'stores the username in the whitelist usernames array', ->
+        @director.whitelist.usernames.should.eql ['yeon', 'juan', 'nima']
 
-    context 'with users type and array of users, some not existing', ->
+    context 'with usernames type and array of usernames, some not existing', ->
 
       beforeEach ->
         unmute = mute()
         @director = new Director @robot
-        @director.whitelist.users = ['yeon', 'juan']
-        @director.whitelistRemove 'users', ['pema', 'juan', 'nima']
+        @director.whitelist.usernames = ['yeon', 'juan']
+        @director.whitelistRemove 'usernames', ['pema', 'juan', 'nima']
         unmute()
 
       it 'adds any missing, not duplicating existing', ->
-        @director.whitelist.users.should.eql ['yeon']
+        @director.whitelist.usernames.should.eql ['yeon']
 
     context 'with invalid type', ->
 
@@ -274,27 +288,27 @@ describe '#Director', ->
 
   describe '.blacklistAdd', ->
 
-    context 'with users type and array of usernames', ->
+    context 'with usernames type and array of usernames', ->
 
       beforeEach ->
         unmute = mute()
         @director = new Director @robot
-        @director.blacklistAdd 'users', ['pema', 'nima']
+        @director.blacklistAdd 'usernames', ['pema', 'nima']
         unmute()
 
-      it 'stores the usernames in the blacklist users array', ->
-        @director.blacklist.users.should.eql ['pema', 'nima']
+      it 'stores the usernames in the blacklist usernames array', ->
+        @director.blacklist.usernames.should.eql ['pema', 'nima']
 
-    context 'with users type and single username', ->
+    context 'with usernames type and single username', ->
 
       beforeEach ->
         unmute = mute()
         @director = new Director @robot
-        @director.blacklistAdd 'users', 'pema'
+        @director.blacklistAdd 'usernames', 'pema'
         unmute()
 
-      it 'stores the username in the blacklist users array', ->
-        @director.blacklist.users.should.eql ['pema']
+      it 'stores the username in the blacklist usernames array', ->
+        @director.blacklist.usernames.should.eql ['pema']
 
     context 'with invalid type', ->
 
@@ -308,31 +322,44 @@ describe '#Director', ->
       it 'throws error when given invalid type', ->
         @spy.blacklistAdd.should.have.threw
 
-  describe '.blacklistRemove', ->
-
-    context 'with users type and array of usernames', ->
+    context 'adding usernames with existing blacklist', ->
 
       beforeEach ->
         unmute = mute()
         @director = new Director @robot
-        @director.blacklist.users = ['yeon', 'pema', 'juan', 'nima']
-        @director.blacklistRemove 'users', ['pema', 'nima']
-        mute()
-
-      it 'removes the usernames from the blacklist users array', ->
-        @director.blacklist.users.should.eql ['yeon', 'juan']
-
-    context 'with users type and single username', ->
-
-      beforeEach ->
-        unmute = mute()
-        @director = new Director @robot
-        @director.blacklist.users = ['yeon', 'pema', 'juan', 'nima']
-        @director.blacklistRemove 'users', 'pema'
+        @director.whitelist.usernames = ['yeon', 'nima']
+        try
+          @director.blacklistAdd 'usernames', ['pema', 'juan']
         unmute()
 
-      it 'stores the username in the blacklist users array', ->
-        @director.blacklist.users.should.eql ['yeon', 'juan', 'nima']
+      it 'throws an error', ->
+        @spy.blacklistAdd.should.have.threw
+
+  describe '.blacklistRemove', ->
+
+    context 'with usernames type and array of usernames', ->
+
+      beforeEach ->
+        unmute = mute()
+        @director = new Director @robot
+        @director.blacklist.usernames = ['yeon', 'pema', 'juan', 'nima']
+        @director.blacklistRemove 'usernames', ['pema', 'nima']
+        mute()
+
+      it 'removes the usernames from the blacklist usernames array', ->
+        @director.blacklist.usernames.should.eql ['yeon', 'juan']
+
+    context 'with usernames type and single username', ->
+
+      beforeEach ->
+        unmute = mute()
+        @director = new Director @robot
+        @director.blacklist.usernames = ['yeon', 'pema', 'juan', 'nima']
+        @director.blacklistRemove 'usernames', 'pema'
+        unmute()
+
+      it 'stores the username in the blacklist usernames array', ->
+        @director.blacklist.usernames.should.eql ['yeon', 'juan', 'nima']
 
     context 'with invalid type', ->
 
@@ -349,15 +376,19 @@ describe '#Director', ->
   describe '.directScene', ->
 
     beforeEach ->
+      unmute = mute()
       @director = new Director @robot
       @scene = new Scene @robot
       @director.directScene @scene
+      unmute()
 
     context 'when scene enter manually called - user not allowed', ->
 
       beforeEach ->
-        @director.blacklistAdd 'users', 'tester'
+        unmute = mute()
+        @director.blacklistAdd 'usernames', 'tester'
         @dialogue = @scene.enter @res
+        unmute()
 
       it 'calls canEnter, returning false', ->
         @spy.canEnter.getCall(0).returnValue.should.be.false
@@ -368,11 +399,13 @@ describe '#Director', ->
     context 'when scene enter manually called - user allowed', ->
 
       beforeEach ->
-        @director.whitelistAdd 'users', 'tester'
+        unmute = mute()
+        @director.whitelist.usernames = ['tester']
         @dialogue = @scene.enter @res
+        unmute()
 
-      it 'calls canEnter, returning false', ->
-        @spy.canEnter.getCall(0).returnValue.should.be.false
+      it 'calls canEnter, returning true', ->
+        @spy.canEnter.getCall(0).returnValue.should.be.true
 
       it 'allowed the .enter method, returning a Dialogue object', ->
         @dialogue.should.be.instanceof Dialogue
@@ -387,33 +420,41 @@ describe '#Director', ->
 
   describe '.canEnter', ->
 
-    context 'blacklisted user, without authMethod', ->
+    beforeEach ->
+      unmute = mute()
+      @director = new Director @robot
+      @scene = new Scene @robot
+      @director.directScene @scene
+      unmute()
+
+    context 'blacklisted user, without authorise function', ->
 
       beforeEach ->
+        @director.blacklist.usernames = ['tester']
         @result = @scene.enter @res
 
       it 'calls .canEnter to check if origin of response can access', ->
-        @spy.canEnter.getCall(0).should.have.calledWith @scene, @res
+        @spy.canEnter.getCall(0).should.have.calledWith @res
 
       it 'preempts (hooks) the enter function result to return false', ->
         @result.should.be.false
 
     # TODO: all the below
 
-    context 'blacklisted room, without authMethod', ->
+    context 'blacklisted room, without authorise function', ->
 
-    context 'blacklisted user, with authMethod', ->
+    context 'blacklisted user, with authorise function', ->
 
-    context 'blacklisted room, with authMethod', ->
+    context 'blacklisted room, with authorise function', ->
 
-    context 'whitelisted user, without authMethod', ->
+    context 'whitelisted user, without authorise function', ->
 
-    context 'whitelisted room, without authMethod', ->
+    context 'whitelisted room, without authorise function', ->
 
-    context 'whitelisted user, with authMethod', ->
+    context 'whitelisted user, with authorise function', ->
 
-    context 'whitelisted room, with authMethod', ->
+    context 'whitelisted room, with authorise function', ->
 
-    context 'function as authMethod', ->
+    context 'authorise function allowed user, not white/blacklisted', ->
 
-    context 'adapter method name as authMethod', ->
+    context 'authorise function denied user, not white/blacklisted', ->

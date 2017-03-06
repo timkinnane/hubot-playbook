@@ -6,20 +6,27 @@ slug = require 'slug'
 {EventEmitter} = require 'events'
 
 # Adds middleware to authorise bot interactions, global or attached to scene
-# authMethod can be an adapter method name (string) or a function to call which
 # will receive the username, room and full response object to return wether that
 # user can access the current scene - e.g. 'hasAdminRole'
-# without an authMethod:
-# - if a whitelist exists, ONLY those on it are allowed
-# - if a blacklist exists, ONLY those on it are denied
-# with an authMethod: method can determine access, but lists will overide
 # TODO: save/restore black/whitelists in hubot brain against key if provided
 class Director extends EventEmitter
-  constructor: (@robot, args..., @authMethod) ->
+
+  # @param robot {Object} the hubot instance
+  # @param key (optional) {String} name for references to Director, e.g. logs
+  # @param opts (optional) {Object} key/vals for config overides, e.g.
+  # - deniedResponse: 'What to say when user denied access'
+  # @param authorise (optional) {Function} function for controlling access
+  # without an authorise function:
+  # - if a whitelist exists, ONLY those on it are allowed
+  # - if a blacklist exists, ONLY those on it are denied
+  # with an authorise function: function returns access, but lists will overide
+  # - will be passed [username, room, res] to return bool to allow/deny access
+  constructor: (@robot, args...) ->
 
     # take first argument as key if its a string, use leftover args as options
     @key = if _.isString args[0] then @keygen args.shift() else @keygen()
-    opts = args[0] or {}
+    opts = if _.isObject args[0] then opts = args.shift() else {}
+    @authorise = if _.isFunction args[0] then args.shift()
 
     @log = @robot.logger
     @whitelist = usernames: [], rooms: []
@@ -52,7 +59,9 @@ class Director extends EventEmitter
   # merge new usernames/rooms with whitelisted (allowed) array
   whitelistAdd: (group, names) ->
     if group not in ['usernames','rooms']
-      throw new Error "invalid access group - accepts only usernames, rooms"
+      throw new Error "Invalid access group - accepts only usernames, rooms"
+    if @blacklist[group].length
+      throw new Error "Already has a #{group} blacklist, cannot use whitelist"
     @log.info "Adding #{ inspect names } to #{ @key } whitelist"
     names = [names] if not _.isArray names # cast single as array
     @whitelist[group] = _.union @whitelist[group], names
@@ -61,7 +70,7 @@ class Director extends EventEmitter
   # remove usernames/rooms from whitelisted (allowed) array
   whitelistRemove: (group, names) ->
     if group not in ['usernames','rooms']
-      throw new Error "invalid access group - accepts only usernames, rooms"
+      throw new Error "Invalid access group - accepts only usernames, rooms"
     @log.info "Removing #{ inspect names } from #{ @key } whitelist"
     names = [names] if not _.isArray names # cast single as array
     @whitelist[group] = _.without @whitelist[group], names...
@@ -70,7 +79,9 @@ class Director extends EventEmitter
   # merge new usernames/rooms with blacklist (denied) array
   blacklistAdd: (group, names) ->
     if group not in ['usernames','rooms']
-      throw new Error "invalid access group - accepts only usernames, rooms"
+      throw new Error "Invalid access group - accepts only usernames, rooms"
+    if @whitelist[group].length
+      throw new Error "Already has a #{group} whitelist, cannot use blacklist"
     @log.info "Adding #{ inspect names } to #{ @key } blacklist"
     names = [names] if not _.isArray names # cast single as array
     @blacklist[group] = _.union @blacklist[group], names
@@ -79,7 +90,7 @@ class Director extends EventEmitter
   # remove usernames/rooms from blacklist (denied) array
   blacklistRemove: (group, names) ->
     if group not in ['usernames','rooms']
-      throw new Error "invalid access group - accepts only usernames, rooms"
+      throw new Error "Invalid access group - accepts only usernames, rooms"
     @log.info "Removing #{ inspect names } from #{ @key } blacklist"
     names = [names] if not _.isArray names # cast single as array
     @blacklist[group] = _.without @blacklist[group], names...
@@ -93,31 +104,28 @@ class Director extends EventEmitter
 
     # hook into .enter to control access for manually entered scenes
     hooker.hook scene, 'enter', pre: (res) =>
-      return hooker.preempt false if not @canEnter scene, res
+      return hooker.preempt false if not @canEnter res
 
   # determine if user has access, checking against usernames and rooms
   canEnter: (res) ->
     username = res.message.user.name
     room = res.message.room
 
-    # let some through regardless, don't let anyone else through
+    # let some through regardless, block anyone else
     if @whitelist.usernames.length
       return true if username in @whitelist.usernames
       return true if room in @whitelist.rooms
-      return false if not @authMethod?
+      return false if not @authorise?
 
     # block some regardless, let anyone else through
     if @blacklist.usernames.length
       return false if username in @blacklist.usernames
       return false if room in @blacklist.room
-      return true if not @authMethod?
+      return true if not @authorise?
 
-    # custom method/function will determine access if lists didn't
-    if @authMethod?
-      if _.isString @authMethod
-        return @robot.adapter.callMethod @authMethod, username, room, res
-      else if _.isFunction @authMethod
-        return @authMethod username, room, res
+    # custom method/function can determine access if lists didn't
+    return @authorise username, room, res if @authorise?
+
     return true # no reason not to
 
 module.exports = Director
