@@ -22,21 +22,21 @@ class Director extends EventEmitter
 
   # @param robot {Object} the hubot instance
   # @param key (optional) {String} name for references to instance, e.g. logs
-  # @param opts (optional) {Object} key/vals for config overides, e.g.
-  # - type: whitelist or blacklist (default: whitelist)
-  # - scope: user or room (default: user)
-  # - reply: when user denied access (default: "Sorry, I can't do that.")
   # @param authorise (optional) {Function} function for controlling access
-  # will receive the user or room name and response object to control access
-  # e.g. 'hasAdminRole' with user scope could lookup the passed user's role
+  #   will receive the user or room name and response object to control access
+  #   e.g. could pass function to check if user has a particular role
+  # @param opts (optional) {Object} key/vals for config overides, e.g.
+  #   - type: whitelist or blacklist (default: whitelist)
+  #   - scope: user or room (default: user)
+  #   - reply: when user denied access (default: "Sorry, I can't do that.")
   constructor: (@robot, args...) ->
     @log = @robot.logger
     @names = []
 
     # take args of the stack in param order, for all optional arguments
     @key = if _.isString args[0] then @keygen args.shift() else @keygen()
-    opts = if _.isObject args[0] then opts = args.shift() else {}
     @authorise = if _.isFunction args[0] then args.shift()
+    opts = if _.isObject args[0] then opts = args.shift() else {}
 
     # extend options with defaults
     @config = _.defaults opts,
@@ -115,7 +115,9 @@ class Director extends EventEmitter
     # authorise function can determine access if lists didn't
     return @authorise name, res if @authorise?
 
-    return true # no reason not to - but should never reach here
+    # no names on lists, no authorise function
+    return false if @config.type is 'whitelist'
+    return true if @config.type is 'blacklist'
 
 module.exports = Director
 

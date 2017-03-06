@@ -22,7 +22,7 @@ describe '#Director', ->
     @robot = @room.robot
     @robot.on 'respond', (res) => @res = res # store every response sent
     @robot.on 'receive', (res) => @rec = res # store every message received
-    @robot.log.info = @robot.log.debug = -> # silence
+    @robot.logger.info = @robot.logger.debug = -> # silence
     @spy = _.mapObject Director.prototype, (val, key) ->
       sinon.spy Director.prototype, key # spy on all the class methods
     @room.user.say 'tester', 'hubot ping' # trigger first response
@@ -69,14 +69,6 @@ describe '#Director', ->
       it 'stores the slugified source key as an attribute', ->
         @director.key.should.equal 'Orson-Welles'
 
-    context 'with options', ->
-
-      beforeEach ->
-        @director = new Director @robot, deniedReply: "DENIED!"
-
-      it 'stores passed options in config', ->
-        @director.config.deniedReply.should.equal "DENIED!"
-
     context 'with authorise function', ->
 
       beforeEach ->
@@ -86,18 +78,26 @@ describe '#Director', ->
       it 'stores the given function as its authorise method', ->
         @director.authorise = @authorise
 
+    context 'with options', ->
+
+      beforeEach ->
+        @director = new Director @robot, reply: "DENIED!"
+
+      it 'stores passed options in config', ->
+        @director.config.reply.should.equal "DENIED!"
+
     context 'with env var for names', ->
 
       beforeEach ->
-        process.env.WHITELIST_USERS = 'Emmanuel'
+        process.env.WHITELIST_USERNAMES = 'Emmanuel'
         process.env.WHITELIST_ROOMS = 'Capital'
-        process.env.BLACKLIST_USERS = 'Winston,Julia,Syme'
+        process.env.BLACKLIST_USERNAMES = 'Winston,Julia,Syme'
         process.env.BLACKLIST_ROOMS = 'Labour'
 
       afterEach ->
-        delete process.env.WHITELIST_USERS
+        delete process.env.WHITELIST_USERNAMES
         delete process.env.WHITELIST_ROOMS
-        delete process.env.BLACKLIST_USERS
+        delete process.env.BLACKLIST_USERNAMES
         delete process.env.BLACKLIST_ROOMS
 
       context 'whitelist type, username scope', ->
@@ -118,7 +118,7 @@ describe '#Director', ->
             scope: 'room'
 
         it 'stores the whitelisted rooms from env', ->
-          @names.rooms.should.eql ['Capital']
+          @director.names.should.eql ['Capital']
 
       context 'blacklist type, username scope', ->
 
@@ -150,19 +150,19 @@ describe '#Director', ->
         delete process.env.DENIED_REPLY
 
       it 'stores env vars in config', ->
-        @director.config.deniedReply.should.equal "403 Sorry."
+        @director.config.reply.should.equal "403 Sorry."
 
     context 'with env vars and args for reply', ->
 
       beforeEach ->
         process.env.DENIED_REPLY = "403 Sorry."
-        @director = new Director @robot, deniedReply: "DENIED!"
+        @director = new Director @robot, reply: "DENIED!"
 
       afterEach ->
         delete process.env.DENIED_REPLY
 
       it 'stores passed options in config (overriding env vars)', ->
-        @director.config.deniedReply.should.equal "DENIED!"
+        @director.config.reply.should.equal "DENIED!"
 
     context 'with invalid option for type', ->
 
@@ -185,6 +185,32 @@ describe '#Director', ->
 
       it 'should throw error', ->
         @constructor.should.have.threw
+
+    context 'without key, with authorise function and options', ->
+
+      beforeEach ->
+        @authorise = -> null
+        @director = new Director @robot, @authorise,
+          scope: 'room'
+
+      it 'uses options', ->
+        @director.config.scope.should.equal 'room'
+
+      it 'uses authorise function', ->
+        @director.authorise.should.eql @authorise
+
+    context 'with key, without authorise function, with options', ->
+
+      beforeEach ->
+        @authorise = -> null
+        @director = new Director @robot, 'Metal Face',
+          scope: 'room'
+
+      it 'uses key', ->
+        @director.keygen.should.have.calledWith 'Metal Face'
+
+      it 'uses options', ->
+        @director.config.scope.should.equal 'room'
 
   describe '.keygen', ->
 
@@ -231,6 +257,7 @@ describe '#Director', ->
     context 'given array of names, some existing', ->
 
       beforeEach ->
+        @director.names = ['yeon','juan']
         @director.add ['pema', 'juan']
 
       it 'adds any missing, not duplicating existing', ->
@@ -276,25 +303,26 @@ describe '#Director', ->
     context 'when scene enter manually called - user not allowed', ->
 
       beforeEach ->
-        @dialogue = @scene.enter @res
+        @director.names = ['nobody']
+        @result = @scene.enter @res
 
       it 'calls .canEnter to check if origin of response can access', ->
         @spy.canEnter.getCall(0).should.have.calledWith @res
 
       it 'preempts scene.enter, returning false instead', ->
-        @dialogue.should.be.false
+        @result.should.be.false
 
     context 'when scene enter manually called - user allowed', ->
 
       beforeEach ->
         @director.names = ['tester']
-        @dialogue = @scene.enter @res
+        @result = @scene.enter @res
 
       it 'calls .canEnter to check if origin of response can access', ->
         @spy.canEnter.getCall(0).should.have.calledWith @res
 
       it 'allowed the .enter method, returning a Dialogue object', ->
-        @dialogue.should.be.instanceof Dialogue
+        @result.should.be.instanceof Dialogue
 
     context 'when matched listeners - user not allowed', ->
 
@@ -316,8 +344,8 @@ describe '#Director', ->
         beforeEach ->
           @result = @director.canEnter @res
 
-        it 'returns true', ->
-          @result.should.be.true
+        it 'returns false', ->
+          @result.should.be.false
 
       context 'has list, username on list', ->
 
@@ -411,7 +439,8 @@ describe '#Director', ->
 
       beforeEach ->
         @authorise = sinon.spy -> 'AUTHORISE'
-        @director = new Director @robot, @authorise
+        @director = new Director @robot, @authorise,
+          type: 'blacklist'
 
       context 'no list', ->
 
