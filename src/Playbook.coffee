@@ -2,6 +2,9 @@ _ = require 'underscore'
 Dialogue = require './modules/Dialogue'
 Scene = require './modules/Scene'
 
+# TODO: Optional config for send middleware to debounce consecutive messages
+# - display "thinking" elipses
+
 # TODO: Refactor class and usage as singleton
 # A container class for modules provided by the Playbook library
 # For modules that require the robot as an argument, Playbook will pass it first

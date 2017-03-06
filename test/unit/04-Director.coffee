@@ -53,7 +53,7 @@ describe '#Director', ->
         @director.blacklist.should.eql usernames: [], rooms: []
 
       it 'stores default fallback config', ->
-        @director.config.deniedResponse.should.equal "Sorry, I can't do that."
+        @director.config.deniedReply.should.equal "Sorry, I can't do that."
 
       it 'calls keygen to create a random key', ->
         @spy.keygen.getCall(0).should.have.calledWith()
@@ -93,11 +93,11 @@ describe '#Director', ->
       beforeEach ->
         unmute = mute()
         namespace = Director: require "../../src/modules/Director"
-        @director = new namespace.Director @robot, deniedResponse: "DENIED!"
+        @director = new namespace.Director @robot, deniedReply: "DENIED!"
         unmute()
 
       it 'stores passed options in config', ->
-        @director.config.deniedResponse.should.equal "DENIED!"
+        @director.config.deniedReply.should.equal "DENIED!"
 
       it 'calls keygen to create a random key', ->
         @spy.keygen.getCall(0).should.have.calledWith()
@@ -119,6 +119,18 @@ describe '#Director', ->
       it 'stores the slugified source key as an attribute', ->
         @director.key.should.equal 'Orson-Welles'
 
+    context 'with authorise function', ->
+
+      beforeEach ->
+        unmute = mute()
+        namespace = Director: require "../../src/modules/Director"
+        @authorise = -> null
+        @director = new namespace.Director @robot, @authorise
+        unmute()
+
+      it 'stores the given function as its authorise method', ->
+        @director.authorise = @authorise
+
     context 'with env vars for config', ->
 
       beforeEach ->
@@ -132,7 +144,7 @@ describe '#Director', ->
         delete process.env.DENIED_RESPONSE
 
       it 'stores env vars in config', ->
-        @director.config.deniedResponse.should.equal "403 Sorry."
+        @director.config.deniedReply.should.equal "403 Sorry."
 
     context 'with env vars and options', ->
 
@@ -140,14 +152,14 @@ describe '#Director', ->
         unmute = mute()
         process.env.DENIED_RESPONSE = "403 Sorry."
         namespace = Director: require "../../src/modules/Director"
-        @director = new namespace.Director @robot, deniedResponse: "DENIED!"
+        @director = new namespace.Director @robot, deniedReply: "DENIED!"
         unmute()
 
       afterEach ->
         delete process.env.DENIED_RESPONSE
 
       it 'stores passed options in config (overriding env vars)', ->
-        @director.config.deniedResponse.should.equal "DENIED!"
+        @director.config.deniedReply.should.equal "DENIED!"
 
   describe '.keygen', ->
 
@@ -222,7 +234,6 @@ describe '#Director', ->
 
       it 'throws an error', ->
         @spy.whitelistAdd.should.have.threw
-
 
     context 'with invalid type', ->
 
@@ -390,10 +401,10 @@ describe '#Director', ->
         @dialogue = @scene.enter @res
         unmute()
 
-      it 'calls canEnter, returning false', ->
-        @spy.canEnter.getCall(0).returnValue.should.be.false
+      it 'calls .canEnter to check if origin of response can access', ->
+        @spy.canEnter.getCall(0).should.have.calledWith @res
 
-      it 'preempts the .enter method, returning false instead', ->
+      it 'preempts scene.enter, returning false instead', ->
         @dialogue.should.be.false
 
     context 'when scene enter manually called - user allowed', ->
@@ -404,8 +415,8 @@ describe '#Director', ->
         @dialogue = @scene.enter @res
         unmute()
 
-      it 'calls canEnter, returning true', ->
-        @spy.canEnter.getCall(0).returnValue.should.be.true
+      it 'calls .canEnter to check if origin of response can access', ->
+        @spy.canEnter.getCall(0).should.have.calledWith @res
 
       it 'allowed the .enter method, returning a Dialogue object', ->
         @dialogue.should.be.instanceof Dialogue
@@ -420,41 +431,123 @@ describe '#Director', ->
 
   describe '.canEnter', ->
 
-    beforeEach ->
-      unmute = mute()
-      @director = new Director @robot
-      @scene = new Scene @robot
-      @director.directScene @scene
-      unmute()
-
-    context 'blacklisted user, without authorise function', ->
+    context 'without authorise function', ->
 
       beforeEach ->
-        @director.blacklist.usernames = ['tester']
-        @result = @scene.enter @res
+        unmute = mute()
+        @director = new Director @robot
+        unmute()
 
-      it 'calls .canEnter to check if origin of response can access', ->
-        @spy.canEnter.getCall(0).should.have.calledWith @res
+      context 'no whitelist or blacklist', ->
 
-      it 'preempts (hooks) the enter function result to return false', ->
-        @result.should.be.false
+        beforeEach ->
+          unmute = mute()
+          @director = new Director @robot
+          @result = @director.canEnter @res
+          unmute()
 
-    # TODO: all the below
+        it 'returns true', ->
+          @result.should.be.true
 
-    context 'blacklisted room, without authorise function', ->
+      context 'whitelist exists, user on list', ->
 
-    context 'blacklisted user, with authorise function', ->
+        beforeEach ->
+          @director.whitelist.usernames = ['tester']
+          @result = @director.canEnter @res
 
-    context 'blacklisted room, with authorise function', ->
+        it 'returns true' ->
+          @result.should.be.true
 
-    context 'whitelisted user, without authorise function', ->
+      context 'whitelist exists, user not on list', ->
 
-    context 'whitelisted room, without authorise function', ->
+        beforeEach ->
+          @director.whitelist.usernames = ['nobody']
+          @result = @director.canEnter @res
 
-    context 'whitelisted user, with authorise function', ->
+        it 'returns false' ->
+          @result.should.be.false
 
-    context 'whitelisted room, with authorise function', ->
+      context 'whitelist exists, rooom on list', ->
 
-    context 'authorise function allowed user, not white/blacklisted', ->
+        beforeEach ->
+          @director.whitelist.rooms = ['testing']
+          @result = @director.canEnter @res
 
-    context 'authorise function denied user, not white/blacklisted', ->
+        it 'returns true' ->
+          @result.should.be.true
+
+      context 'whitelist exists, room not on list', ->
+
+        beforeEach ->
+          @director.whitelist.rooms = ['nowhere']
+          @result = @director.canEnter @res
+
+        it 'returns false' ->
+          @result.should.be.false
+
+      context 'blacklist exists, user on list', ->
+
+        beforeEach ->
+          @director.blacklist.usernames = ['tester']
+          @result = @director.canEnter @res
+
+        it 'returns false' ->
+          @result.should.be.false
+
+      context 'blacklist exists, user not on list', ->
+
+        beforeEach ->
+          @director.blacklist.usernames = ['nobody']
+          @result = @director.canEnter @res
+
+        it 'returns true' ->
+          @result.should.be.true
+
+      context 'blacklist exists, rooom on list', ->
+
+        beforeEach ->
+          @director.blacklist.rooms = ['testing']
+          @result = @director.canEnter @res
+
+        it 'returns false' ->
+          @result.should.be.false
+
+      context 'blacklist exists, room not on list', ->
+
+        beforeEach ->
+          @director.blacklist.rooms = ['nowhere']
+          @result = @director.canEnter @res
+
+        it 'returns true' ->
+          @result.should.be.true
+
+    context 'with authorise function (allowing)', ->
+
+      beforeEach ->
+        unmute = mute()
+        @authorise = sinon.spy -> 'ALLOW'
+        @director = new Director @robot, @authorise
+        unmute()
+
+      context 'no whitelist or blacklist', ->
+
+        beforeEach ->
+          @result = @director.canEnter @res
+
+        it 'calls authorise function with username, room and res', ->
+          @authorise.getCall(0).should.have.calledWith 'tester', 'testing', @res
+
+        it 'returns true', ->
+          @result.should.be.true
+
+# TODO copy whitelist / blacklist variant tests to complete @authorise branches
+
+    context 'with authorise function (allowing)', ->
+
+      beforeEach ->
+        unmute = mute()
+        @authorise = sinon.spy -> 'DENY'
+        @director = new Director @robot, @authorise
+        unmute()
+
+# TODO test that it replies when denied, through manual call or middleware

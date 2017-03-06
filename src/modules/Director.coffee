@@ -14,7 +14,7 @@ class Director extends EventEmitter
   # @param robot {Object} the hubot instance
   # @param key (optional) {String} name for references to Director, e.g. logs
   # @param opts (optional) {Object} key/vals for config overides, e.g.
-  # - deniedResponse: 'What to say when user denied access'
+  # - deniedReply: 'What to say when user denied access'
   # @param authorise (optional) {Function} function for controlling access
   # without an authorise function:
   # - if a whitelist exists, ONLY those on it are allowed
@@ -44,11 +44,11 @@ class Director extends EventEmitter
 
     # extend options with defaults
     @config = _.defaults opts,
-      deniedResponse: process.env.DENIED_RESPONSE or "Sorry, I can't do that."
+      deniedReply: process.env.DENIED_RESPONSE or "Sorry, I can't do that."
       # TODO: parse Playbook messages for template tags e.g. hi {{ username }}
 
     @log.info """
-      New Director #{ @key } responds '#{ @config.deniedResponse }' to denied
+      New Director #{ @key } responds '#{ @config.deniedReply }' to denied
     """
 
   # helper used by path, generate key from slugifying or random string
@@ -104,7 +104,9 @@ class Director extends EventEmitter
 
     # hook into .enter to control access for manually entered scenes
     hooker.hook scene, 'enter', pre: (res) =>
-      return hooker.preempt false if not @canEnter res
+      if not @canEnter res
+        res.reply @config.deniedReply if @config.deniedReply isnt ''
+        return hooker.preempt false
 
   # determine if user has access, checking against usernames and rooms
   canEnter: (res) ->
