@@ -93,7 +93,7 @@ class Director extends EventEmitter
     # hook into .enter to control access for manually entered scenes
     hooker.hook scene, 'enter', pre: (res) =>
       if not @canEnter res
-        res.reply @config.reply if @config.reply isnt ''
+        res.reply @config.reply if @config.reply? and @config.reply isnt ''
         return hooker.preempt false
 
   # determine if user has access, checking against usernames and rooms
@@ -114,10 +114,6 @@ class Director extends EventEmitter
 
     # authorise function can determine access if lists didn't
     return @authorise name, res if @authorise?
-
-    # no names on lists, no authorise function
-    return false if @config.type is 'whitelist'
-    return true if @config.type is 'blacklist'
 
 module.exports = Director
 

@@ -299,38 +299,61 @@ describe '#Director', ->
       @director = new Director @robot
       @scene = new Scene @robot
       @director.directScene @scene
+      @reply = sinon.spy @res, 'reply'
 
-    context 'when scene enter manually called - user not allowed', ->
+    context 'user not on list', ->
 
-      beforeEach ->
-        @director.names = ['nobody']
-        @result = @scene.enter @res
+      context 'scene enter manually called', ->
 
-      it 'calls .canEnter to check if origin of response can access', ->
-        @spy.canEnter.getCall(0).should.have.calledWith @res
+        context 'with denied reply value', ->
 
-      it 'preempts scene.enter, returning false instead', ->
-        @result.should.be.false
+          beforeEach ->
+            @result = @scene.enter @res
 
-    context 'when scene enter manually called - user allowed', ->
+          it 'calls .canEnter to check if origin of response can access', ->
+            @spy.canEnter.getCall(0).should.have.calledWith @res
+
+          it 'preempts scene.enter, returning false instead', ->
+            @result.should.be.false
+
+          it 'calls response reply method with denied reply', ->
+            @reply.should.have.calledWith @director.config.reply
+
+        context 'without denied reply value', ->
+
+          beforeEach ->
+            @director.config.reply = null
+            @result = @scene.enter @res
+
+          it 'does not call response reply method', ->
+            @reply.should.not.have.called
+
+      context 'when matched listeners', ->
+
+        # TODO: test middleware attached
+
+    context 'user allowed', ->
 
       beforeEach ->
         @director.names = ['tester']
-        @result = @scene.enter @res
 
-      it 'calls .canEnter to check if origin of response can access', ->
-        @spy.canEnter.getCall(0).should.have.calledWith @res
+      context 'scene enter manually called', ->
 
-      it 'allowed the .enter method, returning a Dialogue object', ->
-        @result.should.be.instanceof Dialogue
+        beforeEach ->
+          @result = @scene.enter @res
 
-    context 'when matched listeners - user not allowed', ->
+        it 'calls .canEnter to check if origin of response can access', ->
+          @spy.canEnter.getCall(0).should.have.calledWith @res
 
-      # TODO: test middleware attached
+        it 'allowed the .enter method, returning a Dialogue object', ->
+          @result.should.be.instanceof Dialogue
 
-    context 'when matched listeners - user allowed', ->
+        it 'does not call response reply method', ->
+          @reply.should.not.have.called
 
-      # TODO: test middleware attached
+      context 'when matched listeners', ->
+
+        # TODO: test middleware attached
 
   describe '.canEnter', ->
 
