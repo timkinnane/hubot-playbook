@@ -136,12 +136,10 @@ describe '#Dialogue', ->
 
   describe '.keygen', ->
 
-    beforeEach ->
-      @dialogue = new Dialogue @res
-
     context 'with a source string', ->
 
       beforeEach ->
+        @dialogue = new Dialogue @res
         @result = @dialogue.keygen '%.test @# String!'
 
       it 'converts or removes unsafe characters', ->
@@ -150,6 +148,7 @@ describe '#Dialogue', ->
     context 'without source', ->
 
       beforeEach ->
+        @dialogue = new Dialogue @res
         @result = @dialogue.keygen()
 
       it 'creates a string of 12 random characters', ->
@@ -569,7 +568,7 @@ describe '#Dialogue', ->
     beforeEach ->
       @dialogue = new Dialogue @res
 
-    context 'with config.reply set to false', ->
+    context 'with config.sendReplies set to false', ->
 
       beforeEach (done) ->
         @observer.next().then -> done() # watch for response before proceeding
@@ -578,11 +577,11 @@ describe '#Dialogue', ->
       it 'sends to the room from original res', ->
         @room.messages.pop().should.eql [ 'hubot', 'test' ]
 
-    context 'with config.reply set to true', ->
+    context 'with config.sendReplies set to true', ->
 
       beforeEach (done) ->
         @observer.next().then -> done() # watch for response before proceeding
-        @dialogue.config.reply = true
+        @dialogue.config.sendReplies = true
         @dialogue.send 'test'
 
       it 'sends to the room from original res, responding to the @user', ->

@@ -1,45 +1,52 @@
 # credit to lmarkus/hubot-conversation for the original concept
 _ = require 'underscore'
 {inspect} = require 'util'
+{generate} = require 'randomstring'
+slug = require 'slug'
 Dialogue = require './Dialogue'
+
+# Fix listener ID to include scene. namespace
 
 # handles array of participants engaged in dialogue
 # while engaged the robot will only follow the given dialogue choices
 # entering a user scene will engage the user
 # entering a room scene will engage the whole room
-# entering a userRoom scene will engage the user in that room only
-# @param robot, a hubot instance
-# @param type (optional), participant type; room, user (default) or userRoom
-# @param opts (optional), key/vals for dialogue config, e.g overide reply method
+# entering a direct scene will engage the user in that room only
 class Scene
+
+  # @param robot {Object} a hubot instance
+  # @param type (optional) {String} room, user (default) or direct
+  # @param opts (optional) {Object} for dialogue config, e.g set reply method
   constructor: (@robot, args...) ->
 
-    # validate arguments / assume defaults
-    @type = args.shift() if _.isString args[0]
-    opts = args[0] if _.isObject args[0]
-    @type ?= 'user' # type fallback
-    opts ?= {} # opts fallback
+    # take arguments in param order, for all optional arguments
+    @type = if _.isString args[0] then args.shift() else 'user'
+    opts = if _.isObject args[0] then args.shift() else {}
 
-    if @type not in [ 'room', 'user', 'userRoom' ]
+    if @type not in [ 'room', 'user', 'direct' ]
       throw new Error "invalid scene type given"
 
     # '@user hello' vs 'hello'
-    replyDefault = if @type is 'room' then true else false
+    sendReplies = if @type is 'room' then true else false
 
     # extend options with defaults (passed to dialogue)
     @config = _.defaults opts,
-      reply: process.env.REPLY_DEFAULT or replyDefault
+      sendReplies: process.env.SEND_REPLIES or sendReplies
 
-    # force type in case reply setting from environment var
-    @config.reply = true if @config.reply? and @config.reply is 'true'
-    @config.reply = false if @config.reply? and @config.reply is 'false'
+    # cast as proper bool in case string came from environment var
+    @config.sendReplies = true if @config.sendReplies in ['true', 'TRUE']
+    @config.sendReplies = false if @config.sendReplies in ['false', 'FALSE']
 
     @listeners = [] # array of prompts that will enter sceen
     @engaged = {} # dialogues of each engaged participants
     @log = @robot.logger
 
-    # hubot middleware re-routes to internal matching while engaged
+    # scene middleware routes all messages to engaged participants
     @robot.receiveMiddleware (c, n, d) => @middleware @, c, n, d
+
+  # helper, generate key from slugifying source or random string
+  keygen: (source) ->
+    return if source? then slug source else generate 12
 
   # not called as method, but copied as a property
   middleware: (scene, context, next, done) =>
@@ -58,13 +65,29 @@ class Scene
     return
 
   # setup listener callback to enter scene
-  listen: (listenType, regex, callback) ->
-    throw new Error "Invalid listenType" if listenType not in ['hear','respond']
-    @robot[listenType] regex, (res) =>
-      dialogue = @enter res # may fail if enter hooks override
+  # @param type - the listener type, should be hear or respond
+  # @param
+  listen: (type, args...) ->
+    throw new Error "Invalid listener type" if type not in ['hear','respond']
+
+    # valid regex as first arg (required)
+    regex = args.shift()
+    throw new Error "Invalid regex for listener" if not _.isRegExp regex
+
+    # id is optional
+    id = if _.isString args[0] then @keygen args.shift() else @keygen()
+
+    # last arg taken as callback (required)
+    callback = args.shift()
+    throw new Error "Invalid callback for listener" if not _.isFunction callback
+
+    # setup robot listener with given or generated key, so it can be referred to
+    @robot[type] regex, id: id, (res) =>
+      dialogue = @enter res # may fail if enter hooks override (from Director)
       callback.call dialogue, res if dialogue? # in callback dialogue is 'this'
-    @listeners.push [listenType, regex]
-    return
+
+    @listeners.push id: id, type: type, regex: regex
+    return id
 
   # alias of .listen with hear as specified type
   hear: (args...) -> return @listen 'hear', args...
@@ -77,7 +100,7 @@ class Scene
     return switch @type
       when 'room' then return res.message.room
       when 'user' then return res.message.user.id
-      when 'userRoom' then return "#{res.message.user.id}_#{res.message.room}"
+      when 'direct' then return "#{res.message.user.id}_#{res.message.room}"
 
   # engage the participants in dialogue
   # @param res, the response object

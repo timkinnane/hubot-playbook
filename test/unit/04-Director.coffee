@@ -50,7 +50,7 @@ describe '#Director', ->
         @director.config.should.eql
           type: 'whitelist'
           scope: 'username'
-          reply: "Sorry, I can't do that."
+          deniedReply: "Sorry, I can't do that."
 
       it 'calls keygen to create a random key', ->
         @spy.keygen.getCall(0).should.have.calledWith()
@@ -81,10 +81,10 @@ describe '#Director', ->
     context 'with options', ->
 
       beforeEach ->
-        @director = new Director @robot, reply: "DENIED!"
+        @director = new Director @robot, deniedReply: "DENIED!"
 
       it 'stores passed options in config', ->
-        @director.config.reply.should.equal "DENIED!"
+        @director.config.deniedReply.should.equal "DENIED!"
 
     context 'with env var for names', ->
 
@@ -150,19 +150,19 @@ describe '#Director', ->
         delete process.env.DENIED_REPLY
 
       it 'stores env vars in config', ->
-        @director.config.reply.should.equal "403 Sorry."
+        @director.config.deniedReply.should.equal "403 Sorry."
 
     context 'with env vars and args for reply', ->
 
       beforeEach ->
         process.env.DENIED_REPLY = "403 Sorry."
-        @director = new Director @robot, reply: "DENIED!"
+        @director = new Director @robot, deniedReply: "DENIED!"
 
       afterEach ->
         delete process.env.DENIED_REPLY
 
       it 'stores passed options in config (overriding env vars)', ->
-        @director.config.reply.should.equal "DENIED!"
+        @director.config.deniedReply.should.equal "DENIED!"
 
     context 'with invalid option for type', ->
 
@@ -214,12 +214,10 @@ describe '#Director', ->
 
   describe '.keygen', ->
 
-    beforeEach ->
-      @director = new Director @robot
-
     context 'with a source string', ->
 
       beforeEach ->
+        @director = new Director @robot
         @result = @director.keygen '%.test @# String!'
 
       it 'converts or removes unsafe characters', ->
@@ -228,6 +226,7 @@ describe '#Director', ->
     context 'without source', ->
 
       beforeEach ->
+        @director = new Director @robot
         @result = @director.keygen()
 
       it 'creates a string of 12 random characters', ->
@@ -317,12 +316,12 @@ describe '#Director', ->
             @result.should.be.false
 
           it 'calls response reply method with denied reply', ->
-            @reply.should.have.calledWith @director.config.reply
+            @reply.should.have.calledWith @director.config.deniedReply
 
         context 'without denied reply value', ->
 
           beforeEach ->
-            @director.config.reply = null
+            @director.config.deniedReply = null
             @result = @scene.enter @res
 
           it 'does not call response reply method', ->

@@ -18,9 +18,10 @@ describe '#Playbook', ->
   beforeEach ->
     @room = helper.createRoom name: 'testing'
     @robot = @room.robot
+    @robot.on 'respond', (res) => @res = res # store every response sent
+    @robot.logger.info = @robot.logger.debug = -> # silence
     @spy = _.mapObject Playbook.prototype, (val, key) ->
       sinon.spy Playbook.prototype, key # spy on all the class methods
-    @robot.on 'respond', (res) => @res = res # store every response sent
     @room.user.say 'tester', 'hubot ping' # create first response
 
   afterEach ->
@@ -30,11 +31,9 @@ describe '#Playbook', ->
   describe 'constructor', ->
 
     beforeEach ->
-      unmute = mute()
       namespace = Playbook: require "../../src/Playbook"
       @constructor = sinon.spy namespace, 'Playbook'
       @playbook = new namespace.Playbook @robot
-      unmute()
 
     it 'does not throw', ->
       @constructor.should.not.have.threw
@@ -48,10 +47,8 @@ describe '#Playbook', ->
   describe '.scene', ->
 
     beforeEach ->
-      unmute = mute()
       @playbook = new Playbook @robot
       @scene = @playbook.scene()
-      unmute()
 
     it 'makes a Scene :P', ->
       @scene.should.be.instanceof Scene
@@ -64,10 +61,8 @@ describe '#Playbook', ->
     context 'with type, without options args', ->
 
       beforeEach ->
-        unmute = mute()
         @playbook = new Playbook @robot
         @dialogue = @playbook.sceneEnter 'room', @res
-        unmute()
 
       it 'makes a Scene (stored, not returned)', ->
         @playbook.scenes[0].should.be.instanceof Scene
@@ -84,24 +79,20 @@ describe '#Playbook', ->
     context 'with type and options args', ->
 
       beforeEach ->
-        unmute = mute()
         @playbook = new Playbook @robot
         @dialogue = @playbook.sceneEnter 'room', @res, reply: false
-        unmute()
 
       it 'used the given room type', ->
         @playbook.scenes[0].type.should.equal 'room'
 
       it 'used the options argument', ->
-        @dialogue.config.reply = false
+        @dialogue.config.sendReplies = false
 
     context 'without type or args (other than response)', ->
 
       beforeEach ->
-        unmute = mute()
         @playbook = new Playbook @robot
         @dialogue = @playbook.sceneEnter @res
-        unmute()
 
       it 'makes scene with default user type', ->
         @playbook.scenes[0].should.be.instanceof Scene
@@ -112,13 +103,11 @@ describe '#Playbook', ->
     context 'with scene args', ->
 
       beforeEach ->
-        unmute = mute()
         @playbook = new Playbook @robot
         @robot.hear /.*/, (@res) => null # get any response for comparison
         opts = reply: false
         @listenSpy = sinon.spy Scene.prototype, 'listen'
         @scene = @playbook.sceneListen 'hear', /test/, 'room', opts, (res) ->
-        unmute()
 
       afterEach ->
         @listenSpy.restore()
@@ -136,11 +125,9 @@ describe '#Playbook', ->
     context 'without scene args', ->
 
       beforeEach ->
-        unmute = mute()
         @playbook = new Playbook @robot
         @listenSpy = sinon.spy Scene.prototype, 'listen'
         @scene = @playbook.sceneListen 'hear', /test/, (res) ->
-        unmute()
 
       afterEach ->
         @listenSpy.restore()
@@ -158,10 +145,8 @@ describe '#Playbook', ->
   describe '.sceneHear', ->
 
     beforeEach ->
-      unmute = mute()
       @playbook = new Playbook @robot
       @playbook.sceneHear /test/, 'room', (res) ->
-      unmute()
 
     it 'calls .sceneListen with hear type and any other args', ->
       args = ['hear', /test/, 'room', sinon.match.func]
@@ -170,10 +155,8 @@ describe '#Playbook', ->
   describe '.sceneRespond', ->
 
     beforeEach ->
-      unmute = mute()
       @playbook = new Playbook @robot
       @playbook.sceneRespond /test/, 'room', (res) ->
-      unmute()
 
     it 'calls .sceneListen with respond type and any other args', ->
       args = ['respond', /test/, 'room', sinon.match.func]
@@ -182,10 +165,8 @@ describe '#Playbook', ->
   describe '.dialogue', ->
 
     beforeEach ->
-      unmute = mute()
       @playbook = new Playbook @robot
       @dialogue = @playbook.dialogue @res
-      unmute()
 
     it 'creates Dialogue instance', ->
       @dialogue.should.be.instanceof Dialogue
@@ -196,14 +177,12 @@ describe '#Playbook', ->
   describe '.shutdown', ->
 
     beforeEach ->
-      unmute = mute()
       @playbook = new Playbook @robot
       @dialogue = @playbook.dialogue @res
       @scene = @playbook.scene()
       @endSpy = sinon.spy @dialogue, 'end'
       @exitSpy = sinon.spy @scene, 'exitAll'
       @playbook.shutdown()
-      unmute()
 
     it 'calls .exitAll on scenes', ->
       @exitSpy.should.have.calledOnce

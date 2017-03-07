@@ -5,6 +5,8 @@ hooker = require 'hooker'
 slug = require 'slug'
 {EventEmitter} = require 'events'
 
+# TODO: Add middleware, and method for regular listeners (not for a scene)
+
 # Control listener access, such as, but not limited to, any attached to a scene
 # Can operate as a blacklist or a whitelist, also allowing external logic
 # accepts an authorise function to determine access (lists can overide):
@@ -33,7 +35,7 @@ class Director extends EventEmitter
     @log = @robot.logger
     @names = []
 
-    # take args of the stack in param order, for all optional arguments
+    # take arguments in param order, for all optional arguments
     @key = if _.isString args[0] then @keygen args.shift() else @keygen()
     @authorise = if _.isFunction args[0] then args.shift()
     opts = if _.isObject args[0] then opts = args.shift() else {}
@@ -42,7 +44,7 @@ class Director extends EventEmitter
     @config = _.defaults opts,
       type: 'whitelist'
       scope: 'username'
-      reply: process.env.DENIED_REPLY or "Sorry, I can't do that."
+      deniedReply: process.env.DENIED_REPLY or "Sorry, I can't do that."
 
     # allow setting black/whitelisted names from env var (csv)
     if @config.type is 'whitelist'
@@ -63,10 +65,10 @@ class Director extends EventEmitter
       throw new Error "Invalid scope - accepts only username or room"
 
     @log.info "New #{ @config.scope } Director #{ @config.type }: #{ @key }"
-    if @config.reply?
-      @log.info "replies '#{ @config.reply }' if denied"
+    if @config.deniedReply?
+      @log.info "replies '#{ @config.deniedReply }' if denied"
 
-  # helper used by path, generate key from slugifying or random string
+  # helper, generate key from slugifying source or random string
   keygen: (source) ->
     return if source? then slug source else generate 12
 
@@ -93,7 +95,7 @@ class Director extends EventEmitter
     # hook into .enter to control access for manually entered scenes
     hooker.hook scene, 'enter', pre: (res) =>
       if not @canEnter res
-        res.reply @config.reply if @config.reply? and @config.reply isnt ''
+        res.reply @config.deniedReply if @config.deniedReply not in ['', null]
         return hooker.preempt false
 
   # determine if user has access, checking against usernames and rooms

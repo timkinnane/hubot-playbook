@@ -27,6 +27,10 @@ class Dialogue extends EventEmitter
         'Timed out! Please start again.'
     return @
 
+  # helper, generate key from slugifying source or random string
+  keygen: (source) ->
+    return if source? then slug source else generate 12
+
   startTimeout: ->
     @countdown = setTimeout () =>
       @emit 'timeout'
@@ -49,11 +53,6 @@ class Dialogue extends EventEmitter
     else
       @send @config.timeoutLine if @config.timeoutLine?
     return
-
-  # helper used by path, generate key from slugifying or random string
-  keygen: (source) ->
-    key = if source? then slug source else generate 12
-    return key
 
   # add a dialogue path - a prompt with one or more branches to follow
   # @param opts.prompt, (optional) string to send presenting the branches
@@ -155,7 +154,7 @@ class Dialogue extends EventEmitter
   # Send response using original response object
   # Address the participants appropriately (i.e. @user reply or send to channel)
   send: (line) ->
-    if @config.reply then @res.reply line else @res.send line
+    if @config.sendReplies then @res.reply line else @res.send line
     @record 'send', 'bot', line
     return
 

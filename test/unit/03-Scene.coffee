@@ -20,10 +20,11 @@ describe '#Scene', ->
   # create room and initiate a response to test with
   beforeEach ->
     @room = helper.createRoom name: 'testing'
-    @robot = @room.robot
     @observer = new Observer @room.messages
+    @robot = @room.robot
     @robot.on 'respond', (res) => @res = res # store every response sent
     @robot.on 'receive', (res) => @rec = res # store every message received
+    @robot.logger.info = @robot.logger.debug = -> # silence
     @spy = _.mapObject Scene.prototype, (val, key) ->
       sinon.spy Scene.prototype, key # spy on all the class methods
     @room.user.say 'tester', 'hubot ping' # trigger first response
@@ -37,7 +38,7 @@ describe '#Scene', ->
     context 'without type or options', ->
 
       beforeEach ->
-        delete process.env.REPLY_DEFAULT # prevent interference
+        delete process.env.SEND_REPLIES # prevent interference
         namespace = Scene: require "../../src/modules/Scene"
         @constructor = sinon.spy namespace, 'Scene'
         @scene = new namespace.Scene @robot
@@ -53,26 +54,26 @@ describe '#Scene', ->
         # length is 2 because of test helper middleware added by ping.coffee
 
       it 'stores config object with default reply setting', ->
-        @scene.config.should.eql { reply: false }
+        @scene.config.should.eql { sendReplies: false }
 
     context 'without type or options, environment overriding reply setting', ->
 
       beforeEach ->
-        process.env.REPLY_DEFAULT = true
+        process.env.SEND_REPLIES = true
         @scene = new Scene @robot
 
       afterEach ->
-        delete process.env.REPLY_DEFAULT
+        delete process.env.SEND_REPLIES
 
       it 'stores config object with overriden reply setting', ->
-        @scene.config.should.eql { reply: true }
+        @scene.config.should.eql { sendReplies: true }
 
     context 'without type, with options', ->
 
       beforeEach ->
         namespace = Scene: require "../../src/modules/Scene"
         @constructor = sinon.spy namespace, 'Scene'
-        @scene = new namespace.Scene @robot, reply: true
+        @scene = new namespace.Scene @robot, sendReplies: true
 
         it 'does not throw when given options without type', ->
           @constructor.should.not.have.threw
@@ -81,7 +82,7 @@ describe '#Scene', ->
           @scene.type.should.equal 'user'
 
         it 'stored options in config object', ->
-          @scene.config.reply.should.be.true
+          @scene.config.sendReplies.should.be.true
 
     context 'with type (room), without options', ->
 
@@ -97,57 +98,148 @@ describe '#Scene', ->
         @scene.type.should.equal 'room'
 
       it 'stores config with default options for type', ->
-        @scene.config.reply.should.be.true
+        @scene.config.sendReplies.should.be.true
 
     context 'with invalid type', ->
 
       beforeEach ->
-        unmute = mute()
         namespace = Scene: require "../../src/modules/Scene"
         try
           @constructor = sinon.spy namespace, 'Scene'
           @scene = new namespace.Scene @robot, 'monkey'
-        unmute()
 
       it 'throws error when given invalid type', ->
         @constructor.should.have.threw
 
+  describe '.keygen', ->
+
+    context 'with a source string', ->
+
+      beforeEach ->
+        @scene = new Scene @robot
+        @result = @scene.keygen '%.test @# String!'
+
+      it 'converts or removes unsafe characters', ->
+        @result.should.equal 'test-String'
+
+    context 'without source', ->
+
+      beforeEach ->
+        @scene = new Scene @robot
+        @result = @scene.keygen()
+
+      it 'creates a string of 12 random characters', ->
+        @result.length.should.equal 12
+
   describe '.listen', ->
 
-    beforeEach (done) ->
-      unmute = mute()
-      @cbSpy = sinon.spy()
-      cbSpy = @cbSpy
+    beforeEach ->
+      callback = @callback = sinon.spy()
       @scene = new Scene @robot, 'user'
       @robot.hear /.*/, (@res) => null # get any response for comparison
-      @robotHear = sinon.spy @robot, 'hear'
-      @scene.listen 'hear', /test/, (res) ->
-        cbSpy @, res
-        done()
-        unmute()
-      @room.user.say 'tester', 'test'
-      return
+      @robotHear = sinon.spy @robot, 'hear' # spy any further listeners
+      @robotRespond = sinon.spy @robot, 'respond'
 
-    it 'registers a robot listener with regex and callback', ->
-      @robotHear.getCall(0).should.be.calledWith /test/, sinon.match.func
+    context 'with hear type and message matching regex', ->
 
-    it 'calls the enter callback from listener', ->
-      @cbSpy.should.have.calledOnce
+      beforeEach ->
+        callback = @callback
+        @id = @scene.listen 'hear', /test/, (res) -> callback @, res
+        @room.user.say 'tester', 'test'
+        Q.delay 15
 
-    it 'creates Dialogue instance, replaces "this" in callback', ->
-      @cbSpy.args[0][0].should.be.instanceof Dialogue
+      it 'registers a robot hear listener with regex, id and callback', ->
+        @robotHear.should.be.calledWith /test/, id: @id, sinon.match.func
 
-    it 'passes response object from listener', ->
-      @cbSpy.args[0][1].should.eql @res
+      it 'calls the given callback from listener', ->
+        @callback.should.have.calledOnce
 
-    it 'stores the listener type and regex', ->
-      @scene.listeners[0].should.eql ['hear', /test/]
+      it 'creates Dialogue instance, replaces "this" in callback', ->
+        @callback.args[0][0].should.be.instanceof Dialogue
+
+      it 'passes response object from listener to callback', ->
+        @callback.args[0][1].should.eql @res
+
+    context 'with respond type and message matching regex', ->
+
+      beforeEach ->
+        callback = @callback
+        @id = @scene.listen 'respond', /test/, (res) -> callback @, res
+        @room.user.say 'tester', 'hubot test'
+        Q.delay 15
+
+      it 'registers a robot respond listener with regex, id and callback', ->
+        @robotRespond.should.be.calledWith /test/, id: @id, sinon.match.func
+
+      it 'calls the given callback from listener', ->
+        @callback.should.have.calledOnce
+
+      it 'creates Dialogue instance, replaces "this" in callback', ->
+        @callback.args[0][0].should.be.instanceof Dialogue
+
+      it 'passes response object from listener to callback', ->
+        @callback.args[0][1].should.eql @res
+
+    context 'without an id string', ->
+
+      beforeEach ->
+        @id = @scene.listen 'hear', /test/, (res) ->
+
+      it 'calls keygen to generate a key', ->
+        @scene.keygen.should.have.calledWith()
+
+      it 'stores the listener id, type and regex', ->
+        @scene.listeners[0].should.eql
+          id: @id
+          type: 'hear'
+          regex: /test/
+
+      it 'returns the generated id', ->
+        @id.should.equal @scene.keygen.returnValues[0]
+
+    context 'with an id string', ->
+
+      beforeEach ->
+        @id = @scene.listen 'hear', /test/, 'foo', -> null
+
+      it 'calls keygen with given key string', ->
+        @scene.keygen.should.have.calledWith 'foo'
+
+      it 'stores the listener id, type and regex', ->
+        @scene.listeners[0].should.eql
+          id: 'foo'
+          type: 'hear'
+          regex: /test/
+
+    context 'with an invalid type', ->
+
+      beforeEach ->
+        try @listenID = @scene.listen 'smell', /test/, -> null
+
+      it 'trhows an error', ->
+        @spy.listen.should.have.threw
+
+    context 'with an invalid regex', ->
+
+      beforeEach ->
+        try @listenID = @scene.listen 'hear', 'test', -> null
+
+      it 'trhows an error', ->
+        @spy.listen.should.have.threw
+
+    context 'with an invalid callback', ->
+
+      beforeEach ->
+        try @listenID = @scene.listen 'hear', /test/, { not: 'a function '}
+
+      it 'trhows an error', ->
+        @spy.listen.should.have.threw
 
   describe '.hear', ->
 
     beforeEach ->
       @scene = new Scene @robot, 'user'
-      @scene.hear /test/, (res) ->
+      @scene.hear /test/, -> null
 
     it 'calls .listen with hear listen type and arguments', ->
       args = ['hear', /test/, sinon.match.func]
@@ -157,7 +249,7 @@ describe '#Scene', ->
 
     beforeEach ->
       @scene = new Scene @robot, 'user'
-      @scene.respond /test/, (res) ->
+      @scene.respond /test/, -> null
 
     it 'calls .listen with respond listen type and arguments', ->
       args = ['respond', /test/, sinon.match.func]
@@ -183,10 +275,10 @@ describe '#Scene', ->
       it 'returns the room ID', ->
         @result.should.equal 'testing'
 
-    context 'userRoom scene', ->
+    context 'direct scene', ->
 
       beforeEach ->
-        @scene = new Scene @robot, 'userRoom'
+        @scene = new Scene @robot, 'direct'
         @result = @scene.whoSpeaks @res
 
       it 'returns the concatenated username and room ID', ->
@@ -197,10 +289,8 @@ describe '#Scene', ->
     context 'user scene', ->
 
       beforeEach ->
-        unmute = mute()
         @scene = new Scene @robot, 'user'
         @dialogue = @scene.enter @res
-        unmute()
 
       it 'saves engaged Dialogue instance with username key', ->
         @scene.engaged['tester'].should.be.instanceof Dialogue
@@ -208,21 +298,17 @@ describe '#Scene', ->
     context 'room scene', ->
 
       beforeEach ->
-        unmute = mute()
         @scene = new Scene @robot, 'room'
         @dialogue = @scene.enter @res
-        unmute()
 
       it 'saves engaged Dialogue instance with room key', ->
         @scene.engaged['testing'].should.be.instanceof Dialogue
 
-    context 'userRoom scene', ->
+    context 'direct scene', ->
 
       beforeEach ->
-        unmute = mute()
-        @scene = new Scene @robot, 'userRoom'
+        @scene = new Scene @robot, 'direct'
         @dialogue = @scene.enter @res
-        unmute()
 
       it 'saves engaged Dialogue instance with composite key', ->
         @scene.engaged['tester_testing'].should.be.instanceof Dialogue
@@ -230,12 +316,10 @@ describe '#Scene', ->
     context 'with timeout options', ->
 
       beforeEach ->
-        unmute = mute()
         @scene = new Scene @robot
         @dialogue = @scene.enter @res,
           timeout: 100
           timeoutLine: 'foo'
-        unmute()
 
       it 'passes the options to dialogue config', ->
         @dialogue.config.timeout.should.equal 100
@@ -244,14 +328,11 @@ describe '#Scene', ->
     context 'dialogue allowed to timeout after branch added', ->
 
       beforeEach (done) ->
-        unmute = mute()
         @scene = new Scene @robot
         @dialogue = @scene.enter @res,
           timeout: 10,
           timeoutLine: null
-        @dialogue.on 'end', ->
-          unmute()
-          done()
+        @dialogue.on 'end', -> done()
         @dialogue.branch /.*/, ''
 
       it 'calls .exit first on "timeout"', ->
@@ -263,13 +344,11 @@ describe '#Scene', ->
     context 'dialogue completed (by message matching branch)', ->
 
       beforeEach ->
-        unmute = mute()
         @scene = new Scene @robot
         @dialogue = @scene.enter @res
         @dialogue.branch /.*/, '' # match anything
         @room.user.say 'tester', 'test'
         @room.user.say 'tester', 'testing again'
-        .then -> unmute()
 
       it 'calls .exit once with "complete"', ->
         @spy.exit.should.have.calledWith @res, 'complete'
@@ -280,11 +359,9 @@ describe '#Scene', ->
     context 're-enter currently engaged participants', ->
 
       beforeEach ->
-        unmute = mute()
         @scene = new Scene @robot
         @dialogueA = @scene.enter @res
         @dialogueB = @scene.enter @res
-        unmute()
 
       it 'returns null the second time', ->
         should.equal @dialogueB, null
@@ -292,12 +369,10 @@ describe '#Scene', ->
     context 're-enter previously engaged participants', ->
 
       beforeEach ->
-        unmute = mute()
         @scene = new Scene @robot
         @dialogueA = @scene.enter @res
         @scene.exit @res # no reason given
         @dialogueB = @scene.enter @res
-        unmute()
 
       it 'returns Dialogue instance (as per normal)', ->
         @dialogueB.should.be.instanceof Dialogue
@@ -307,7 +382,6 @@ describe '#Scene', ->
     context 'with user in scene, called manually', ->
 
       beforeEach ->
-        unmute = mute()
         @scene = new Scene @robot
         @dialogue = @scene.enter @res, timeout: 10
         @dialogue.branch /.*/, '' # starts timeout
@@ -315,8 +389,6 @@ describe '#Scene', ->
         @dialogue.onTimeout => @timeout()
         @result = @scene.exit @res, 'testing'
         Q.delay 15
-        .then ->
-          unmute()
 
       it 'does not call onTimeout on dialogue', ->
         @timeout.should.not.have.called
@@ -330,12 +402,9 @@ describe '#Scene', ->
     context 'with user in scene, called from events', ->
 
       beforeEach (done) ->
-        unmute = mute()
         @scene = new Scene @robot
         @dialogue = @scene.enter @res, timeout: 10
-        @dialogue.on 'end', ->
-          unmute()
-          done()
+        @dialogue.on 'end', -> done()
         @dialogue.branch /.*/, '' # starts timeout
 
       it 'gets called twice (on timeout and end)', ->
@@ -361,7 +430,6 @@ describe '#Scene', ->
     context 'with two users in scene', ->
 
       beforeEach ->
-        unmute = mute()
         @scene = new Scene @robot
         @room.user.say 'testerA', 'hubot ping' # trigger new response
         .then => @dialogueA = @scene.enter @res
@@ -371,7 +439,6 @@ describe '#Scene', ->
           @clearA = sinon.spy @dialogueA, 'clearTimeout'
           @clearB = sinon.spy @dialogueB, 'clearTimeout'
           @scene.exitAll()
-          unmute()
 
       it 'created two dialogues', ->
         @dialogueA.should.be.instanceof Dialogue
@@ -389,11 +456,9 @@ describe '#Scene', ->
     context 'with user in scene', ->
 
       beforeEach ->
-        unmute = mute()
         @scene = new Scene @robot
         @dialogue = @scene.enter @res
         @result = @scene.dialogue 'tester'
-        unmute()
 
       it 'returns the matching dialogue', ->
         @result.should.eql @dialogue
@@ -412,12 +477,10 @@ describe '#Scene', ->
     context 'in engaged user scene', ->
 
       beforeEach ->
-        unmute = mute()
         @scene = new Scene @robot
         @scene.enter @res
         @userEngaged = @scene.inDialogue 'tester'
         @roomEngaged = @scene.inDialogue 'testing'
-        unmute()
 
       it 'returns true with username', ->
         @userEngaged.should.be.true
@@ -437,12 +500,10 @@ describe '#Scene', ->
     context 'room scene, in scene', ->
 
       beforeEach ->
-        unmute = mute()
         @scene = new Scene @robot, 'room'
         @scene.enter @res
         @roomEngaged = @scene.inDialogue 'testing'
         @userEngaged = @scene.inDialogue 'tester'
-        unmute()
 
       it 'returns true with roomname', ->
         @roomEngaged.should.be.true
@@ -450,19 +511,17 @@ describe '#Scene', ->
       it 'returns false with username', ->
         @userEngaged.should.be.false
 
-    context 'userRoom scene, in scene', ->
+    context 'direct scene, in scene', ->
 
       beforeEach ->
-        unmute = mute()
-        @scene = new Scene @robot, 'userRoom'
+        @scene = new Scene @robot, 'direct'
         @scene.enter @res
         @roomEngaged = @scene.inDialogue 'testing'
         @userEngaged = @scene.inDialogue 'tester'
-        @userRoomEngaged = @scene.inDialogue 'tester_testing'
-        unmute()
+        @directEngaged = @scene.inDialogue 'tester_testing'
 
       it 'returns true with ${username}_${roomID}', ->
-        @userRoomEngaged.should.be.true
+        @directEngaged.should.be.true
 
       it 'returns false with roomname', ->
         @roomEngaged.should.be.false
