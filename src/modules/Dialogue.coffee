@@ -3,10 +3,9 @@
 # TODO: save transcript to brain (here or in scene)
 
 _ = require 'underscore'
-{generate} = require 'randomstring'
-slug = require 'slug'
 {inspect} = require 'util'
 {EventEmitter} = require 'events'
+{keygen} = require './Helpers'
 
 # multiple-choice dialogue interactions
 # the timeout will trigger a timeout message if nothing matches in time
@@ -26,10 +25,6 @@ class Dialogue extends EventEmitter
       timeoutLine: process.env.DIALOGUE_TIMEOUT_LINE or
         'Timed out! Please start again.'
     return @
-
-  # helper, generate key from slugifying source or random string
-  keygen: (source) ->
-    return if source? then slug source else generate 12
 
   startTimeout: ->
     @countdown = setTimeout () =>
@@ -64,7 +59,7 @@ class Dialogue extends EventEmitter
     opts = branches: opts if _.isArray opts # move branches array into property
 
     # generate key if not provided and make sure its unique
-    opts.key ?= @keygen opts.prompt
+    opts.key ?= keygen opts.prompt
     if opts.key in _.keys @paths
       @log.error "Path key '#{ opts.key }' already exists, cannot overwrite"
       return false

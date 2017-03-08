@@ -1,9 +1,9 @@
 # credit to lmarkus/hubot-conversation for the original concept
 _ = require 'underscore'
 {inspect} = require 'util'
-{generate} = require 'randomstring'
-slug = require 'slug'
+
 Dialogue = require './Dialogue'
+{keygen} = require './Helpers'
 
 # Fix listener ID to include scene. namespace
 
@@ -44,10 +44,6 @@ class Scene
     # scene middleware routes all messages to engaged participants
     @robot.receiveMiddleware (c, n, d) => @middleware @, c, n, d
 
-  # helper, generate key from slugifying source or random string
-  keygen: (source) ->
-    return if source? then slug source else generate 12
-
   # not called as method, but copied as a property
   middleware: (scene, context, next, done) =>
     res = context.response
@@ -75,7 +71,7 @@ class Scene
     throw new Error "Invalid regex for listener" if not _.isRegExp regex
 
     # id is optional
-    id = if _.isString args[0] then @keygen args.shift() else @keygen()
+    id = if _.isString args[0] then keygen args.shift() else keygen()
 
     # last arg taken as callback (required)
     callback = args.shift()

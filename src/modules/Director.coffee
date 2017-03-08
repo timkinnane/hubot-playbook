@@ -1,9 +1,9 @@
 _ = require 'underscore'
 hooker = require 'hooker'
 {inspect} = require 'util'
-{generate} = require 'randomstring'
-slug = require 'slug'
 {EventEmitter} = require 'events'
+
+keygen = require './keygen'
 
 # TODO: Add middleware, and method for regular listeners (not for a scene)
 
@@ -36,7 +36,7 @@ class Director extends EventEmitter
     @names = []
 
     # take arguments in param order, for all optional arguments
-    @key = if _.isString args[0] then @keygen args.shift() else @keygen()
+    @key = if _.isString args[0] then keygen args.shift() else keygen()
     @authorise = if _.isFunction args[0] then args.shift()
     opts = if _.isObject args[0] then opts = args.shift() else {}
 
@@ -68,10 +68,6 @@ class Director extends EventEmitter
     if @config.deniedReply?
       @log.info "replies '#{ @config.deniedReply }' if denied"
 
-  # helper, generate key from slugifying source or random string
-  keygen: (source) ->
-    return if source? then slug source else generate 12
-
   # merge new usernames/rooms with listed names
   add: (names) ->
     @log.info "Adding #{ inspect names } to #{ @key } #{ @config.type }"
@@ -95,6 +91,7 @@ class Director extends EventEmitter
     # hook into .enter to control access for manually entered scenes
     hooker.hook scene, 'enter', pre: (res) =>
       if not @canEnter res
+        @emit 'denied', res, scene
         res.reply @config.deniedReply if @config.deniedReply not in ['', null]
         return hooker.preempt false
 

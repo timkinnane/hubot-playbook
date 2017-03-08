@@ -13,6 +13,7 @@ Dialogue = require '../../src/modules/Dialogue'
 Scene = require '../../src/modules/Scene'
 Director = require '../../src/modules/Director'
 Playbook = require '../../src/Playbook'
+{keygen} = require '../../src/modules/Helpers'
 
 describe '#Director', ->
 
@@ -20,6 +21,7 @@ describe '#Director', ->
   beforeEach ->
     @room = helper.createRoom name: 'testing'
     @robot = @room.robot
+    @keygen = sinon.spy keygen
     @robot.on 'respond', (res) => @res = res # store every response sent
     @robot.on 'receive', (res) => @rec = res # store every message received
     @robot.logger.info = @robot.logger.debug = -> # silence
@@ -53,7 +55,7 @@ describe '#Director', ->
           deniedReply: "Sorry, I can't do that."
 
       it 'calls keygen to create a random key', ->
-        @spy.keygen.getCall(0).should.have.calledWith()
+        @keygen.getCall(0).should.have.calledWith()
 
       it 'stores the generated key as an attribute', ->
         @director.key.length.should.equal 12
@@ -64,7 +66,7 @@ describe '#Director', ->
         @director = new Director @robot, 'Orson Welles'
 
       it 'calls keygen with provided source', ->
-        @spy.keygen.getCall(0).should.have.calledWith 'Orson Welles'
+        @keygen.getCall(0).should.have.calledWith 'Orson Welles'
 
       it 'stores the slugified source key as an attribute', ->
         @director.key.should.equal 'Orson-Welles'
@@ -207,30 +209,10 @@ describe '#Director', ->
           scope: 'room'
 
       it 'uses key', ->
-        @director.keygen.should.have.calledWith 'Metal Face'
+        @keygen.should.have.calledWith 'Metal Face'
 
       it 'uses options', ->
         @director.config.scope.should.equal 'room'
-
-  describe '.keygen', ->
-
-    context 'with a source string', ->
-
-      beforeEach ->
-        @director = new Director @robot
-        @result = @director.keygen '%.test @# String!'
-
-      it 'converts or removes unsafe characters', ->
-        @result.should.equal 'test-String'
-
-    context 'without source', ->
-
-      beforeEach ->
-        @director = new Director @robot
-        @result = @director.keygen()
-
-      it 'creates a string of 12 random characters', ->
-        @result.length.should.equal 12
 
   describe '.add', ->
 

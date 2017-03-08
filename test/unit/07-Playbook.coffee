@@ -11,6 +11,7 @@ Helper = require 'hubot-test-helper'
 helper = new Helper "../scripts/ping.coffee"
 Dialogue = require '../../src/modules/Dialogue'
 Scene = require '../../src/modules/Scene'
+Director = require '../../src/modules/Director'
 Playbook = require '../../src/Playbook'
 
 describe '#Playbook', ->
@@ -44,6 +45,18 @@ describe '#Playbook', ->
     it 'has an empty array of dialogues', ->
       @playbook.dialogues.should.eql []
 
+  describe '.director', ->
+
+    beforeEach ->
+      @playbook = new Playbook @robot
+      @director = @playbook.director()
+
+    it 'creates and returns director', ->
+      @director.should.be.instanceof Director
+
+    it 'stores it in the directors array', ->
+      @playbook.directors[0].should.eql @director
+
   describe '.scene', ->
 
     beforeEach ->
@@ -53,8 +66,8 @@ describe '#Playbook', ->
     it 'makes a Scene :P', ->
       @scene.should.be.instanceof Scene
 
-    it 'does not throw any errors', ->
-      @spy.scene.should.not.have.threw
+    it 'stores it in the scenes array', ->
+      @playbook.scenes[0].should.eql @scene
 
   describe '.sceneEnter', ->
 

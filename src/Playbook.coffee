@@ -3,7 +3,6 @@ Dialogue = require './modules/Dialogue'
 Scene = require './modules/Scene'
 
 # TODO: Add methods for creating and assigning Director to Scene
-
 # TODO: Refactor class and usage as singleton
 
 # A container class for modules provided by the Playbook library
@@ -12,8 +11,14 @@ class Playbook
   constructor: (@robot) ->
     @log = @robot.logger
     @log.info 'Playbook starting up'
+    @directors = []
     @scenes = []
     @dialogues = []
+
+  # create and return director
+  director: (args...) ->
+    @director.push new Director, @robot, args...
+    return _.last @director
 
   # create and return scene
   scene: (type) ->

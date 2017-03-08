@@ -10,13 +10,13 @@ chai.use require 'sinon-chai'
 Helper = require 'hubot-test-helper'
 helper = new Helper '../scripts/ping.coffee'
 Observer = require '../utils/observer'
-
 Dialogue = require '../../src/modules/Dialogue'
 {EventEmitter} = require 'events'
 Timeout = setTimeout () ->
   null
 , 0
 .constructor # get the null Timeout prototype instance for comparison
+{keygen} = require '../../src/modules/Helpers'
 
 # prevent environment changing tests
 delete process.env.DIALOGUE_TIMEOUT
@@ -29,6 +29,7 @@ describe '#Dialogue', ->
     @room = helper.createRoom()
     @observer = new Observer @room.messages
     @robot = @room.robot
+    @keygen = sinon.spy keygen
     @robot.on 'respond', (res) => @res = res # store every response sent
     @robot.on 'receive', (res) => @rec = res # store every message received
     @spy = _.mapObject Dialogue.prototype, (val, key) ->
@@ -134,26 +135,6 @@ describe '#Dialogue', ->
       it 'calls .end', ->
         @spy.end.should.have.calledOnce
 
-  describe '.keygen', ->
-
-    context 'with a source string', ->
-
-      beforeEach ->
-        @dialogue = new Dialogue @res
-        @result = @dialogue.keygen '%.test @# String!'
-
-      it 'converts or removes unsafe characters', ->
-        @result.should.equal 'test-String'
-
-    context 'without source', ->
-
-      beforeEach ->
-        @dialogue = new Dialogue @res
-        @result = @dialogue.keygen()
-
-      it 'creates a string of 12 random characters', ->
-        @result.length.should.equal 12
-
   describe '.path', ->
 
     beforeEach ->
@@ -173,7 +154,7 @@ describe '#Dialogue', ->
           key: 'which-way'
 
       it 'does not create a key', ->
-        @spy.keygen.should.not.have.called
+        @keygen.should.not.have.called
 
       it 'clears branches', ->
         @spy.clearBranches.should.have.calledOnce
@@ -219,7 +200,7 @@ describe '#Dialogue', ->
           ]
 
       it 'creates a key from the prompt', ->
-        @spy.keygen.should.have.calledWith 'Pick door 1 or 2?'
+        @keygen.should.have.calledWith 'Pick door 1 or 2?'
 
       it 'returns generated key (prompt slug)', ->
         @result.should.equal 'Pick-door-1-or-2'
@@ -243,7 +224,7 @@ describe '#Dialogue', ->
           ]
 
       it 'creates a random key', ->
-        @spy.keygen.should.have.calledWith()
+        @keygen.should.have.calledWith()
 
       it 'creates branches with branch property array elements', ->
         @spy.branch.should.have.calledWith /1/, 'You get cake!'
@@ -270,7 +251,7 @@ describe '#Dialogue', ->
         ]
 
       it 'creates a random key', ->
-        @spy.keygen.should.have.calledWith()
+        @keygen.should.have.calledWith()
 
       it 'creates branches with array elements', ->
         @spy.branch.should.have.calledWith /1/, 'You get cake!'

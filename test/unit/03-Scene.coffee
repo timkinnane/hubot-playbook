@@ -10,10 +10,11 @@ should = chai.should()
 chai.use require 'sinon-chai'
 
 Helper = require 'hubot-test-helper'
-helper = new Helper "../scripts/ping.coffee"
+helper = new Helper '../scripts/ping.coffee'
 Observer = require '../utils/observer'
-Dialogue = require "../../src/modules/Dialogue"
-Scene = require "../../src/modules/Scene"
+Dialogue = require '../../src/modules/Dialogue'
+Scene = require '../../src/modules/Scene'
+{keygen} = require '../../src/modules/Helpers'
 
 describe '#Scene', ->
 
@@ -22,6 +23,7 @@ describe '#Scene', ->
     @room = helper.createRoom name: 'testing'
     @observer = new Observer @room.messages
     @robot = @room.robot
+    @keygen = sinon.spy keygen
     @robot.on 'respond', (res) => @res = res # store every response sent
     @robot.on 'receive', (res) => @rec = res # store every message received
     @robot.logger.info = @robot.logger.debug = -> # silence
@@ -111,26 +113,6 @@ describe '#Scene', ->
       it 'throws error when given invalid type', ->
         @constructor.should.have.threw
 
-  describe '.keygen', ->
-
-    context 'with a source string', ->
-
-      beforeEach ->
-        @scene = new Scene @robot
-        @result = @scene.keygen '%.test @# String!'
-
-      it 'converts or removes unsafe characters', ->
-        @result.should.equal 'test-String'
-
-    context 'without source', ->
-
-      beforeEach ->
-        @scene = new Scene @robot
-        @result = @scene.keygen()
-
-      it 'creates a string of 12 random characters', ->
-        @result.length.should.equal 12
-
   describe '.listen', ->
 
     beforeEach ->
@@ -186,7 +168,7 @@ describe '#Scene', ->
         @id = @scene.listen 'hear', /test/, (res) ->
 
       it 'calls keygen to generate a key', ->
-        @scene.keygen.should.have.calledWith()
+        @keygen.should.have.calledWith()
 
       it 'stores the listener id, type and regex', ->
         @scene.listeners[0].should.eql
@@ -195,7 +177,7 @@ describe '#Scene', ->
           regex: /test/
 
       it 'returns the generated id', ->
-        @id.should.equal @scene.keygen.returnValues[0]
+        @id.should.equal @keygen.returnValues[0]
 
     context 'with an id string', ->
 
@@ -203,7 +185,7 @@ describe '#Scene', ->
         @id = @scene.listen 'hear', /test/, 'foo', -> null
 
       it 'calls keygen with given key string', ->
-        @scene.keygen.should.have.calledWith 'foo'
+        @keygen.should.have.calledWith 'foo'
 
       it 'stores the listener id, type and regex', ->
         @scene.listeners[0].should.eql
