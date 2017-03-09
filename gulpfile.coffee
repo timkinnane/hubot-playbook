@@ -32,7 +32,6 @@ options = minimist process.argv.slice(2), knownOptions
 if options.modules isnt 'all'
   paths.source = ["./src/**/*#{ options.modules }*.coffee"]
   paths.tests = ["./test/unit/**/*#{ options.modules }*.coffee"]
-console.log paths.tests
 
 gulp.task 'lint', ->
   gulp.src paths.lint
@@ -40,7 +39,7 @@ gulp.task 'lint', ->
   .pipe $.coffeelint.reporter()
   .pipe $.coffeelint.reporter 'fail'
 
-gulp.task 'clean', ['lint'], del.bind null, ['./coverage']
+gulp.task 'clean', ['lint'], -> del.bind null, ['./coverage']
 
 gulp.task 'coverage', ['clean'], (done) ->
   gulp.src paths.source
@@ -48,13 +47,13 @@ gulp.task 'coverage', ['clean'], (done) ->
   .pipe $.coffeeIstanbul.hookRequire()
   .on 'finish', ->
     gulp.src paths.tests, cwd: __dirname
-      .pipe $.if(!boolifyString(process.env.CI), $.plumber())
-      .pipe $.mocha()
-      .pipe $.coffeeIstanbul.writeReports({ dir: './coverage' })
-      .on 'finish', ->
-        process.chdir __dirname
-        done()
-  undefined
+    .pipe $.if(!boolifyString(process.env.CI), $.plumber())
+    .pipe $.mocha()
+    .pipe $.coffeeIstanbul.writeReports({ dir: './coverage' })
+    .on 'finish', ->
+      process.chdir __dirname
+      done()
+  return
 
 gulp.task 'watch', ['test'], -> gulp.watch paths.watch, ['test']
 

@@ -3,7 +3,7 @@ hooker = require 'hooker'
 {inspect} = require 'util'
 {EventEmitter} = require 'events'
 
-keygen = require './keygen'
+{keygen} = require './Helpers'
 
 # TODO: Add middleware, and method for regular listeners (not for a scene)
 

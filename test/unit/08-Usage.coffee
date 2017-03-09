@@ -185,5 +185,3 @@ describe 'Playbook usage (messaging test cases)', ->
           [ '#A', 'nima', "Nima in A" ],
           [ '#A', 'hubot', "Hello Nima in A" ],
         ]
-
-# TODO: examples from hubot-conversation and strato index

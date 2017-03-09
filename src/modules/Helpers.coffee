@@ -1,16 +1,12 @@
-{generate} = require 'randomstring'
+_ = require 'underscore'
 slug = require 'slug'
 
-ids = [] # list of used id strings to avoid dupes
-
-# helpers used by various Playbook modules
 module.exports =
 
-  # return key from slugifying source string or generated random
-  keygen: (source) ->
-    if source?
-      return slug source if slug source not in keys
-      throw new Error "Key already exists for #{ slug source }"
-    else
-      random = generate 8 while random not in keys
-      return random
+  # get a unique key for a defined context (scope), randomly if not given source
+  # @param scope {String} namespace for identifying key usage
+  # @param source {String} (optional) to be "slugified" into a safe key string
+  keygen: (scope, source) ->
+    throw new Error "Key requires a scope param" if not (scope? or source?)
+    scope = "#{scope}_#{source}" if scope? and source? # join namespaces
+    return _.uniqueId "#{ slug scope }_"

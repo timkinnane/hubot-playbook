@@ -5,6 +5,7 @@
 _ = require 'underscore'
 {inspect} = require 'util'
 {EventEmitter} = require 'events'
+
 {keygen} = require './Helpers'
 
 # multiple-choice dialogue interactions
@@ -15,7 +16,7 @@ class Dialogue extends EventEmitter
   constructor: (@res, opts={}) ->
     @log = @res.robot.logger
     @paths = {} # builds as dialogue progresses
-    @pathKey = null # pointer for current path
+    @pathId = null # pointer for current path
     @branches = [] # branch options within current path
     @ended = false # state of dialogue completion
 
@@ -58,23 +59,20 @@ class Dialogue extends EventEmitter
   path: (opts) ->
     opts = branches: opts if _.isArray opts # move branches array into property
 
-    # generate key if not provided and make sure its unique
-    opts.key ?= keygen opts.prompt
-    if opts.key in _.keys @paths
-      @log.error "Path key '#{ opts.key }' already exists, cannot overwrite"
-      return false
+    # generate unique id (using source string if key or prompt given)
+    @pathId = keygen 'path', opts.key or opts.prompt
+    console.log @pathId
 
     # setup new path object and dialogue state
     @clearBranches()
-    @pathKey = opts.key
-    @paths[opts.key] =
+    @paths[@pathId] =
       prompt: opts.prompt
       status: _.map opts.branches, (args) => @branch args...
       transcript: []
 
     # kick-off dialogue exchange
     @send opts.prompt if opts.prompt?
-    return opts.key # allow path to be queried by key
+    return @pathId # allow path to be queried by key
 
   # add a dialogue branch (usually through path) with response and/or callback
   # 1: .branch( regex, response ) reply with response on regex match
@@ -156,7 +154,7 @@ class Dialogue extends EventEmitter
   # record and report sends, matches or mismatches
   # adds interactions to transcript if currently executing a named path
   record: (type, user, content, match, regex) ->
-    @paths[@pathKey].transcript.push [ type, user, content ] if @pathKey?
+    @paths[@pathId].transcript.push [ type, user, content ] if @pathId?
     return switch type
       when 'match'
         @log.debug "Received \"#{ content }\" matched #{ inspect regex }"

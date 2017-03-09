@@ -11,12 +11,11 @@ Helper = require 'hubot-test-helper'
 helper = new Helper '../scripts/ping.coffee'
 Observer = require '../utils/observer'
 Dialogue = require '../../src/modules/Dialogue'
-{EventEmitter} = require 'events'
 Timeout = setTimeout () ->
   null
 , 0
 .constructor # get the null Timeout prototype instance for comparison
-{keygen} = require '../../src/modules/Helpers'
+Helpers = require '../../src/modules/Helpers'
 
 # prevent environment changing tests
 delete process.env.DIALOGUE_TIMEOUT
@@ -29,15 +28,19 @@ describe '#Dialogue', ->
     @room = helper.createRoom()
     @observer = new Observer @room.messages
     @robot = @room.robot
-    @keygen = sinon.spy keygen
     @robot.on 'respond', (res) => @res = res # store every response sent
     @robot.on 'receive', (res) => @rec = res # store every message received
-    @spy = _.mapObject Dialogue.prototype, (val, key) ->
-      sinon.spy Dialogue.prototype, key # spy on all the class methods
-    @room.user.say 'tester', 'hubot ping' # trigger first response
+
+    # spy on all the class and helper methods
+    _.map _.keys(Dialogue.prototype), (key) -> sinon.spy Dialogue.prototype, key
+    _.map _.keys(Helpers), (key) -> sinon.spy Helpers, key
+
+    # trigger first response
+    @room.user.say 'tester', 'hubot ping'
 
   afterEach ->
-    _.invoke @spy, 'restore' # restore all the methods
+    _.map _.keys(Dialogue.prototype), (key) -> Dialogue.prototype[key].restore()
+    _.map _.keys(Helpers), (key) -> Helpers[key].restore()
     @room.destroy()
 
   describe 'constructor', ->
@@ -51,19 +54,12 @@ describe '#Dialogue', ->
       afterEach ->
         @dialogue.end()
 
-      it 'inherits event emmiter', ->
-        @dialogue.should.be.instanceof EventEmitter
-        @dialogue.emit.should.be.a 'function'
-
-      it 'has the logger from response object robot', ->
-        @dialogue.log.should.eql @robot.logger
-
       it 'has empty paths object', ->
         @dialogue.paths.should.be.an 'object'
         _.size(@paths).should.equal 0
 
       it 'has a null value for current path', ->
-        should.equal @dialogue.pathKey, null
+        should.equal @dialogue.pathId, null
 
       it 'has an empty branches array', ->
         @dialogue.branches.should.be.an 'array'
@@ -130,10 +126,10 @@ describe '#Dialogue', ->
         @end.should.have.calledOnce
 
       it 'calls .onTimeout', ->
-        @spy.onTimeout.should.have.calledOnce
+        @dialogue.onTimeout.should.have.calledOnce
 
       it 'calls .end', ->
-        @spy.end.should.have.calledOnce
+        @dialogue.end.should.have.calledOnce
 
   describe '.path', ->
 
@@ -145,7 +141,7 @@ describe '#Dialogue', ->
 
       beforeEach (done) ->
         @observer.next().then -> done() # watch for prompt before proceeding
-        @result = @dialogue.path
+        @pathId = @dialogue.path
           prompt: 'Turn left or right?'
           branches: [
             [ /left/, 'Ok, going left!' ]
@@ -153,33 +149,33 @@ describe '#Dialogue', ->
           ]
           key: 'which-way'
 
-      it 'does not create a key', ->
-        @keygen.should.not.have.called
+      it 'generates a unique id with namespace', ->
+        Helpers.keygen.should.have.calledWith null, 'path'
 
       it 'clears branches', ->
-        @spy.clearBranches.should.have.calledOnce
+        @dialogue.clearBranches.should.have.calledOnce
 
       it 'creates branches with branch property array elements', ->
-        @spy.branch.getCall(0).should.have.calledWith /left/, 'Ok, going left!'
-        @spy.branch.getCall(1).should.have.calledWith /right/, 'Ok, going right!'
+        @dialogue.branch.getCall(0).should.have.calledWith /left/, 'Ok, going left!'
+        @dialogue.branch.getCall(1).should.have.calledWith /right/, 'Ok, going right!'
 
-      it 'returns the key', ->
-        @result.should.equal 'which-way'
+      it 'returns the id using namespace and key', ->
+        @pathId.should.match /^path_which-way/
 
       it 'returned key corresponds to a path object', ->
-        @dialogue.paths[@result].should.be.an.object
-        @dialogue.paths[@result].should.have.property 'prompt'
-        @dialogue.paths[@result].should.have.property 'status'
-        @dialogue.paths[@result].should.have.property 'transcript'
+        @dialogue.paths[@pathId].should.be.an.object
+        @dialogue.paths[@pathId].should.have.property 'prompt'
+        @dialogue.paths[@pathId].should.have.property 'status'
+        @dialogue.paths[@pathId].should.have.property 'transcript'
 
       it 'path object has prompt', ->
-        @dialogue.paths[@result].prompt.should.equal 'Turn left or right?'
+        @dialogue.paths[@pathId].prompt.should.equal 'Turn left or right?'
 
       it 'path object has status of branch adds (both success)', ->
-        @dialogue.paths[@result].status.should.eql [ true, true ]
+        @dialogue.paths[@pathId].status.should.eql [ true, true ]
 
       it 'path object has transcript containing sent prompt', ->
-        @dialogue.paths[@result].transcript.should.eql [[
+        @dialogue.paths[@pathId].transcript.should.eql [[
           'send'
           'bot'
           'Turn left or right?'
@@ -200,7 +196,7 @@ describe '#Dialogue', ->
           ]
 
       it 'creates a key from the prompt', ->
-        @keygen.should.have.calledWith 'Pick door 1 or 2?'
+        Helpers.keygen.should.have.calledWith 'Pick door 1 or 2?', 'path'
 
       it 'returns generated key (prompt slug)', ->
         @result.should.equal 'Pick-door-1-or-2'
@@ -212,7 +208,7 @@ describe '#Dialogue', ->
         @dialogue.paths[@result].should.have.property 'transcript'
 
       it 'sends the prompt', ->
-        @spy.send.should.have.calledWith 'Pick door 1 or 2?'
+        @dialogue.send.should.have.calledWith 'Pick door 1 or 2?', 'path'
 
     context 'without a prompt or key (branches only)', ->
 
@@ -224,11 +220,11 @@ describe '#Dialogue', ->
           ]
 
       it 'creates a random key', ->
-        @keygen.should.have.calledWith()
+        Helpers.keygen.should.have.calledWith null, 'path'
 
       it 'creates branches with branch property array elements', ->
-        @spy.branch.should.have.calledWith /1/, 'You get cake!'
-        @spy.branch.should.have.calledWith /2/, 'You get cake!'
+        @dialogue.branch.should.have.calledWith /1/, 'You get cake!'
+        @dialogue.branch.should.have.calledWith /2/, 'You get cake!'
 
       it 'returned key corresponds to a path object', ->
         @dialogue.paths[@result].should.be.an.object
@@ -237,7 +233,7 @@ describe '#Dialogue', ->
         @dialogue.paths[@result].should.have.property 'transcript'
 
       it 'sends nothing', ->
-        @spy.send.should.not.have.called
+        @dialogue.send.should.not.have.called
 
       it 'path object has empty transcript array', ->
         @dialogue.paths[@result].transcript.should.eql []
@@ -251,11 +247,11 @@ describe '#Dialogue', ->
         ]
 
       it 'creates a random key', ->
-        @keygen.should.have.calledWith()
+        Helpers.keygen.should.have.calledWith null, 'path'
 
       it 'creates branches with array elements', ->
-        @spy.branch.should.have.calledWith /1/, 'You get cake!'
-        @spy.branch.should.have.calledWith /2/, 'You get cake!'
+        @dialogue.branch.should.have.calledWith /1/, 'You get cake!'
+        @dialogue.branch.should.have.calledWith /2/, 'You get cake!'
 
       it 'returned key corresponds to a path object', ->
         @dialogue.paths[@result].should.be.an.object
@@ -264,7 +260,7 @@ describe '#Dialogue', ->
         @dialogue.paths[@result].should.have.property 'transcript'
 
       it 'sends nothing', ->
-        @spy.send.should.not.have.called
+        @dialogue.send.should.not.have.called
 
     context 'twice with the same key', ->
 
@@ -288,7 +284,7 @@ describe '#Dialogue', ->
         @result.should.be.false
 
       it 'clears branches only once', ->
-        @spy.clearBranches.should.have.calledOnce
+        @dialogue.clearBranches.should.have.calledOnce
 
       it 'does not setup new path', ->
         _.size(@dialogue.paths).should.equal 1
@@ -310,10 +306,10 @@ describe '#Dialogue', ->
         @dialogue.branches[0].handler.should.be.a 'function'
 
       it 'does not clear (non-existent) timeout', ->
-        @spy.clearTimeout.should.not.have.called
+        @dialogue.clearTimeout.should.not.have.called
 
       it 'starts the timeout', ->
-        @spy.startTimeout.should.have.calledOnce
+        @dialogue.startTimeout.should.have.calledOnce
         @dialogue.countdown.should.be.instanceof Timeout
 
       it 'returns true', ->
@@ -340,7 +336,7 @@ describe '#Dialogue', ->
         @dialogue.branches[0].handler.should.be.a 'function'
 
       it 'starts the timeout', ->
-        @spy.startTimeout.should.have.calledOnce
+        @dialogue.startTimeout.should.have.calledOnce
         @dialogue.countdown.should.be.instanceof Timeout
 
     context 'with bad arguments', ->
@@ -356,8 +352,8 @@ describe '#Dialogue', ->
         @dialogue.branches.length.should.equal 0
 
       it 'does not clear or start timeout', ->
-        @spy.clearTimeout.should.not.have.called
-        @spy.startTimeout.should.not.have.called
+        @dialogue.clearTimeout.should.not.have.called
+        @dialogue.startTimeout.should.not.have.called
         should.not.exist @dialogue.countdown
 
       it 'returns false', ->
@@ -376,14 +372,14 @@ describe '#Dialogue', ->
         @dialogue.branches.length.should.equal 2
 
       it 'clears and restarts the timeout', ->
-        @spy.clearTimeout.should.have.calledOnce
-        @spy.startTimeout.should.have.calledTwice
+        @dialogue.clearTimeout.should.have.calledOnce
+        @dialogue.startTimeout.should.have.calledTwice
 
     context 'with a handler that adds another branch', ->
 
       beforeEach ->
-        @yesSpy = sinon.spy()
-        @dialogue.branch /confirm/, => @dialogue.branch /yes/, @yesSpy
+        @callback = sinon.spy()
+        @dialogue.branch /confirm/, => @dialogue.branch /yes/, @callback
         @room.user.say 'tester', 'confirm'
 
       it 'has new branch after matching original', ->
@@ -391,7 +387,7 @@ describe '#Dialogue', ->
 
       it 'calls second callback after matching sequence', ->
         @room.user.say 'tester', 'yes'
-        .then => @yesSpy.should.have.calledOnce
+        .then => @callback.should.have.calledOnce
 
     context 'when already ended', ->
 
@@ -413,8 +409,8 @@ describe '#Dialogue', ->
     beforeEach ->
       @dialogue = new Dialogue @res
       @robot.hear /.*/, (res) => @result = @dialogue.receive res # hear all
-      @branchespy = sinon.spy()
-      @dialogue.branch /.*/, @branchespy
+      @callback = sinon.spy()
+      @dialogue.branch /.*/, @callback
       @dialogue.clearBranches()
       @room.user.say 'tester', 'test'
 
@@ -422,7 +418,7 @@ describe '#Dialogue', ->
       @dialogue.branches.length.should.equal 0
 
     it 'does not respond to prior added branches', ->
-      @branchespy.should.not.have.called
+      @callback.should.not.have.called
 
   describe '.receive', ->
 
@@ -445,7 +441,7 @@ describe '#Dialogue', ->
         @room.user.say 'tester', '1'
 
       it 'records the match (with user, line, match, regex)', ->
-        @spy.record.should.have.calledWith 'match',
+        @dialogue.record.should.have.calledWith 'match',
         @rec.message.user,
         '1',
         '1'.match('1'),
@@ -463,7 +459,7 @@ describe '#Dialogue', ->
         @room.user.say 'tester', '2'
 
       it 'records the match (with user, line, match, regex)', ->
-        @spy.record.should.have.calledWith 'match',
+        @dialogue.record.should.have.calledWith 'match',
         @rec.message.user,
         '2',
         '2'.match('2'),
@@ -481,7 +477,7 @@ describe '#Dialogue', ->
         @room.user.say 'tester', '3'
 
       it 'records the match (with user, line, match, regex)', ->
-        @spy.record.should.have.calledWith 'match',
+        @dialogue.record.should.have.calledWith 'match',
         @rec.message.user,
         '3',
         '3'.match('3'),
@@ -494,7 +490,7 @@ describe '#Dialogue', ->
         @room.messages.pop().should.eql [ 'hubot', 'got 3' ]
 
       it 'clears branches after match', ->
-        @spy.clearBranches.should.have.calledOnce
+        @dialogue.clearBranches.should.have.calledOnce
 
     context 'received matching branches consecutively', ->
 
@@ -503,7 +499,7 @@ describe '#Dialogue', ->
         @room.user.say 'tester', '2'
 
       it 'clears branches after first only', ->
-        @spy.clearBranches.should.have.calledOnce
+        @dialogue.clearBranches.should.have.calledOnce
 
       it 'does not reply to the second', ->
         @room.messages.pop().should.eql [ 'hubot', 'got 1' ]
@@ -514,7 +510,7 @@ describe '#Dialogue', ->
         @room.user.say 'tester', '1'
 
       it 'ends dialogue', ->
-        @spy.end.should.have.called
+        @dialogue.end.should.have.called
 
     context 'when branch is not matched', ->
 
@@ -522,12 +518,12 @@ describe '#Dialogue', ->
         @room.user.say 'tester', '?'
 
       it 'records mismatch (with user, line)', ->
-        @spy.record.should.have.calledWith 'mismatch',
+        @dialogue.record.should.have.calledWith 'mismatch',
         @rec.message.user,
         '?'
 
       it 'does not call end', ->
-        @spy.end.should.not.have.called
+        @dialogue.end.should.not.have.called
 
     context 'when already ended', ->
 
@@ -542,7 +538,7 @@ describe '#Dialogue', ->
         @handler1.should.not.have.called
 
       it 'does not record anything', ->
-        @spy.record.should.not.have.called
+        @dialogue.record.should.not.have.called
 
   describe '.send', ->
 
@@ -646,7 +642,7 @@ describe '#Dialogue', ->
         @end.should.have.calledWith false
 
       it 'clears the timeout', ->
-        @spy.clearTimeout.should.have.calledOnce
+        @dialogue.clearTimeout.should.have.calledOnce
 
     context 'when triggered by last branch match', ->
 
@@ -660,7 +656,7 @@ describe '#Dialogue', ->
         @dialogue.ended.should.be.true
 
       it 'clears the timeout only once (from match)', ->
-        @spy.clearTimeout.should.have.calledOnce
+        @dialogue.clearTimeout.should.have.calledOnce
 
     context 'when already ended (by last branch match)', ->
 
@@ -733,4 +729,4 @@ describe '#Dialogue', ->
         @override.should.have.threw
 
       it 'continues to execute and end', ->
-        @spy.end.should.have.called
+        @dialogue.end.should.have.called
