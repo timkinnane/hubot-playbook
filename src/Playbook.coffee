@@ -63,5 +63,5 @@ class Playbook
 
 module.exports = Playbook
 
-# TODO: Optional config for send middleware to debounce consecutive messages
+# TODO: Optional config for send middleware to throttle hearing consecutive res
 # - display "thinking" elipses

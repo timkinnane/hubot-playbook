@@ -14,7 +14,9 @@ helper = new Helper '../scripts/ping.coffee'
 Observer = require '../utils/observer'
 Dialogue = require '../../src/modules/Dialogue'
 Scene = require '../../src/modules/Scene'
-{keygen} = require '../../src/modules/Helpers'
+Helpers = require '../../src/modules/Helpers'
+
+matchAny = new RegExp /.*/
 
 describe '#Scene', ->
 
@@ -23,16 +25,20 @@ describe '#Scene', ->
     @room = helper.createRoom name: 'testing'
     @observer = new Observer @room.messages
     @robot = @room.robot
-    @keygen = sinon.spy keygen
     @robot.on 'respond', (res) => @res = res # store every response sent
     @robot.on 'receive', (res) => @rec = res # store every message received
     @robot.logger.info = @robot.logger.debug = -> # silence
-    @spy = _.mapObject Scene.prototype, (val, key) ->
-      sinon.spy Scene.prototype, key # spy on all the class methods
-    @room.user.say 'tester', 'hubot ping' # trigger first response
+
+    # spy on all the class and helper methods
+    _.map _.keys(Scene.prototype), (key) -> sinon.spy Scene.prototype, key
+    _.map _.keys(Helpers), (key) -> sinon.spy Helpers, key
+
+    # trigger first response
+    @room.user.say 'tester', 'hubot ping'
 
   afterEach ->
-    _.invoke @spy, 'restore' # restore all the methods
+    _.map _.keys(Scene.prototype), (key) -> Scene.prototype[key].restore()
+    _.map _.keys(Helpers), (key) -> Helpers[key].restore()
     @room.destroy()
 
   describe 'constructor', ->
@@ -116,17 +122,20 @@ describe '#Scene', ->
   describe '.listen', ->
 
     beforeEach ->
-      callback = @callback = sinon.spy()
+      @callback = sinon.spy()
       @scene = new Scene @robot, 'user'
-      @robot.hear /.*/, (@res) => null # get any response for comparison
-      @robotHear = sinon.spy @robot, 'hear' # spy any further listeners
-      @robotRespond = sinon.spy @robot, 'respond'
+      @robot.hear matchAny, (@res) => null # get any response for comparison
+      @robotHear = sinon.spy @robot, 'hear' # spy any further hears
+      @robotRespond = sinon.spy @robot, 'respond' # spy any further responds
 
     context 'with hear type and message matching regex', ->
 
       beforeEach ->
+        # need a standard function referring to a spy (to pass type detection)
         callback = @callback
-        @id = @scene.listen 'hear', /test/, (res) -> callback @, res
+        @id = @scene.listen 'hear', /test/, (res) ->
+          console.log 'MEMEMEMEMEME'
+          callback @, res
         @room.user.say 'tester', 'test'
         Q.delay 15
 
@@ -146,7 +155,7 @@ describe '#Scene', ->
 
       beforeEach ->
         callback = @callback
-        @id = @scene.listen 'respond', /test/, (res) -> callback @, res
+        @id = @scene.listen 'respond', /test/, (res) => callback @, res
         @room.user.say 'tester', 'hubot test'
         Q.delay 15
 
@@ -167,31 +176,19 @@ describe '#Scene', ->
       beforeEach ->
         @id = @scene.listen 'hear', /test/, (res) ->
 
-      it 'calls keygen to generate a key', ->
-        @keygen.should.have.calledWith()
-
-      it 'stores the listener id, type and regex', ->
-        @scene.listeners[0].should.eql
-          id: @id
-          type: 'hear'
-          regex: /test/
+      it 'creates an id with scene and listener scope', ->
+        Helpers.keygen.should.have.calledWith 'listener'
 
       it 'returns the generated id', ->
-        @id.should.equal @keygen.returnValues[0]
+        @id.should.equal Helpers.keygen.returnValues[0]
 
     context 'with an id string', ->
 
       beforeEach ->
         @id = @scene.listen 'hear', /test/, 'foo', -> null
 
-      it 'calls keygen with given key string', ->
-        @keygen.should.have.calledWith 'foo'
-
-      it 'stores the listener id, type and regex', ->
-        @scene.listeners[0].should.eql
-          id: 'foo'
-          type: 'hear'
-          regex: /test/
+      it 'creates an id with listener scope and key string', ->
+        Helpers.keygen.should.have.calledWith 'listener', 'foo'
 
     context 'with an invalid type', ->
 
@@ -199,7 +196,7 @@ describe '#Scene', ->
         try @listenID = @scene.listen 'smell', /test/, -> null
 
       it 'trhows an error', ->
-        @spy.listen.should.have.threw
+        @scene.listen.should.have.threw
 
     context 'with an invalid regex', ->
 
@@ -207,7 +204,7 @@ describe '#Scene', ->
         try @listenID = @scene.listen 'hear', 'test', -> null
 
       it 'trhows an error', ->
-        @spy.listen.should.have.threw
+        @scene.listen.should.have.threw
 
     context 'with an invalid callback', ->
 
@@ -215,7 +212,7 @@ describe '#Scene', ->
         try @listenID = @scene.listen 'hear', /test/, { not: 'a function '}
 
       it 'trhows an error', ->
-        @spy.listen.should.have.threw
+        @scene.listen.should.have.threw
 
   describe '.hear', ->
 
@@ -225,7 +222,7 @@ describe '#Scene', ->
 
     it 'calls .listen with hear listen type and arguments', ->
       args = ['hear', /test/, sinon.match.func]
-      @spy.listen.getCall(0).should.have.calledWith args...
+      @scene.listen.getCall(0).should.have.calledWith args...
 
   describe '.respond', ->
 
@@ -235,7 +232,7 @@ describe '#Scene', ->
 
     it 'calls .listen with respond listen type and arguments', ->
       args = ['respond', /test/, sinon.match.func]
-      @spy.listen.getCall(0).should.have.calledWith args...
+      @scene.listen.getCall(0).should.have.calledWith args...
 
   describe '.whoSpeaks', ->
 
@@ -315,28 +312,28 @@ describe '#Scene', ->
           timeout: 10,
           timeoutLine: null
         @dialogue.on 'end', -> done()
-        @dialogue.branch /.*/, ''
+        @dialogue.branch matchAny, ''
 
       it 'calls .exit first on "timeout"', ->
-        @spy.exit.getCall(0).should.have.calledWith @res, 'timeout'
+        @scene.exit.getCall(0).should.have.calledWith @res, 'timeout'
 
       it 'calls .exit again on "incomplete"', ->
-        @spy.exit.getCall(1).should.have.calledWith @res, 'incomplete'
+        @scene.exit.getCall(1).should.have.calledWith @res, 'incomplete'
 
     context 'dialogue completed (by message matching branch)', ->
 
       beforeEach ->
         @scene = new Scene @robot
         @dialogue = @scene.enter @res
-        @dialogue.branch /.*/, '' # match anything
+        @dialogue.branch matchAny, '' # match anything
         @room.user.say 'tester', 'test'
         @room.user.say 'tester', 'testing again'
 
       it 'calls .exit once with "complete"', ->
-        @spy.exit.should.have.calledWith @res, 'complete'
+        @scene.exit.should.have.calledWith @res, 'complete'
 
       it 'dialogue not continue receiving after scene exit', ->
-        @spy.middleware.should.have.called
+        @scene.middleware.should.have.called
 
     context 're-enter currently engaged participants', ->
 
@@ -366,7 +363,7 @@ describe '#Scene', ->
       beforeEach ->
         @scene = new Scene @robot
         @dialogue = @scene.enter @res, timeout: 10
-        @dialogue.branch /.*/, '' # starts timeout
+        @dialogue.branch matchAny, '' # starts timeout
         @timeout = sinon.spy()
         @dialogue.onTimeout => @timeout()
         @result = @scene.exit @res, 'testing'
@@ -387,16 +384,16 @@ describe '#Scene', ->
         @scene = new Scene @robot
         @dialogue = @scene.enter @res, timeout: 10
         @dialogue.on 'end', -> done()
-        @dialogue.branch /.*/, '' # starts timeout
+        @dialogue.branch matchAny, '' # starts timeout
 
       it 'gets called twice (on timeout and end)', ->
-        @spy.exit.should.have.calledTwice
+        @scene.exit.should.have.calledTwice
 
       it 'returns true the first time', ->
-        @spy.exit.getCall(0).should.have.returned true
+        @scene.exit.getCall(0).should.have.returned true
 
       it 'returns false the second time (because already disengaged)', ->
-        @spy.exit.getCall(1).should.have.returned false
+        @scene.exit.getCall(1).should.have.returned false
 
     context 'user not in scene, called manually', ->
 
@@ -413,9 +410,9 @@ describe '#Scene', ->
 
       beforeEach ->
         @scene = new Scene @robot
-        @room.user.say 'testerA', 'hubot ping' # trigger new response
+        @room.user.say 'testerA', 'hubot ping' # trigger 1st response
         .then => @dialogueA = @scene.enter @res
-        .then => @room.user.say 'testerB', 'hubot ping' # trigger second response
+        .then => @room.user.say 'testerB', 'hubot ping' # trigger 2nd response
         .then => @dialogueB = @scene.enter @res
         .then =>
           @clearA = sinon.spy @dialogueA, 'clearTimeout'

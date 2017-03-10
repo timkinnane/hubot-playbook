@@ -6,7 +6,7 @@ _ = require 'underscore'
 {inspect} = require 'util'
 {EventEmitter} = require 'events'
 
-{keygen} = require './Helpers'
+Helpers = require './Helpers'
 
 # multiple-choice dialogue interactions
 # the timeout will trigger a timeout message if nothing matches in time
@@ -60,8 +60,7 @@ class Dialogue extends EventEmitter
     opts = branches: opts if _.isArray opts # move branches array into property
 
     # generate unique id (using source string if key or prompt given)
-    @pathId = keygen 'path', opts.key or opts.prompt
-    console.log @pathId
+    @pathId = Helpers.keygen 'path', opts.key or opts.prompt
 
     # setup new path object and dialogue state
     @clearBranches()

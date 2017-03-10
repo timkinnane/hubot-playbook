@@ -3,7 +3,7 @@ _ = require 'underscore'
 {inspect} = require 'util'
 
 Dialogue = require './Dialogue'
-{keygen} = require './Helpers'
+Helpers = require './Helpers'
 
 # Fix listener ID to include scene. namespace
 
@@ -26,6 +26,9 @@ class Scene
     if @type not in [ 'room', 'user', 'direct' ]
       throw new Error "invalid scene type given"
 
+    # create an id using scene scope (and key if given)
+    @id = Helpers.keygen 'scene', opts.key or undefined
+
     # '@user hello' vs 'hello'
     sendReplies = if @type is 'room' then true else false
 
@@ -37,26 +40,23 @@ class Scene
     @config.sendReplies = true if @config.sendReplies in ['true', 'TRUE']
     @config.sendReplies = false if @config.sendReplies in ['false', 'FALSE']
 
-    @listeners = [] # array of prompts that will enter sceen
     @engaged = {} # dialogues of each engaged participants
-    @log = @robot.logger
+    @log = @robot.logger # shorthand
+    @robot.receiveMiddleware (c, n, d) => _.bind @middleware, @, c, n, d # route
 
-    # scene middleware routes all messages to engaged participants
-    @robot.receiveMiddleware (c, n, d) => @middleware @, c, n, d
-
-  # not called as method, but copied as a property
-  middleware: (scene, context, next, done) =>
+  # process all incoming messages, re-route to dialogue for engaged participants
+  middleware: (context, next, done) ->
     res = context.response
     participants = @whoSpeaks res
 
-    # check if incoming messages are part of active scene
-    if participants of scene.engaged
-      scene.log.debug "#{ participants } is engaged, routing dialogue."
+    # are incoming messages from this scenes' engaged participants
+    if participants of @engaged
+      @log.debug "#{ participants } is engaged, routing dialogue."
       res.finish() # don't process regular listeners
-      scene.engaged[participants].receive res # let dialogue handle the response
+      @engaged[participants].receive res # let dialogue handle the response
       done() # don't process further middleware.
     else
-      scene.log.debug "#{ participants } not engaged, continue as normal."
+      @log.debug "#{ participants } not engaged, continue as normal."
       next done
     return
 
@@ -70,8 +70,11 @@ class Scene
     regex = args.shift()
     throw new Error "Invalid regex for listener" if not _.isRegExp regex
 
-    # id is optional
-    id = if _.isString args[0] then keygen args.shift() else keygen()
+    # create id from scene namespace and listener scope (and key if provided)
+    if _.isString args[0]
+      id = Helpers.keygen @id+'_listener', args.shift()
+    else
+      id = Helpers.keygen @id+'_listener'
 
     # last arg taken as callback (required)
     callback = args.shift()
@@ -82,7 +85,6 @@ class Scene
       dialogue = @enter res # may fail if enter hooks override (from Director)
       callback.call dialogue, res if dialogue? # in callback dialogue is 'this'
 
-    @listeners.push id: id, type: type, regex: regex
     return id
 
   # alias of .listen with hear as specified type

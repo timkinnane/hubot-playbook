@@ -8,11 +8,9 @@ boolifyString = require 'boolify-string'
 
 paths =
   lint: [
-    './gulpfile.coffee'
     './src/**/*.coffee'
   ]
   watch: [
-    './gulpfile.coffee'
     './src/**/*.coffee'
     './test/**/*.coffee'
     '!test/{temp,temp/**}'
@@ -46,7 +44,11 @@ gulp.task 'coverage', ['clean'], (done) ->
     .on 'finish', ->
       gulp.src paths.tests, cwd: __dirname
         .pipe $.if !boolifyString(process.env.CI), $.plumber()
-        .pipe $.mocha compilers: 'coffee:coffee-script/register'
+        .pipe $.mocha
+          reporter: 'landing'
+          bail: true
+          compilers: 'coffee:coffee-script/register'
+          require: 'coffee-coverage/register-istanbul'
         .pipe $.coffeeIstanbul.writeReports dir: './coverage'
         .on 'finish', ->
           process.chdir __dirname

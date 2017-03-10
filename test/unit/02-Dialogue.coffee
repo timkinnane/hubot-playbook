@@ -149,8 +149,8 @@ describe '#Dialogue', ->
           ]
           key: 'which-way'
 
-      it 'generates a unique id with namespace', ->
-        Helpers.keygen.should.have.calledWith null, 'path'
+      it 'creates id from path scope and key', ->
+        Helpers.keygen.should.have.calledWith 'path', 'which-way'
 
       it 'clears branches', ->
         @dialogue.clearBranches.should.have.calledOnce
@@ -162,7 +162,7 @@ describe '#Dialogue', ->
       it 'returns the id using namespace and key', ->
         @pathId.should.match /^path_which-way/
 
-      it 'returned key corresponds to a path object', ->
+      it 'returned id corresponds to a path object', ->
         @dialogue.paths[@pathId].should.be.an.object
         @dialogue.paths[@pathId].should.have.property 'prompt'
         @dialogue.paths[@pathId].should.have.property 'status'
@@ -195,20 +195,17 @@ describe '#Dialogue', ->
             [ /2/, 'You get cake!' ]
           ]
 
-      it 'creates a key from the prompt', ->
-        Helpers.keygen.should.have.calledWith 'Pick door 1 or 2?', 'path'
+      it 'creates id from path scope and prompt', ->
+        Helpers.keygen.should.have.calledWith 'path', 'Pick door 1 or 2?'
 
-      it 'returns generated key (prompt slug)', ->
-        @result.should.equal 'Pick-door-1-or-2'
-
-      it 'returned key corresponds to a path object', ->
+      it 'returned id corresponds to a path object', ->
         @dialogue.paths[@result].should.be.an.object
         @dialogue.paths[@result].should.have.property 'prompt'
         @dialogue.paths[@result].should.have.property 'status'
         @dialogue.paths[@result].should.have.property 'transcript'
 
       it 'sends the prompt', ->
-        @dialogue.send.should.have.calledWith 'Pick door 1 or 2?', 'path'
+        @dialogue.send.should.have.calledWith 'Pick door 1 or 2?'
 
     context 'without a prompt or key (branches only)', ->
 
@@ -219,14 +216,14 @@ describe '#Dialogue', ->
             [ /2/, 'You get cake!' ]
           ]
 
-      it 'creates a random key', ->
-        Helpers.keygen.should.have.calledWith null, 'path'
+      it 'creates id from path scope alone', ->
+        Helpers.keygen.should.have.calledWith 'path'
 
       it 'creates branches with branch property array elements', ->
         @dialogue.branch.should.have.calledWith /1/, 'You get cake!'
         @dialogue.branch.should.have.calledWith /2/, 'You get cake!'
 
-      it 'returned key corresponds to a path object', ->
+      it 'returned id corresponds to a path object', ->
         @dialogue.paths[@result].should.be.an.object
         @dialogue.paths[@result].should.have.property 'prompt'
         @dialogue.paths[@result].should.have.property 'status'
@@ -246,14 +243,14 @@ describe '#Dialogue', ->
           [ /2/, 'You get cake!' ]
         ]
 
-      it 'creates a random key', ->
-        Helpers.keygen.should.have.calledWith null, 'path'
+      it 'creates id from path scope alone', ->
+        Helpers.keygen.should.have.calledWith 'path'
 
       it 'creates branches with array elements', ->
         @dialogue.branch.should.have.calledWith /1/, 'You get cake!'
         @dialogue.branch.should.have.calledWith /2/, 'You get cake!'
 
-      it 'returned key corresponds to a path object', ->
+      it 'returned id corresponds to a path object', ->
         @dialogue.paths[@result].should.be.an.object
         @dialogue.paths[@result].should.have.property 'prompt'
         @dialogue.paths[@result].should.have.property 'status'
@@ -261,33 +258,6 @@ describe '#Dialogue', ->
 
       it 'sends nothing', ->
         @dialogue.send.should.not.have.called
-
-    context 'twice with the same key', ->
-
-      beforeEach ->
-        unmute = mute()
-        @dialogue.path
-          prompt: 'Say anything...'
-          branches: [
-            [ /.*/, 'You said things!' ]
-          ]
-          key: 'testKey'
-        @result = @dialogue.path
-          prompt: 'Keep talking...'
-          branches: [
-            [ /.*/, 'You said more things!' ]
-          ]
-          key: 'testKey'
-        unmute()
-
-      it 'returns false the second', ->
-        @result.should.be.false
-
-      it 'clears branches only once', ->
-        @dialogue.clearBranches.should.have.calledOnce
-
-      it 'does not setup new path', ->
-        _.size(@dialogue.paths).should.equal 1
 
   describe '.branch', ->
 
@@ -687,15 +657,18 @@ describe '#Dialogue', ->
     context 'method override (as argument)', ->
 
       beforeEach ->
-        @override = sinon.spy()
+        @newTimeout = sinon.spy()
         @dialogue = new Dialogue @res, timeout: 10
-        @dialogue.onTimeout.restore() # remove original spy
-        @dialogue.onTimeout @override
+        @oldTimeout = @dialogue.onTimeout
+        @dialogue.onTimeout @newTimeout
         @dialogue.startTimeout()
         Q.delay 15
 
+      afterEach ->
+        @dialogue.onTimeout = @oldTimeout
+
       it 'calls the override method', ->
-        @override.should.have.calledOnce
+        @newTimeout.should.have.calledOnce
 
       it 'does not send the default timeout message', ->
         @room.messages.pop().should.not.eql [
@@ -705,25 +678,33 @@ describe '#Dialogue', ->
     context 'method override (by assignment)', ->
 
       beforeEach ->
-        @override = sinon.spy()
+        @newTimeout = sinon.spy()
         @dialogue = new Dialogue @res, timeout: 10
-        @dialogue.onTimeout = @override
+        @oldTimeout = @dialogue.onTimeout
+        @dialogue.onTimeout = @newTimeout
         @dialogue.startTimeout()
         Q.delay 15
 
+      afterEach ->
+        @dialogue.onTimeout = @oldTimeout
+
       it 'calls the override method', ->
-        @override.should.have.calledOnce
+        @newTimeout.should.have.calledOnce
 
     context 'method override with invalid function', ->
 
       beforeEach ->
         unmute = mute()
         @dialogue = new Dialogue @res, timeout: 10
+        @oldTimeout = @dialogue.onTimeout
         @dialogue.onTimeout -> throw new Error "Test exception"
         @override = sinon.spy @dialogue, 'onTimeout'
         @dialogue.startTimeout()
         Q.delay 15
-        .then -> unmute()
+          .then unmute
+
+      afterEach ->
+        @dialogue.onTimeout = @oldTimeout
 
       it 'throws exception (caught by timeout)', ->
         @override.should.have.threw
