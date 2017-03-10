@@ -3,7 +3,6 @@
 gulp = require 'gulp'
 $ = (require 'gulp-load-plugins') lazy: false
 del = require 'del'
-es = require 'event-stream'
 minimist = require 'minimist'
 boolifyString = require 'boolify-string'
 
@@ -31,32 +30,32 @@ knownOptions = string: 'modules', default: modules: 'all'
 options = minimist process.argv.slice(2), knownOptions
 if options.modules isnt 'all'
   paths.source = ["./src/**/*#{ options.modules }*.coffee"]
-  paths.tests = ["./test/unit/**/*#{ options.modules }*.coffee"]
+  paths.tests[0] = "./test/unit/**/*#{ options.modules }*.coffee"
 
 gulp.task 'lint', ->
   gulp.src paths.lint
-  .pipe $.coffeelint()
-  .pipe $.coffeelint.reporter()
-  .pipe $.coffeelint.reporter 'fail'
+    .pipe $.coffeelint()
+    .pipe $.coffeelint.reporter()
 
-gulp.task 'clean', ['lint'], -> del.bind null, ['./coverage']
+gulp.task 'clean', del.bind null, ['./coverage']
 
 gulp.task 'coverage', ['clean'], (done) ->
   gulp.src paths.source
-  .pipe $.coffeeIstanbul includeUntested: true
-  .pipe $.coffeeIstanbul.hookRequire()
-  .on 'finish', ->
-    gulp.src paths.tests, cwd: __dirname
-    .pipe $.if(!boolifyString(process.env.CI), $.plumber())
-    .pipe $.mocha()
-    .pipe $.coffeeIstanbul.writeReports({ dir: './coverage' })
+    .pipe $.coffeeIstanbul includeUntested: true
+    .pipe $.coffeeIstanbul.hookRequire()
     .on 'finish', ->
-      process.chdir __dirname
-      done()
+      gulp.src paths.tests, cwd: __dirname
+        .pipe $.if !boolifyString(process.env.CI), $.plumber()
+        .pipe $.mocha compilers: 'coffee:coffee-script/register'
+        .pipe $.coffeeIstanbul.writeReports dir: './coverage'
+        .on 'finish', ->
+          process.chdir __dirname
+          done()
   return
 
-gulp.task 'watch', ['test'], -> gulp.watch paths.watch, ['test']
+gulp.task 'watch', ['test'], ->
+  gulp.watch paths.watch, ['test']
 
-gulp.task 'test', ['coverage']
+gulp.task 'test', ['lint', 'coverage']
 
 gulp.task 'default', ['test']
