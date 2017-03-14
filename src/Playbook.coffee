@@ -3,7 +3,6 @@ Dialogue = require './modules/Dialogue'
 Scene = require './modules/Scene'
 Director = require './modules/Director'
 
-# TODO: Add methods for creating and assigning Director to Scene
 # TODO: Refactor class and usage as singleton
 
 # A container class for modules provided by the Playbook library

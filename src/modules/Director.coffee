@@ -5,8 +5,6 @@ hooker = require 'hooker'
 
 Helpers = require './Helpers'
 
-# TODO: Add middleware, and method for regular listeners (not for a scene)
-
 # Control listener access, such as, but not limited to, any attached to a scene
 # Can operate as a blacklist or a whitelist, also allowing external logic
 # accepts an authorise function to determine access (lists can overide):
