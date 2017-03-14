@@ -24,7 +24,12 @@ paths =
   ]
 
 # process command line options for running limited module tests
-knownOptions = string: 'modules', default: modules: 'all'
+knownOptions =
+  string: ['modules','reporter']
+  default:
+    modules: 'all'
+    reporter: 'landing'
+
 options = minimist process.argv.slice(2), knownOptions
 if options.modules isnt 'all'
   paths.source = ["./src/**/*#{ options.modules }*.coffee"]
@@ -45,7 +50,7 @@ gulp.task 'coverage', ['clean'], (done) ->
       gulp.src paths.tests, cwd: __dirname
         .pipe $.if !boolifyString(process.env.CI), $.plumber()
         .pipe $.mocha
-          reporter: 'landing'
+          reporter: options.reporter
           bail: true
           compilers: 'coffee:coffee-script/register'
           require: 'coffee-coverage/register-istanbul'

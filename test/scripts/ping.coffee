@@ -13,13 +13,19 @@
 # Author:
 #   timkinnane
 #
+{inspect} = require 'util'
 
 module.exports = (robot) ->
 
   # talk when talked to
   robot.respond /ping/, (res) -> res.reply 'pong'
 
-  # let tests listen for response objects
+  # don't suffer in silence
+  robot.error (err, res) ->
+    robot.logger.error inspect err
+    res.reply "ROBOT ERROR" if res?
+
+  # events allow tests to listen in
   robot.receiveMiddleware (context, next, done) ->
     robot.emit 'receive', context.response
     next()

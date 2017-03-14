@@ -13,24 +13,32 @@ Dialogue = require '../../src/modules/Dialogue'
 Scene = require '../../src/modules/Scene'
 Director = require '../../src/modules/Director'
 Playbook = require '../../src/Playbook'
-{keygen} = require '../../src/modules/Helpers'
+Helpers = require '../../src/modules/Helpers'
+
+matchAny = new RegExp /.*/
 
 describe '#Director', ->
 
   # create room and initiate a response to test with
   beforeEach ->
     @room = helper.createRoom name: 'testing'
+
+    # store and log all responses sent and messages received
     @robot = @room.robot
-    @keygen = sinon.spy keygen
-    @robot.on 'respond', (res) => @res = res # store every response sent
-    @robot.on 'receive', (res) => @rec = res # store every message received
+    @robot.on 'receive', (@rec,txt) => @robot.logger.debug "Bot receives: " +txt
+    @robot.on 'respond', (@res,txt) => @robot.logger.debug "Bot responds: " +txt
     @robot.logger.info = @robot.logger.debug = -> # silence
-    @spy = _.mapObject Director.prototype, (val, key) ->
-      sinon.spy Director.prototype, key # spy on all the class methods
-    @room.user.say 'tester', 'hubot ping' # trigger first response
+
+    # spy on all the class and helper methods
+    _.map _.keys(Director.prototype), (key) -> sinon.spy Director.prototype, key
+    _.map _.keys(Helpers), (key) -> sinon.spy Helpers, key
+
+    # trigger first response
+    @room.user.say 'tester', 'hubot ping'
 
   afterEach ->
-    _.invoke @spy, 'restore' # restore all the methods
+    _.map _.keys(Director.prototype), (key) -> Director.prototype[key].restore()
+    _.map _.keys(Helpers), (key) -> Helpers[key].restore()
     @room.destroy()
 
   describe 'constructor', ->
@@ -54,22 +62,11 @@ describe '#Director', ->
           scope: 'username'
           deniedReply: "Sorry, I can't do that."
 
-      it 'calls keygen to create a random key', ->
-        @keygen.getCall(0).should.have.calledWith()
+      it 'creates an id with director scope', ->
+        Helpers.keygen.should.have.calledWith 'director'
 
       it 'stores the generated key as an attribute', ->
-        @director.key.length.should.equal 12
-
-    context 'with key', ->
-
-      beforeEach ->
-        @director = new Director @robot, 'Orson Welles'
-
-      it 'calls keygen with provided source', ->
-        @keygen.getCall(0).should.have.calledWith 'Orson Welles'
-
-      it 'stores the slugified source key as an attribute', ->
-        @director.key.should.equal 'Orson-Welles'
+        Helpers.keygen.returnValues[0].should.equal @director.id
 
     context 'with authorise function', ->
 
@@ -80,13 +77,21 @@ describe '#Director', ->
       it 'stores the given function as its authorise method', ->
         @director.authorise = @authorise
 
-    context 'with options', ->
+    context 'with options (denied reply and key string)', ->
 
       beforeEach ->
-        @director = new Director @robot, deniedReply: "DENIED!"
+        @director = new Director @robot,
+          deniedReply: "DENIED!"
+          key: 'Orson Welles'
 
       it 'stores passed options in config', ->
         @director.config.deniedReply.should.equal "DENIED!"
+
+      it 'creates an id from director scope and key', ->
+        Helpers.keygen.should.have.calledWith 'director', 'Orson Welles'
+
+      it 'stores generated id as its id', ->
+        @director.id.should.equal Helpers.keygen.returnValues.pop()
 
     context 'with env var for names', ->
 
@@ -201,19 +206,6 @@ describe '#Director', ->
       it 'uses authorise function', ->
         @director.authorise.should.eql @authorise
 
-    context 'with key, without authorise function, with options', ->
-
-      beforeEach ->
-        @authorise = -> null
-        @director = new Director @robot, 'Metal Face',
-          scope: 'room'
-
-      it 'uses key', ->
-        @keygen.should.have.calledWith 'Metal Face'
-
-      it 'uses options', ->
-        @director.config.scope.should.equal 'room'
-
   describe '.add', ->
 
     beforeEach ->
@@ -274,69 +266,7 @@ describe '#Director', ->
       it 'removes any missing, ignoring others', ->
         @director.names.should.eql ['yeon']
 
-  describe '.directScene', ->
-
-    beforeEach ->
-      @director = new Director @robot
-      @scene = new Scene @robot
-      @director.directScene @scene
-      @reply = sinon.spy @res, 'reply'
-
-    context 'user not on list', ->
-
-      context 'scene enter manually called', ->
-
-        context 'with denied reply value', ->
-
-          beforeEach ->
-            @result = @scene.enter @res
-
-          it 'calls .canEnter to check if origin of response can access', ->
-            @spy.canEnter.getCall(0).should.have.calledWith @res
-
-          it 'preempts scene.enter, returning false instead', ->
-            @result.should.be.false
-
-          it 'calls response reply method with denied reply', ->
-            @reply.should.have.calledWith @director.config.deniedReply
-
-        context 'without denied reply value', ->
-
-          beforeEach ->
-            @director.config.deniedReply = null
-            @result = @scene.enter @res
-
-          it 'does not call response reply method', ->
-            @reply.should.not.have.called
-
-      context 'when matched listeners', ->
-
-        # TODO: test middleware attached
-
-    context 'user allowed', ->
-
-      beforeEach ->
-        @director.names = ['tester']
-
-      context 'scene enter manually called', ->
-
-        beforeEach ->
-          @result = @scene.enter @res
-
-        it 'calls .canEnter to check if origin of response can access', ->
-          @spy.canEnter.getCall(0).should.have.calledWith @res
-
-        it 'allowed the .enter method, returning a Dialogue object', ->
-          @result.should.be.instanceof Dialogue
-
-        it 'does not call response reply method', ->
-          @reply.should.not.have.called
-
-      context 'when matched listeners', ->
-
-        # TODO: test middleware attached
-
-  describe '.canEnter', ->
+  describe '.isAllowed', ->
 
     context 'whitelist without authorise function', ->
 
@@ -346,7 +276,7 @@ describe '#Director', ->
       context 'no list', ->
 
         beforeEach ->
-          @result = @director.canEnter @res
+          @result = @director.isAllowed @res
 
         it 'returns false', ->
           @result.should.be.false
@@ -355,7 +285,7 @@ describe '#Director', ->
 
         beforeEach ->
           @director.names = ['tester']
-          @result = @director.canEnter @res
+          @result = @director.isAllowed @res
 
         it 'returns true', ->
           @result.should.be.true
@@ -364,7 +294,7 @@ describe '#Director', ->
 
         beforeEach ->
           @director.names = ['nobody']
-          @result = @director.canEnter @res
+          @result = @director.isAllowed @res
 
         it 'returns false', ->
           @result.should.be.false
@@ -378,7 +308,7 @@ describe '#Director', ->
       context 'no list', ->
 
         beforeEach ->
-          @result = @director.canEnter @res
+          @result = @director.isAllowed @res
 
         it 'returns true', ->
           @result.should.be.true
@@ -387,7 +317,7 @@ describe '#Director', ->
 
         beforeEach ->
           @director.names = ['tester']
-          @result = @director.canEnter @res
+          @result = @director.isAllowed @res
 
         it 'returns false', ->
           @result.should.be.false
@@ -396,7 +326,7 @@ describe '#Director', ->
 
         beforeEach ->
           @director.names = ['nobody']
-          @result = @director.canEnter @res
+          @result = @director.isAllowed @res
 
         it 'returns true', ->
           @result.should.be.true
@@ -410,10 +340,10 @@ describe '#Director', ->
       context 'no list', ->
 
         beforeEach ->
-          @result = @director.canEnter @res
+          @result = @director.isAllowed @res
 
         it 'calls authorise function with username and res', ->
-          @authorise.getCall(0).should.have.calledWith 'tester', @res
+          @authorise.should.have.calledWith 'tester', @res
 
         it 'returns value of authorise function', ->
           @result.should.equal 'AUTHORISE'
@@ -422,7 +352,7 @@ describe '#Director', ->
 
         beforeEach ->
           @director.names = ['tester']
-          @result = @director.canEnter @res
+          @result = @director.isAllowed @res
 
         it 'returns true', ->
           @result.should.be.true
@@ -434,7 +364,7 @@ describe '#Director', ->
 
         beforeEach ->
           @director.names = ['nobody']
-          @result = @director.canEnter @res
+          @result = @director.isAllowed @res
 
         it 'returns value of authorise function', ->
           @result.should.equal 'AUTHORISE'
@@ -449,10 +379,10 @@ describe '#Director', ->
       context 'no list', ->
 
         beforeEach ->
-          @result = @director.canEnter @res
+          @result = @director.isAllowed @res
 
         it 'calls authorise function with username and res', ->
-          @authorise.getCall(0).should.have.calledWith 'tester', @res
+          @authorise.should.have.calledWith 'tester', @res
 
         it 'returns value of authorise function', ->
           @result.should.equal 'AUTHORISE'
@@ -461,7 +391,7 @@ describe '#Director', ->
 
         beforeEach ->
           @director.names = ['tester']
-          @result = @director.canEnter @res
+          @result = @director.isAllowed @res
 
         it 'returns false', ->
           @result.should.be.false
@@ -473,9 +403,196 @@ describe '#Director', ->
 
         beforeEach ->
           @director.names = ['nobody']
-          @result = @director.canEnter @res
+          @result = @director.isAllowed @res
 
         it 'returns value of authorise function', ->
           @result.should.equal 'AUTHORISE'
 
-# TODO test that it replies when denied, through manual call or middleware
+  describe '.process', ->
+
+    beforeEach ->
+      @reply = sinon.spy @res, 'reply'
+      @director = new Director @robot
+      @scene = new Scene @robot
+
+    context 'denied user', ->
+
+      beforeEach ->
+        @result = @director.process @res
+
+      it 'calls .isAllowed to determine if user is allowed or denied', ->
+        @director.isAllowed.should.have.calledWith @res
+
+      it 'returns the same result as .isAllowed', ->
+        @result.should.equal @director.isAllowed.returnValues.pop()
+
+    context 'denied with denied reply value', ->
+
+      beforeEach ->
+        @result = @director.process @res
+
+      it 'calls response method reply with reply value', ->
+        @reply.should.have.calledWith @director.config.deniedReply
+
+    context 'denied without denied reply value', ->
+
+      beforeEach ->
+        @director.config.deniedReply = null
+        @result = @director.process @res
+
+      it 'does not call response reply method', ->
+        @reply.should.not.have.called
+
+    context 'allowed user', ->
+
+      beforeEach ->
+        @director.names = ['tester']
+        @result = @director.process @res
+
+      it 'calls .isAllowed to determine if user is allowed or denied', ->
+        @director.isAllowed.should.have.calledWith @res
+
+      it 'returns the same value as .isAllowed', ->
+        @result.should.equal @director.isAllowed.returnValues.pop()
+
+      it 'does not send denied reply', ->
+        @reply.should.not.have.called
+
+  describe '.directMatch', ->
+
+    beforeEach ->
+      @director = new Director @robot
+      @callback = sinon.spy()
+      @robot.hear /test/, @callback
+      @director.directMatch /test/
+
+    context 'allowed user sending message matching directed match', ->
+
+      beforeEach ->
+        @director.names = ['tester']
+        @room.user.say 'tester', 'test'
+
+      it 'calls .process with response to perform access checks and reply', ->
+        @director.process.should.have.calledOnce
+
+      it 'triggers match callback normally', ->
+        @callback.should.have.calledOnce
+
+    context 'denied user sending message matching directed match', ->
+
+      beforeEach ->
+        @room.user.say 'tester', 'test'
+
+      it 'calls .process to perform access checks and reply', ->
+        @director.process.should.have.calledOnce
+
+      it 'prevents match callback from triggering', ->
+        @callback.should.not.have.called
+
+    context 'denied user sending unmatched message', ->
+
+      beforeEach ->
+        @room.user.say 'tester', 'foo'
+
+      it 'does not call .process because middleware did not match', ->
+        @director.process.should.not.have.called
+
+  describe '.directListener', ->
+
+    beforeEach ->
+      @director = new Director @robot
+      @callback = sinon.spy()
+      @robot.hear /test/, id: 'testyMcTest', @callback
+      @director.directListener 'McTest'
+
+    context 'allowed user sending message matching directed listener id', ->
+
+      beforeEach ->
+        @director.names = ['tester']
+        @room.user.say 'tester', 'test'
+
+      it 'calls .process with response to perform access checks and reply', ->
+        @director.process.should.have.calledOnce
+
+      it 'triggers match callback normally', ->
+        @callback.should.have.calledOnce
+
+    context 'denied user sending message matching directed match', ->
+
+      beforeEach ->
+        @room.user.say 'tester', 'test'
+
+      it 'calls .process to perform access checks and reply', ->
+        @director.process.should.have.calledOnce
+
+      it 'prevents match callback from triggering', ->
+        @callback.should.not.have.called
+
+    context 'denied user sending unmatched message', ->
+
+      beforeEach ->
+        @room.user.say 'tester', 'foo'
+
+      it 'does not call .process because middleware did not match', ->
+        @director.process.should.not.have.called
+
+  describe '.directScene', ->
+
+    beforeEach ->
+      @director = new Director @robot
+      @scene = new Scene @robot
+      @enter = sinon.spy @scene, 'enter'
+      @director.directScene @scene
+
+    it 'calls .directListener to control access to scene listeners', ->
+      @director.directListener.should.have.calledWith @scene.id
+
+    context 'scene enter manually called (user allowed)', ->
+
+      beforeEach ->
+        @director.names = ['tester']
+        @result = @scene.enter @res
+
+      it 'calls .process to perform access checks and reply', ->
+        @director.process.should.have.calledWith @res
+
+      it 'allowed the .enter method, returning a Dialogue object', ->
+        @result.should.be.instanceof Dialogue
+
+    context 'scene enter manually called (user denied)', ->
+
+      beforeEach ->
+        @result = @scene.enter @res # no list, denies all in whitelist mode
+
+      it 'calls .process to perform access checks and reply', ->
+        @director.process.should.have.calledWith @res
+
+      it 'preempts scene.enter, returning false instead', ->
+        @result.should.be.false
+
+    context 'allowed user sends message matching scene listener', ->
+
+      beforeEach ->
+        callback = @callback = sinon.spy()
+        @scene.hear /test/, callback
+        @director.names = ['tester']
+        @room.user.say 'tester', 'test'
+
+      it 'triggers the scene enter method', ->
+        @enter.should.have.calledOnce
+
+      it 'calls the scene listener callback', ->
+        @callback.should.have.calledOnce
+
+    context 'denied user sends message matching scene listener', ->
+
+      beforeEach ->
+        callback = @callback = sinon.spy()
+        @scene.hear /test/, callback
+        @room.user.say 'tester', 'test'
+
+      it 'prevents the scene enter method', ->
+        @enter.should.not.have.calledOnce
+
+      it 'does not call the scene listener callback', ->
+        @callback.should.not.have.calledOnce

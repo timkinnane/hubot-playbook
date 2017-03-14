@@ -5,8 +5,6 @@ _ = require 'underscore'
 Dialogue = require './Dialogue'
 Helpers = require './Helpers'
 
-# Fix listener ID to include scene. namespace
-
 # handles array of participants engaged in dialogue
 # while engaged the robot will only follow the given dialogue choices
 # entering a user scene will engage the user
@@ -32,17 +30,19 @@ class Scene
     # '@user hello' vs 'hello'
     sendReplies = if @type is 'room' then true else false
 
-    # extend options with defaults (passed to dialogue)
+    # extend options with defaults (or env vars) (passed to dialogue)
     @config = _.defaults opts,
       sendReplies: process.env.SEND_REPLIES or sendReplies
 
-    # cast as proper bool in case string came from environment var
+    # cast send config as proper bool in case string came from environment var
     @config.sendReplies = true if @config.sendReplies in ['true', 'TRUE']
     @config.sendReplies = false if @config.sendReplies in ['false', 'FALSE']
 
-    @engaged = {} # dialogues of each engaged participants
-    @log = @robot.logger # shorthand
-    @robot.receiveMiddleware (c, n, d) => _.bind @middleware, @, c, n, d # route
+    @engaged = {} # dialogues of each engaged participant type
+    @log = @robot.logger # shorthand helper
+
+    # attach middleware
+    @robot.receiveMiddleware (c, n, d) => @middleware.call @, c, n, d
 
   # process all incoming messages, re-route to dialogue for engaged participants
   middleware: (context, next, done) ->

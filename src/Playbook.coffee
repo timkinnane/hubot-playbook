@@ -1,6 +1,7 @@
 _ = require 'underscore'
 Dialogue = require './modules/Dialogue'
 Scene = require './modules/Scene'
+Director = require './modules/Director'
 
 # TODO: Add methods for creating and assigning Director to Scene
 # TODO: Refactor class and usage as singleton
@@ -17,8 +18,8 @@ class Playbook
 
   # create and return director
   director: (args...) ->
-    @director.push new Director, @robot, args...
-    return _.last @director
+    @directors.push new Director @robot, args...
+    return _.last @directors
 
   # create and return scene
   scene: (type) ->

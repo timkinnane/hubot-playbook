@@ -3,7 +3,6 @@
 Q = require 'q'
 _ = require 'underscore'
 mute = require 'mute'
-{inspect} = require 'util'
 sinon = require 'sinon'
 chai = require 'chai'
 should = chai.should()
@@ -11,7 +10,6 @@ chai.use require 'sinon-chai'
 
 Helper = require 'hubot-test-helper'
 helper = new Helper '../scripts/ping.coffee'
-Observer = require '../utils/observer'
 Dialogue = require '../../src/modules/Dialogue'
 Scene = require '../../src/modules/Scene'
 Helpers = require '../../src/modules/Helpers'
@@ -23,10 +21,11 @@ describe '#Scene', ->
   # create room and initiate a response to test with
   beforeEach ->
     @room = helper.createRoom name: 'testing'
-    @observer = new Observer @room.messages
+
+    # store and log all responses sent and messages received
     @robot = @room.robot
-    @robot.on 'respond', (res) => @res = res # store every response sent
-    @robot.on 'receive', (res) => @rec = res # store every message received
+    @robot.on 'receive', (@rec,txt) => @robot.logger.debug "Bot receives: " +txt
+    @robot.on 'respond', (@res,txt) => @robot.logger.debug "Bot responds: " +txt
     @robot.logger.info = @robot.logger.debug = -> # silence
 
     # spy on all the class and helper methods
@@ -122,7 +121,6 @@ describe '#Scene', ->
   describe '.listen', ->
 
     beforeEach ->
-      @callback = sinon.spy()
       @scene = new Scene @robot, 'user'
       @robot.hear matchAny, (@res) => null # get any response for comparison
       @robotHear = sinon.spy @robot, 'hear' # spy any further hears
@@ -131,11 +129,8 @@ describe '#Scene', ->
     context 'with hear type and message matching regex', ->
 
       beforeEach ->
-        # need a standard function referring to a spy (to pass type detection)
-        callback = @callback
-        @id = @scene.listen 'hear', /test/, (res) ->
-          console.log 'MEMEMEMEMEME'
-          callback @, res
+        callback = @callback = sinon.spy()
+        @id = @scene.listen 'hear', /test/, (res) -> callback @, res
         @room.user.say 'tester', 'test'
         Q.delay 15
 
@@ -145,50 +140,44 @@ describe '#Scene', ->
       it 'calls the given callback from listener', ->
         @callback.should.have.calledOnce
 
-      it 'creates Dialogue instance, replaces "this" in callback', ->
-        @callback.args[0][0].should.be.instanceof Dialogue
-
-      it 'passes response object from listener to callback', ->
-        @callback.args[0][1].should.eql @res
+      it 'callback should receive res and "this" should be Dialogue', ->
+        @callback.should.have.calledWith sinon.match.instanceOf(Dialogue), @res
 
     context 'with respond type and message matching regex', ->
 
       beforeEach ->
-        callback = @callback
-        @id = @scene.listen 'respond', /test/, (res) => callback @, res
+        callback = @callback = sinon.spy()
+        @id = @scene.listen 'respond', /test/, (res) -> callback @, res
         @room.user.say 'tester', 'hubot test'
         Q.delay 15
 
       it 'registers a robot respond listener with regex, id and callback', ->
-        @robotRespond.should.be.calledWith /test/, id: @id, sinon.match.func
+        @robotRespond.should.have.calledWith /test/, id: @id, sinon.match.func
 
       it 'calls the given callback from listener', ->
         @callback.should.have.calledOnce
 
-      it 'creates Dialogue instance, replaces "this" in callback', ->
-        @callback.args[0][0].should.be.instanceof Dialogue
-
-      it 'passes response object from listener to callback', ->
-        @callback.args[0][1].should.eql @res
+      it 'callback should receive res and "this" should be Dialogue', ->
+        @callback.should.have.calledWith sinon.match.instanceOf(Dialogue), @res
 
     context 'without an id string', ->
 
       beforeEach ->
-        @id = @scene.listen 'hear', /test/, (res) ->
+        @id = @scene.listen 'hear', /test/, -> null
 
       it 'creates an id with scene and listener scope', ->
-        Helpers.keygen.should.have.calledWith 'listener'
+        Helpers.keygen.should.have.calledWith @scene.id + '_listener'
 
       it 'returns the generated id', ->
-        @id.should.equal Helpers.keygen.returnValues[0]
+        @id.should.equal Helpers.keygen.returnValues.pop()
 
     context 'with an id string', ->
 
       beforeEach ->
         @id = @scene.listen 'hear', /test/, 'foo', -> null
 
-      it 'creates an id with listener scope and key string', ->
-        Helpers.keygen.should.have.calledWith 'listener', 'foo'
+      it 'creates an id with scene, listener scope and key string', ->
+        Helpers.keygen.should.have.calledWith @scene.id + '_listener', 'foo'
 
     context 'with an invalid type', ->
 

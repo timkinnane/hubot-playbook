@@ -3,7 +3,7 @@ hooker = require 'hooker'
 {inspect} = require 'util'
 {EventEmitter} = require 'events'
 
-{keygen} = require './Helpers'
+Helpers = require './Helpers'
 
 # TODO: Add middleware, and method for regular listeners (not for a scene)
 
@@ -23,7 +23,6 @@ hooker = require 'hooker'
 class Director extends EventEmitter
 
   # @param robot {Object} the hubot instance
-  # @param key (optional) {String} name for references to instance, e.g. logs
   # @param authorise (optional) {Function} function for controlling access
   #   will receive the user or room name and response object to control access
   #   e.g. could pass function to check if user has a particular role
@@ -31,14 +30,17 @@ class Director extends EventEmitter
   #   - type: whitelist or blacklist (default: whitelist)
   #   - scope: user or room (default: user)
   #   - reply: when user denied access (default: "Sorry, I can't do that.")
+  #   - key: string reference for logs, events
   constructor: (@robot, args...) ->
     @log = @robot.logger
     @names = []
 
     # take arguments in param order, for all optional arguments
-    @key = if _.isString args[0] then keygen args.shift() else keygen()
     @authorise = if _.isFunction args[0] then args.shift()
     opts = if _.isObject args[0] then opts = args.shift() else {}
+
+    # create an id using director scope (and key if given)
+    @id = Helpers.keygen 'director', opts.key or undefined
 
     # extend options with defaults
     @config = _.defaults opts,
@@ -64,39 +66,26 @@ class Director extends EventEmitter
     if @config.scope not in ['username','room']
       throw new Error "Invalid scope - accepts only username or room"
 
-    @log.info "New #{ @config.scope } Director #{ @config.type }: #{ @key }"
+    @log.info "New #{ @config.scope } Director #{ @config.type }: #{ @id }"
     if @config.deniedReply?
       @log.info "replies '#{ @config.deniedReply }' if denied"
 
   # merge new usernames/rooms with listed names
   add: (names) ->
-    @log.info "Adding #{ inspect names } to #{ @key } #{ @config.type }"
+    @log.info "Adding #{ inspect names } to #{ @id } #{ @config.type }"
     names = [names] if not _.isArray names # cast single as array
     @names = _.union @names, names
     return
 
   # remove usernames/rooms from listed names
   remove: (names) ->
-    @log.info "Removing #{ inspect names } from #{ @key } #{ @config.type }"
+    @log.info "Removing #{ inspect names } from #{ @id } #{ @config.type }"
     names = [names] if not _.isArray names # cast single as array
     @names = _.without @names, names...
     return
 
-  # let this director control access to a given scene
-  directScene: (scene) ->
-
-    # setup middleware to control access to the scene's listeners
-    # TODO: setup middleware
-
-    # hook into .enter to control access for manually entered scenes
-    hooker.hook scene, 'enter', pre: (res) =>
-      if not @canEnter res
-        @emit 'denied', res, scene
-        res.reply @config.deniedReply if @config.deniedReply not in ['', null]
-        return hooker.preempt false
-
   # determine if user has access, checking against usernames and rooms
-  canEnter: (res) ->
+  isAllowed: (res) ->
     name = switch @config.scope
       when 'username' then res.message.user.name
       when 'room' then res.message.room
@@ -114,7 +103,60 @@ class Director extends EventEmitter
     # authorise function can determine access if lists didn't
     return @authorise name, res if @authorise?
 
+  # process a access or denial (either silently or with reply, as configured)
+  process: (res) ->
+    allowed = @isAllowed res
+    user = res.message.user.name
+    message = res.message.text
+
+    # allow access
+    if allowed
+      @log.debug "#{ @id } allowed #{ user } on receiving #{ message }"
+      return true
+
+    # process denial
+    @log.info "#{ @id } denied #{ user } on receiving: #{ message }"
+    @emit 'denied', res
+    res.reply @config.deniedReply if @config.deniedReply not in ['', null]
+    return false
+
+  # let this director control access to any listener matching regex
+  # note - this uses listener middleware because we don't want it sending
+  # denied reply every time a message matches, only if there was a listener
+  directMatch: (regex) ->
+    throw new Error "Invalid regex provided" if not _.isRegExp regex
+    @log.info "#{ @id } now controlling access to listeners matching #{ regex }"
+    @robot.listenerMiddleware (context, next, done) =>
+      res = context.response
+      if res.message.text.match(regex) and not @process res # matched, denied
+        res.message.finish() # don't process this message further
+        return done() # don't process further middleware
+      return next done # nothing matched or user allowed
+
+  # let this director control access to a listener by id (allow partial match)
+  directListener: (id) ->
+    @log.info "#{ @id } now controlling access to listener id matching #{ id }"
+    @robot.listenerMiddleware (context, next, done) =>
+      res = context.response
+      listenerId = context.listener.options.id
+      regex = new RegExp id, 'i' # case insensitive match
+      if listenerId.match(regex) and not @process res # listener matched, denied
+        res.message.finish() # don't process this message further
+        return done() # don't process further middleware
+      return next done # nothing matched or user allowed
+
+  # let this director control access to a given scene
+  directScene: (scene) ->
+    @log.info "#{ @id } now controlling #{ scene.id }"
+
+    # setup middleware to control access to the scene's listeners
+    @directListener scene.id
+
+    # hook into .enter to control access for manually entered scenes
+    hooker.hook scene, 'enter', pre: (res) =>
+      return hooker.preempt false if not @process res
+
 module.exports = Director
 
-# TODO: save/restore config in hubot brain against key if provided
+# TODO: save/restore config in hubot brain against Director id if provided
 # TODO: parse Playbook messages for template tags e.g. sorry {{ username }}
