@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>Playbook.coffee</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" media="all" href="../public/stylesheets/normalize.css" />
+  <link rel="stylesheet" media="all" href="../docco.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="page">
+
+      <div class="header">
+        
+          <h1>Playbook.coffee</h1>
+        
+
+        
+      </div>
+
+      
+        
+        
+        
+          <div class='highlight'><pre>_ = <span class="hljs-built_in">require</span> <span class="hljs-string">'underscore'</span>
+Dialogue = <span class="hljs-built_in">require</span> <span class="hljs-string">'./modules/Dialogue'</span>
+Scene = <span class="hljs-built_in">require</span> <span class="hljs-string">'./modules/Scene'</span>
+Director = <span class="hljs-built_in">require</span> <span class="hljs-string">'./modules/Director'</span></pre></div>
+        
+      
+        
+        <p>TODO: Refactor class and usage as singleton</p>
+
+        
+      
+        
+        <p>##*</p>
+
+        
+          <div class='highlight'><pre> * Wrangler <span class="hljs-keyword">for</span> modules provided <span class="hljs-keyword">by</span> the Playbook library
+ * Provides the robot object <span class="hljs-keyword">and</span> easy access to variants <span class="hljs-keyword">of</span> <span class="hljs-built_in">module</span> constructors
+ * @method constructor
+ * @param  {object}    @robot The Hubot</pre></div>
+        
+      
+        
+        <p>##</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Playbook</span></span>
+  constructor: <span class="hljs-function"><span class="hljs-params">(@robot)</span> -&gt;</span>
+    @log = @robot.logger
+    @log.info <span class="hljs-string">'Playbook starting up'</span>
+    @directors = []
+    @scenes = []
+    @dialogues = []</pre></div>
+        
+      
+        
+        <p>create and return director</p>
+
+        
+          <div class='highlight'><pre>  director: <span class="hljs-function"><span class="hljs-params">(args...)</span> -&gt;</span>
+    @directors.push <span class="hljs-keyword">new</span> Director @robot, args...
+    <span class="hljs-keyword">return</span> _.last @directors</pre></div>
+        
+      
+        
+        <p>create and return scene</p>
+
+        
+          <div class='highlight'><pre>  scene: <span class="hljs-function"><span class="hljs-params">(type)</span> -&gt;</span>
+    @scenes.push <span class="hljs-keyword">new</span> Scene @robot, type
+    <span class="hljs-keyword">return</span> _.last @scenes</pre></div>
+        
+      
+        
+        <p>create and enter scene, returns dialogue, or false if failed to enter</p>
+
+        
+          <div class='highlight'><pre>  sceneEnter: <span class="hljs-function"><span class="hljs-params">(args...)</span> -&gt;</span>
+    type = args.shift() <span class="hljs-keyword">if</span> <span class="hljs-keyword">typeof</span> args[<span class="hljs-number">0</span>] <span class="hljs-keyword">is</span> <span class="hljs-string">'string'</span>
+    @scenes.push <span class="hljs-keyword">new</span> Scene @robot, type
+    dialogue = _.last @scenes
+      .enter args...
+    <span class="hljs-keyword">return</span> dialogue</pre></div>
+        
+      
+        
+        <p>create scene and setup listener callback to enter
+final param is another callback passing the dialogue and response on enter
+returns the scene</p>
+
+        
+          <div class='highlight'><pre>  sceneListen: <span class="hljs-function"><span class="hljs-params">(listenType, regex, args..., callback)</span> -&gt;</span>
+    scene = @scene args...
+    scene.listen listenType, regex, callback
+    <span class="hljs-keyword">return</span> scene</pre></div>
+        
+      
+        
+        <p>alias of sceneListen with hear as specified type</p>
+
+        
+          <div class='highlight'><pre>  sceneHear: <span class="hljs-function"><span class="hljs-params">(args...)</span> -&gt;</span>
+    <span class="hljs-keyword">return</span> @sceneListen <span class="hljs-string">'hear'</span>, args...</pre></div>
+        
+      
+        
+        <p>alias of sceneListen with respond as specified type</p>
+
+        
+          <div class='highlight'><pre>  sceneRespond: <span class="hljs-function"><span class="hljs-params">(args...)</span> -&gt;</span>
+    <span class="hljs-keyword">return</span> @sceneListen <span class="hljs-string">'respond'</span>, args...</pre></div>
+        
+      
+        
+        <p>create stand-alone dialogue (not within scene)</p>
+
+        
+          <div class='highlight'><pre>  dialogue: <span class="hljs-function"><span class="hljs-params">(args...)</span> -&gt;</span>
+    @dialogues.push <span class="hljs-keyword">new</span> Dialogue args...
+    <span class="hljs-keyword">return</span> _.last @dialogues</pre></div>
+        
+      
+        
+        <p>exit all scenes and end all dialogues</p>
+
+        
+          <div class='highlight'><pre>  shutdown: <span class="hljs-function">-&gt;</span>
+    @log.info <span class="hljs-string">'Playbook shutting down'</span>
+    _.invoke @scenes, <span class="hljs-string">'exitAll'</span>
+    _.invoke @dialogues, <span class="hljs-string">'end'</span>
+    <span class="hljs-keyword">return</span>
+
+<span class="hljs-built_in">module</span>.exports = Playbook</pre></div>
+        
+      
+        
+        <p>TODO: Optional config for send middleware to throttle hearing consecutive res</p>
+<ul>
+<li>display “thinking” elipses</li>
+</ul>
+
+        
+      
+      <div class="fleur">h</div>
+    </div>
+  </div>
+</body>
+</html>

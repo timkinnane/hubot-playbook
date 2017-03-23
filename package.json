@@ -57,6 +57,7 @@
     "gulp-coffee-coverage": "^1.0.0",
     "gulp-coffee-istanbul": "^0.9.1",
     "gulp-coffeelint": "^0.6.0",
+    "gulp-docco": "0.0.4",
     "gulp-espower": "^1.1.0",
     "gulp-if": "^2.0.2",
     "gulp-load-plugins": "^1.5.0",

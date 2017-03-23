@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>diagnostics.coffee</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" media="all" href="../public/stylesheets/normalize.css" />
+  <link rel="stylesheet" media="all" href="../docco.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="page">
+
+      <div class="header">
+        
+          <h1>diagnostics.coffee</h1>
+        
+
+        
+      </div>
+
+      
+        
+        <p>Description
+  Diagnostics interactions provide a baseline measure before doing anything
+  more complicated. They work on Hubot without any modules of Playbook.</p>
+<p>Configuration:
+  N/A</p>
+<p>Commands:
+  hubot which version - Responds with the NPM version of this package
+  is hubot listening? - Responds letting you know its listening</p>
+<p>Notes:
+  These commands provide basic diagnostics about the hubot using them
+  Hear anyone asking…</p>
+<ul>
+<li>Is hubot listening?</li>
+<li>Are any hubots listening?</li>
+<li>Is there a bot listening?</li>
+<li>Hubot are you listening?
+…also works with bot name and alias</li>
+</ul>
+<p>Author:
+  Tim Kinnane[@4thParty]</p>
+
+        
+          <div class='highlight'><pre>
+<span class="hljs-built_in">module</span>.exports = <span class="hljs-function"><span class="hljs-params">(robot)</span> -&gt;</span>
+
+  robot.respond <span class="hljs-regexp">/which version/i</span>, <span class="hljs-function"><span class="hljs-params">(res)</span> -&gt;</span>
+    {version} = <span class="hljs-built_in">require</span> <span class="hljs-string">'../package.json'</span>
+    res.reply <span class="hljs-string">"I'm currently running version <span class="hljs-subst">#{ version }</span>"</span>
+
+  hearTest = <span class="hljs-string">".*\\b((hu)?bot(s)?|<span class="hljs-subst">#{robot.name}</span>"</span>
+  hearTest+= <span class="hljs-string">"|<span class="hljs-subst">#{robot.alias}</span>"</span> <span class="hljs-keyword">if</span> robot.alias?
+  hearTest+= <span class="hljs-string">").*\\b(listening).*"</span>
+  robot.hear <span class="hljs-keyword">new</span> RegExp(hearTest,<span class="hljs-string">'i'</span>), <span class="hljs-function"><span class="hljs-params">(res)</span> -&gt;</span>
+    res.send <span class="hljs-string">"Yes, I'm listening."</span></pre></div>
+        
+      
+      <div class="fleur">h</div>
+    </div>
+  </div>
+</body>
+</html>

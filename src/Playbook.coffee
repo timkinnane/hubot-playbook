@@ -5,8 +5,12 @@ Director = require './modules/Director'
 
 # TODO: Refactor class and usage as singleton
 
-# A container class for modules provided by the Playbook library
-# For modules that require the robot as an argument, Playbook will pass it first
+###*
+ * Wrangler for modules provided by the Playbook library
+ * Provides the robot object and easy access to variants of module constructors
+ * @method constructor
+ * @param  {object}    @robot The Hubot
+###
 class Playbook
   constructor: (@robot) ->
     @log = @robot.logger

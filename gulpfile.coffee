@@ -41,6 +41,12 @@ gulp.task 'lint', ->
     .pipe $.coffeelint.reporter()
 
 gulp.task 'clean', del.bind null, ['./coverage']
+gulp.task 'clean:docs', del.bind null, ['./docs']
+
+gulp.task 'docs', ['clean:docs'], (done) ->
+  gulp.src paths.source.concat(['README.md']), base: '.'
+    .pipe $.docco layout: 'linear'
+    .pipe gulp.dest 'docs'
 
 gulp.task 'coverage', ['clean'], (done) ->
   gulp.src paths.source
@@ -63,6 +69,6 @@ gulp.task 'coverage', ['clean'], (done) ->
 gulp.task 'watch', ['test'], ->
   gulp.watch paths.watch, ['test']
 
-gulp.task 'test', ['lint', 'coverage']
+gulp.task 'test', ['lint', 'coverage', 'docs']
 
 gulp.task 'default', ['test']

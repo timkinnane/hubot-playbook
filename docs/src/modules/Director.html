@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>Director.coffee</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" media="all" href="../../public/stylesheets/normalize.css" />
+  <link rel="stylesheet" media="all" href="../../docco.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="page">
+
+      <div class="header">
+        
+          <h1>Director.coffee</h1>
+        
+
+        
+      </div>
+
+      
+        
+        
+        
+          <div class='highlight'><pre>_ = <span class="hljs-built_in">require</span> <span class="hljs-string">'underscore'</span>
+hooker = <span class="hljs-built_in">require</span> <span class="hljs-string">'hooker'</span>
+{inspect} = <span class="hljs-built_in">require</span> <span class="hljs-string">'util'</span>
+{EventEmitter} = <span class="hljs-built_in">require</span> <span class="hljs-string">'events'</span>
+
+Helpers = <span class="hljs-built_in">require</span> <span class="hljs-string">'./Helpers'</span></pre></div>
+        
+      
+        
+        <p>Control listener access, such as, but not limited to, any attached to a scene
+Can operate as a blacklist or a whitelist, also allowing external logic
+accepts an authorise function to determine access (lists can overide):</p>
+<ul>
+<li>will be passed either user or room name, to return bool to allow/deny
+without an authorise function:</li>
+<li>if type is whitelist, ONLY those on it are allowed</li>
+<li>if type is blacklist, ONLY those on it are denied
+use environment to set global behaviour for all directors</li>
+<li>DENIED_REPLY for when user denied access</li>
+<li>WHITELIST_USERNAMES inherited by whitelist type and username scope directors</li>
+<li>WHITELIST_ROOMS inherited by whitelist type and room scope directors</li>
+<li>BLACKLIST_USERNAMES inherited by blacklist type and username scope directors</li>
+<li>BLACKLIST_ROOMS inherited by blacklist type and room scope directors</li>
+</ul>
+
+        
+          <div class='highlight'><pre><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Director</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">EventEmitter</span></span></pre></div>
+        
+      
+        
+        <p>@param robot {Object} the hubot instance
+@param authorise (optional) {Function} function for controlling access
+  will receive the user or room name and response object to control access
+  e.g. could pass function to check if user has a particular role
+@param opts (optional) {Object} key/vals for config overides, e.g.</p>
+<ul>
+<li>type: whitelist or blacklist (default: whitelist)</li>
+<li>scope: user or room (default: user)</li>
+<li>reply: when user denied access (default: “Sorry, I can’t do that.”)</li>
+<li>key: string reference for logs, events</li>
+</ul>
+
+        
+          <div class='highlight'><pre>  constructor: <span class="hljs-function"><span class="hljs-params">(@robot, args...)</span> -&gt;</span>
+    @log = @robot.logger
+    @names = []</pre></div>
+        
+      
+        
+        <p>take arguments in param order, for all optional arguments</p>
+
+        
+          <div class='highlight'><pre>    @authorise = <span class="hljs-keyword">if</span> _.isFunction args[<span class="hljs-number">0</span>] <span class="hljs-keyword">then</span> args.shift()
+    opts = <span class="hljs-keyword">if</span> _.isObject args[<span class="hljs-number">0</span>] <span class="hljs-keyword">then</span> opts = args.shift() <span class="hljs-keyword">else</span> {}</pre></div>
+        
+      
+        
+        <p>create an id using director scope (and key if given)</p>
+
+        
+          <div class='highlight'><pre>    @id = Helpers.keygen <span class="hljs-string">'director'</span>, opts.key <span class="hljs-keyword">or</span> <span class="hljs-literal">undefined</span></pre></div>
+        
+      
+        
+        <p>extend options with defaults</p>
+
+        
+          <div class='highlight'><pre>    @config = _.defaults opts,
+      type: <span class="hljs-string">'whitelist'</span>
+      scope: <span class="hljs-string">'username'</span>
+      deniedReply: process.env.DENIED_REPLY <span class="hljs-keyword">or</span> <span class="hljs-string">"Sorry, I can't do that."</span></pre></div>
+        
+      
+        
+        <p>allow setting black/whitelisted names from env var (csv)</p>
+
+        
+          <div class='highlight'><pre>    <span class="hljs-keyword">if</span> @config.type <span class="hljs-keyword">is</span> <span class="hljs-string">'whitelist'</span>
+      <span class="hljs-keyword">if</span> @config.scope <span class="hljs-keyword">is</span> <span class="hljs-string">'username'</span> <span class="hljs-keyword">and</span> process.env.WHITELIST_USERNAMES?
+        @names = process.env.WHITELIST_USERNAMES.split <span class="hljs-string">','</span>
+      <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> @config.scope <span class="hljs-keyword">is</span> <span class="hljs-string">'room'</span> <span class="hljs-keyword">and</span> process.env.WHITELIST_ROOMS?
+        @names = process.env.WHITELIST_ROOMS.split <span class="hljs-string">','</span>
+    <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> @config.type <span class="hljs-keyword">is</span> <span class="hljs-string">'blacklist'</span>
+      <span class="hljs-keyword">if</span> @config.scope <span class="hljs-keyword">is</span> <span class="hljs-string">'username'</span> <span class="hljs-keyword">and</span> process.env.BLACKLIST_USERNAMES?
+        @names = process.env.BLACKLIST_USERNAMES.split <span class="hljs-string">','</span>
+      <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> @config.scope <span class="hljs-keyword">is</span> <span class="hljs-string">'room'</span> <span class="hljs-keyword">and</span> process.env.BLACKLIST_ROOMS?
+        @names = process.env.BLACKLIST_ROOMS.split <span class="hljs-string">','</span></pre></div>
+        
+      
+        
+        <p>validate loaded config</p>
+
+        
+          <div class='highlight'><pre>    <span class="hljs-keyword">if</span> @config.type <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> [<span class="hljs-string">'whitelist'</span>,<span class="hljs-string">'blacklist'</span>]
+      <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> Error <span class="hljs-string">"Invalid type - accepts only whitelist or blacklist"</span>
+    <span class="hljs-keyword">if</span> @config.scope <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> [<span class="hljs-string">'username'</span>,<span class="hljs-string">'room'</span>]
+      <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> Error <span class="hljs-string">"Invalid scope - accepts only username or room"</span>
+
+    @log.info <span class="hljs-string">"New <span class="hljs-subst">#{ @config.scope }</span> Director <span class="hljs-subst">#{ @config.type }</span>: <span class="hljs-subst">#{ @id }</span>"</span>
+    <span class="hljs-keyword">if</span> @config.deniedReply?
+      @log.info <span class="hljs-string">"replies '<span class="hljs-subst">#{ @config.deniedReply }</span>' if denied"</span></pre></div>
+        
+      
+        
+        <p>merge new usernames/rooms with listed names</p>
+
+        
+          <div class='highlight'><pre>  add: <span class="hljs-function"><span class="hljs-params">(names)</span> -&gt;</span>
+    @log.info <span class="hljs-string">"Adding <span class="hljs-subst">#{ inspect names }</span> to <span class="hljs-subst">#{ @id }</span> <span class="hljs-subst">#{ @config.type }</span>"</span>
+    names = [names] <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> _.isArray names <span class="hljs-comment"># cast single as array</span>
+    @names = _.union @names, names
+    <span class="hljs-keyword">return</span></pre></div>
+        
+      
+        
+        <p>remove usernames/rooms from listed names</p>
+
+        
+          <div class='highlight'><pre>  remove: <span class="hljs-function"><span class="hljs-params">(names)</span> -&gt;</span>
+    @log.info <span class="hljs-string">"Removing <span class="hljs-subst">#{ inspect names }</span> from <span class="hljs-subst">#{ @id }</span> <span class="hljs-subst">#{ @config.type }</span>"</span>
+    names = [names] <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> _.isArray names <span class="hljs-comment"># cast single as array</span>
+    @names = _.without @names, names...
+    <span class="hljs-keyword">return</span></pre></div>
+        
+      
+        
+        <p>determine if user has access, checking against usernames and rooms</p>
+
+        
+          <div class='highlight'><pre>  isAllowed: <span class="hljs-function"><span class="hljs-params">(res)</span> -&gt;</span>
+    name = <span class="hljs-keyword">switch</span> @config.scope
+      <span class="hljs-keyword">when</span> <span class="hljs-string">'username'</span> <span class="hljs-keyword">then</span> res.message.user.name
+      <span class="hljs-keyword">when</span> <span class="hljs-string">'room'</span> <span class="hljs-keyword">then</span> res.message.room</pre></div>
+        
+      
+        
+        <p>let whitelist names through, block anyone else (if not using authorise)</p>
+
+        
+          <div class='highlight'><pre>    <span class="hljs-keyword">if</span> @config.type <span class="hljs-keyword">is</span> <span class="hljs-string">'whitelist'</span>
+      <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span> <span class="hljs-keyword">if</span> name <span class="hljs-keyword">in</span> @names
+      <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span> <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> @authorise?</pre></div>
+        
+      
+        
+        <p>block blacklist names, let anyone else through (if not using authorise)</p>
+
+        
+          <div class='highlight'><pre>    <span class="hljs-keyword">if</span> @config.type <span class="hljs-keyword">is</span> <span class="hljs-string">'blacklist'</span>
+      <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span> <span class="hljs-keyword">if</span> name <span class="hljs-keyword">in</span> @names
+      <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span> <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> @authorise?</pre></div>
+        
+      
+        
+        <p>authorise function can determine access if lists didn’t</p>
+
+        
+          <div class='highlight'><pre>    <span class="hljs-keyword">return</span> @authorise name, res <span class="hljs-keyword">if</span> @authorise?</pre></div>
+        
+      
+        
+        <p>process a access or denial (either silently or with reply, as configured)</p>
+
+        
+          <div class='highlight'><pre>  process: <span class="hljs-function"><span class="hljs-params">(res)</span> -&gt;</span>
+    allowed = @isAllowed res
+    user = res.message.user.name
+    message = res.message.text</pre></div>
+        
+      
+        
+        <p>allow access</p>
+
+        
+          <div class='highlight'><pre>    <span class="hljs-keyword">if</span> allowed
+      @log.debug <span class="hljs-string">"<span class="hljs-subst">#{ @id }</span> allowed <span class="hljs-subst">#{ user }</span> on receiving <span class="hljs-subst">#{ message }</span>"</span>
+      <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span></pre></div>
+        
+      
+        
+        <p>process denial</p>
+
+        
+          <div class='highlight'><pre>    @log.info <span class="hljs-string">"<span class="hljs-subst">#{ @id }</span> denied <span class="hljs-subst">#{ user }</span> on receiving: <span class="hljs-subst">#{ message }</span>"</span>
+    @emit <span class="hljs-string">'denied'</span>, res
+    res.reply @config.deniedReply <span class="hljs-keyword">if</span> @config.deniedReply <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> [<span class="hljs-string">''</span>, <span class="hljs-literal">null</span>]
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span></pre></div>
+        
+      
+        
+        <p>let this director control access to any listener matching regex
+note - this uses listener middleware because we don’t want it sending
+denied reply every time a message matches, only if there was a listener</p>
+
+        
+          <div class='highlight'><pre>  directMatch: <span class="hljs-function"><span class="hljs-params">(regex)</span> -&gt;</span>
+    <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> Error <span class="hljs-string">"Invalid regex provided"</span> <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> _.isRegExp regex
+    @log.info <span class="hljs-string">"<span class="hljs-subst">#{ @id }</span> now controlling access to listeners matching <span class="hljs-subst">#{ regex }</span>"</span>
+    @robot.listenerMiddleware (context, next, done) =&gt;
+      res = context.response
+      <span class="hljs-keyword">if</span> res.message.text.match(regex) <span class="hljs-keyword">and</span> <span class="hljs-keyword">not</span> @process res <span class="hljs-comment"># matched, denied</span>
+        res.message.finish() <span class="hljs-comment"># don't process this message further</span>
+        <span class="hljs-keyword">return</span> done() <span class="hljs-comment"># don't process further middleware</span>
+      <span class="hljs-keyword">return</span> next done <span class="hljs-comment"># nothing matched or user allowed</span></pre></div>
+        
+      
+        
+        <p>let this director control access to a listener by id (allow partial match)</p>
+
+        
+          <div class='highlight'><pre>  directListener: <span class="hljs-function"><span class="hljs-params">(id)</span> -&gt;</span>
+    @log.info <span class="hljs-string">"<span class="hljs-subst">#{ @id }</span> now controlling access to listener id matching <span class="hljs-subst">#{ id }</span>"</span>
+    @robot.listenerMiddleware (context, next, done) =&gt;
+      res = context.response
+      listenerId = context.listener.options.id
+      regex = <span class="hljs-keyword">new</span> RegExp id, <span class="hljs-string">'i'</span> <span class="hljs-comment"># case insensitive match</span>
+      <span class="hljs-keyword">if</span> listenerId.match(regex) <span class="hljs-keyword">and</span> <span class="hljs-keyword">not</span> @process res <span class="hljs-comment"># listener matched, denied</span>
+        res.message.finish() <span class="hljs-comment"># don't process this message further</span>
+        <span class="hljs-keyword">return</span> done() <span class="hljs-comment"># don't process further middleware</span>
+      <span class="hljs-keyword">return</span> next done <span class="hljs-comment"># nothing matched or user allowed</span></pre></div>
+        
+      
+        
+        <p>let this director control access to a given scene</p>
+
+        
+          <div class='highlight'><pre>  directScene: <span class="hljs-function"><span class="hljs-params">(scene)</span> -&gt;</span>
+    @log.info <span class="hljs-string">"<span class="hljs-subst">#{ @id }</span> now controlling <span class="hljs-subst">#{ scene.id }</span>"</span></pre></div>
+        
+      
+        
+        <p>setup middleware to control access to the scene’s listeners</p>
+
+        
+          <div class='highlight'><pre>    @directListener scene.id</pre></div>
+        
+      
+        
+        <p>hook into .enter to control access for manually entered scenes</p>
+
+        
+          <div class='highlight'><pre>    hooker.hook scene, <span class="hljs-string">'enter'</span>, pre: <span class="hljs-function"><span class="hljs-params">(res)</span> =&gt;</span>
+      <span class="hljs-keyword">return</span> hooker.preempt <span class="hljs-literal">false</span> <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> @process res
+
+<span class="hljs-built_in">module</span>.exports = Director</pre></div>
+        
+      
+        
+        <p>TODO: save/restore config in hubot brain against Director id if provided
+TODO: parse Playbook messages for template tags e.g. sorry {{ username }}</p>
+
+        
+      
+      <div class="fleur">h</div>
+    </div>
+  </div>
+</body>
+</html>
