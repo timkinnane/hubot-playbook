@@ -12,6 +12,7 @@ chai.use require 'sinon-chai'
 Playbook = require '../../src/Playbook'
 
 # TODO: Add example usage of directed scenes
+# TODO: Replace ropey robot sends with better hubot-test-helper for multi rooms
 
 describe 'Playbook usage (messaging test cases)', ->
 
@@ -45,9 +46,11 @@ describe 'Playbook usage (messaging test cases)', ->
     @robot.on 'receive', (res) =>
       msg = res.message if res.message instanceof TextMessage
       @messages.push [ msg.room, msg.user.name, msg.text ] if msg?
-    @robot.on 'respond', (res, strings) =>
+    @robot.on 'respond', (res, strings, method) =>
       msg = res.message if res.message instanceof TextMessage and strings?
-      @messages.push [ msg.room, 'hubot', strings[0] ] if msg?
+      txt = strings[0]
+      txt = "@#{ msg.user.name } #{ txt }" if method is 'reply'
+      @messages.push [ msg.room, 'hubot', txt ] if msg?
     @robot.logger.info = @robot.logger.debug = -> # silence
 
     # fire it up
@@ -87,7 +90,7 @@ describe 'Playbook usage (messaging test cases)', ->
   context 'knock knock test - room scene', ->
 
     beforeEach ->
-      @playbook.sceneHear /knock/, 'room', ->
+      @playbook.sceneHear /knock/, 'room', sendReplies: false, ->
         @send "Who's there?"
         @branch /.*/, (res) =>
           @send "#{ res.match[0] } who?"
@@ -153,7 +156,7 @@ describe 'Playbook usage (messaging test cases)', ->
   context 'knock knock test - parallel direct scenes + reply', ->
 
     beforeEach ->
-      @playbook.sceneHear /knock/, 'direct', reply: true, ->
+      @playbook.sceneHear /knock/, 'direct', sendReplies: true, ->
         @send "Who's there?"
         @branch /.*/, (res) =>
           @send "#{ res.match[0] } who?"
@@ -173,15 +176,84 @@ describe 'Playbook usage (messaging test cases)', ->
       it 'responds to both without conflict', ->
         @messages.should.eql [
           [ '#A', 'nima', "knock knock" ],
-          [ '#A', 'hubot', "Who's there?" ],
+          [ '#A', 'hubot', "@nima Who's there?" ],
           [ '#A', 'pema', "knock knock" ],
-          [ '#A', 'hubot', "Who's there?" ],
+          [ '#A', 'hubot', "@pema Who's there?" ],
           [ '#A', 'nima', "Nima" ],
-          [ '#A', 'hubot', "Nima who?" ],
+          [ '#A', 'hubot', "@nima Nima who?" ],
           [ '#A', 'pema', "Pema" ],
-          [ '#A', 'hubot', "Pema who?" ],
+          [ '#A', 'hubot', "@pema Pema who?" ],
           [ '#A', 'pema', "Pema in A" ],
-          [ '#A', 'hubot', "Hello Pema in A" ],
+          [ '#A', 'hubot', "@pema Hello Pema in A" ],
           [ '#A', 'nima', "Nima in A" ],
-          [ '#A', 'hubot', "Hello Nima in A" ],
+          [ '#A', 'hubot', "@nima Hello Nima in A" ]
         ]
+
+  context 'knock and enter test - directed scene', ->
+
+    beforeEach ->
+      @scene = @playbook.sceneHear /knock/, sendReplies: true, ->
+        @send "You may enter!"
+
+    context 'Nima is whitelisted user, both try to enter', ->
+
+      beforeEach ->
+        @playbook.director deniedReply: "Sorry, Nima's only."
+          .add 'nima'
+          .directScene @scene
+        @send @pemaInA, 'knock knock'
+        .then => @send @nimaInA, 'knock knock'
+
+      it 'answers to Nima only, otherwise default response', ->
+        @messages.should.eql [
+          [ '#A', 'pema', "knock knock" ],
+          [ '#A', 'hubot', "@pema Sorry, Nima's only." ],
+          [ '#A', 'nima', "knock knock" ],
+          [ '#A', 'hubot', "@nima You may enter!" ]
+        ]
+
+    context 'Nima is blacklisted user, both try to enter', ->
+
+      beforeEach ->
+        @playbook.director
+          type: 'blacklist'
+          deniedReply: "Sorry, no Nima's."
+        .add 'nima'
+        .directScene @scene
+        @send @pemaInA, 'knock knock'
+        .then => @send @nimaInA, 'knock knock'
+
+      it 'answers to Nima only, otherwise default response', ->
+        @messages.should.eql [
+          [ '#A', 'pema', "knock knock" ],
+          [ '#A', 'hubot', "@pema You may enter!" ],
+          [ '#A', 'nima', "knock knock" ],
+          [ '#A', 'hubot', "@nima Sorry, no Nima's." ]
+        ]
+
+    #TODO: Fix this test - isn't responding to unallowed room
+    # context 'Room #A is whitelisted, nima and pema try to enter in both', ->
+    #
+    #   beforeEach ->
+    #     @playbook.director
+    #       scope: 'room'
+    #       deniedReply: "Sorry, #A users only."
+    #     .add '#A'
+    #     .directScene @scene
+    #     @send @pemaInA, 'knock knock'
+    #     .then => @send @nimaInA, 'knock knock'
+    #     .then => @send @pemaInB, 'knock knock'
+    #     .then => @send @nimaInB, 'knock knock'
+    #
+    #   it 'answers to room #A only, otherwise default response', ->
+    #     console.log @messages
+    #     @messages.should.eql [
+    #       [ '#A', 'pema', "knock knock" ],
+    #       [ '#A', 'hubot', "@pema You may enter!" ],
+    #       [ '#A', 'nima', "knock knock" ],
+    #       [ '#A', 'hubot', "@nima You may enter!" ],
+    #       [ '#B', 'pema', "knock knock" ],
+    #       [ '#B', 'hubot', "@pema Sorry, #A users only." ],
+    #       [ '#B', 'nima', "knock knock" ],
+    #       [ '#B', 'hubot', "@nima Sorry, #A users only." ],
+    #     ]

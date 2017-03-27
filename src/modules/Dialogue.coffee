@@ -21,11 +21,10 @@ class Dialogue extends EventEmitter
     @ended = false # state of dialogue completion
 
     @config = _.defaults opts, # use defaults for any missing options
-      reply: false # will send without addressing reply to sender
+      sendReplies: false # will send without addressing reply to sender
       timeout: parseInt process.env.DIALOGUE_TIMEOUT or 30000
       timeoutLine: process.env.DIALOGUE_TIMEOUT_LINE or
         'Timed out! Please start again.'
-    return @
 
   startTimeout: ->
     @countdown = setTimeout () =>

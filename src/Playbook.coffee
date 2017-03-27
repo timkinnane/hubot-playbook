@@ -3,8 +3,6 @@ Dialogue = require './modules/Dialogue'
 Scene = require './modules/Scene'
 Director = require './modules/Director'
 
-# TODO: Refactor class and usage as singleton
-
 ###*
  * Wrangler for modules provided by the Playbook library
  * Provides the robot object and easy access to variants of module constructors
@@ -25,8 +23,8 @@ class Playbook
     return _.last @directors
 
   # create and return scene
-  scene: (type) ->
-    @scenes.push new Scene @robot, type
+  scene: (args...) ->
+    @scenes.push new Scene @robot, args...
     return _.last @scenes
 
   # create and enter scene, returns dialogue, or false if failed to enter
@@ -69,3 +67,27 @@ module.exports = Playbook
 
 # TODO: Optional config for send middleware to throttle hearing consecutive res
 # - display "thinking" elipses
+# TODO: Refactor class and usage as singleton (add startup method with hubot)
+# TODO: Add Playbook.test method that returns a mock room with observers. e.g:
+###
+Write your own basic unit tests with Playbook - e.g. basic listener response:
+```
+  beforeEach (done) ->
+    Playbook.startup new Robot()
+    Playbook.sceneHear /hello/i, sendReplies: true, ->
+      @send "Hello"
+      done()
+    Playbook.test.send 'room', 'user', 'Hello!'
+
+  afterEach -> Playbook.shutdown()
+
+  it 'says hello back' ->
+    Playbook.test.messages.pop().should.eql [ 'room', 'hubot', '@user Hello' ]
+```
+or test a whole script:
+```
+  before (done) -> Playbook.test.read '/src/script.coffee'
+  beforeEach ->
+    Playbook.test.send 'room', 'user', 'Hello!'
+```
+###

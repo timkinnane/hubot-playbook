@@ -18,6 +18,7 @@ Helpers = require './Helpers'
 # - WHITELIST_ROOMS inherited by whitelist type and room scope directors
 # - BLACKLIST_USERNAMES inherited by blacklist type and username scope directors
 # - BLACKLIST_ROOMS inherited by blacklist type and room scope directors
+# Most methods return self for chaining after constructor
 class Director extends EventEmitter
 
   # @param robot {Object} the hubot instance
@@ -27,7 +28,7 @@ class Director extends EventEmitter
   # @param opts (optional) {Object} key/vals for config overides, e.g.
   #   - type: whitelist or blacklist (default: whitelist)
   #   - scope: user or room (default: user)
-  #   - reply: when user denied access (default: "Sorry, I can't do that.")
+  #   - deniedReply: say when denied access (default: "Sorry, I can't do that.")
   #   - key: string reference for logs, events
   constructor: (@robot, args...) ->
     @log = @robot.logger
@@ -73,14 +74,14 @@ class Director extends EventEmitter
     @log.info "Adding #{ inspect names } to #{ @id } #{ @config.type }"
     names = [names] if not _.isArray names # cast single as array
     @names = _.union @names, names
-    return
+    return @
 
   # remove usernames/rooms from listed names
   remove: (names) ->
     @log.info "Removing #{ inspect names } from #{ @id } #{ @config.type }"
     names = [names] if not _.isArray names # cast single as array
     @names = _.without @names, names...
-    return
+    return @
 
   # determine if user has access, checking against usernames and rooms
   isAllowed: (res) ->
@@ -107,6 +108,8 @@ class Director extends EventEmitter
     user = res.message.user.name
     message = res.message.text
 
+    console.log allowed
+
     # allow access
     if allowed
       @log.debug "#{ @id } allowed #{ user } on receiving #{ message }"
@@ -130,6 +133,7 @@ class Director extends EventEmitter
         res.message.finish() # don't process this message further
         return done() # don't process further middleware
       return next done # nothing matched or user allowed
+    return @
 
   # let this director control access to a listener by id (allow partial match)
   directListener: (id) ->
@@ -142,6 +146,7 @@ class Director extends EventEmitter
         res.message.finish() # don't process this message further
         return done() # don't process further middleware
       return next done # nothing matched or user allowed
+    return @
 
   # let this director control access to a given scene
   directScene: (scene) ->
@@ -154,7 +159,10 @@ class Director extends EventEmitter
     hooker.hook scene, 'enter', pre: (res) =>
       return hooker.preempt false if not @process res
 
+    return @
+
 module.exports = Director
 
 # TODO: save/restore config in hubot brain against Director id if provided
 # TODO: parse Playbook messages for template tags e.g. sorry {{ username }}
+# TODO: Keep log in hubot brain with director keys, whitelist/blacklist denials

@@ -30,5 +30,5 @@ module.exports = (robot) ->
     robot.emit 'receive', context.response
     next()
   robot.responseMiddleware (context, next, done) ->
-    robot.emit 'respond', context.response, context.strings
+    robot.emit 'respond', context.response, context.strings, context.method
     next()
