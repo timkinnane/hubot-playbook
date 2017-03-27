@@ -36,41 +36,46 @@ if options.modules?
   paths.tests[0] = "./test/unit/**/*#{ options.modules }*.coffee"
 
 gulp.task 'lint', ->
-  gulp.src paths.lint
-    .pipe $.coffeelint()
-    .pipe $.coffeelint.reporter()
+  gulp.src paths.lint,
+    since: gulp.lastRun 'lint'
+  .pipe $.coffeelint()
+  .pipe $.coffeelint.reporter()
 
 gulp.task 'clean:coverage', -> del ['coverage']
 
 gulp.task 'coverage', (done) ->
-  gulp.src paths.source
-    .pipe $.coffeeIstanbul includeUntested: true
-    .pipe $.coffeeIstanbul.hookRequire()
-    .on 'finish', ->
-      gulp.src paths.tests, cwd: __dirname
-        .pipe $.if !boolifyString(process.env.CI), $.plumber()
-        .pipe $.mocha
-          reporter: options.reporter
-          bail: true
-          compilers: 'coffee:coffee-script/register'
-          require: 'coffee-coverage/register-istanbul'
-        .pipe $.coffeeIstanbul.writeReports dir: './coverage'
-        .on 'finish', done
+  gulp.src paths.source, since: gulp.lastRun 'coverage'
+  .pipe $.coffeeIstanbul includeUntested: true
+  .pipe $.coffeeIstanbul.hookRequire()
+  .on 'finish', ->
+    gulp.src paths.tests, cwd: __dirname
+    .pipe $.if !boolifyString(process.env.CI), $.plumber()
+    .pipe $.mocha
+      reporter: options.reporter
+      bail: true
+      compilers: 'coffee:coffee-script/register'
+      require: 'coffee-coverage/register-istanbul'
+    .pipe $.coffeeIstanbul.writeReports dir: './coverage'
+    .on 'finish', done
   return
 
 gulp.task 'clean:docs', -> del ['docs']
 
 gulp.task 'docs:source', ->
-  gulp.src paths.source.concat(['README.md']), base: '.'
-    .pipe $.docco layout: 'linear'
-    .pipe gulp.dest 'docs'
+  gulp.src paths.source.concat(['README.md']),
+    base: '.'
+    since: gulp.lastRun 'docs:source'
+  .pipe $.docco layout: 'linear'
+  .pipe gulp.dest 'docs'
 
 gulp.task 'docs:coverage', (done) ->
-  gulp.src paths.tests, cwd: __dirname
-    .pipe $.coffeeIstanbul.writeReports
-      dir: './docs/coverage'
-      reporters: [ 'json', 'text', 'text-summary', 'html' ]
-    .on 'finish', done
+  gulp.src paths.tests,
+    cwd: __dirname
+    since: gulp.lastRun 'docs:coverage'
+  .pipe $.coffeeIstanbul.writeReports
+    dir: './docs/coverage'
+    reporters: [ 'json', 'text', 'text-summary', 'html' ]
+  .on 'finish', done
   return
 
 # build chains - used by CLI tasks
