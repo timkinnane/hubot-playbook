@@ -52,7 +52,7 @@
     "coveralls": "^2.11.16",
     "del": "^2.2.2",
     "event-stream": "^3.1.5",
-    "gulp": "^3.8.2",
+    "gulp": "gulpjs/gulp#4.0",
     "gulp-coffee": "^2.0.1",
     "gulp-coffee-coverage": "^1.0.0",
     "gulp-coffee-istanbul": "^0.9.1",
