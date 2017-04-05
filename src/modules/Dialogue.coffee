@@ -1,6 +1,4 @@
 # credit to lmarkus/hubot-conversation for the original concept
-# TODO: queue consquetive receive calls to process messages synchronously
-# TODO: save transcript to brain (here or in scene)
 
 _ = require 'underscore'
 {inspect} = require 'util'
@@ -176,6 +174,3 @@ class Dialogue extends EventEmitter
     return @ended
 
 module.exports = Dialogue
-
-# TODO - replace faux "this" in dialogue callbacks with something better
-# ^ makes it complicated for this replacement for other reasons, i.e. fat arrows

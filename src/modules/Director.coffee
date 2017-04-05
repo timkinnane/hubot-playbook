@@ -160,9 +160,3 @@ class Director extends EventEmitter
     return @
 
 module.exports = Director
-
-# TODO: save/restore config in hubot brain against Director id if provided
-# TODO: parse Playbook messages for template tags e.g. sorry {{ username }}
-# TODO: Keep log in hubot brain with director keys, whitelist/blacklist denials
-# TODO: allow directing dialogues
-# TODO: allow directing scenes by key - so object isn't required

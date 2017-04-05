@@ -25,10 +25,6 @@ Add Playbook to your bot: `npm install --save hubot-playbook`
 
 Look at [examples] and [docs] for how to use Playbook and it's modules to add conversational logic to your bots.
 
-@TODO: generate docs!
-
-@TODO: distinct setup steps for spinning up a Playbook bot without development requirements.
-
 ## Required reading
 
 *Framework*
@@ -43,3 +39,45 @@ Look at [examples] and [docs] for how to use Playbook and it's modules to add co
 - [Chaijs (should)](http://chaijs.com/api/bdd/)
 - [Sinon Spies](http://sinonjs.org/releases/v1.17.7/spies/)
 - [Hubot Test Helper](https://github.com/mtsmfm/hubot-test-helper)
+
+## Development
+
+### CLI tasks
+
+- `gulp test` to run tests once for debugging known issues
+- `gulp watch` while developing, to see tests in console
+- `gulp watch --modules {name}` for quicker tests of single module
+- `gulp watch --reporter {name}`
+- `gulp watch --modules Scene --reporter spec` example of above combined
+- `gulp docs` to review generated docs (skips running tests)
+- `gulp watch:docs` while documenting code, to auto-refresh docs on edit
+- `gulp watch:docs` before publishing,
+- `gulp publish` to publish a completed version or patch -- TODO: this
+
+## TODO
+
+### Pre-release
+
+- Replace bound "this" in dialogue callbacks with dialogue as param
+- Refactor Playbook usage as singleton (add startup method with hubot)
+- Let modules refer back up to Playbook and use that instead of Helpers
+- Move message observer methods into Hubot Pretend
+- Create integration test, to replace diagnostics
+
+### Beta Features
+
+- Allow directing dialogues
+- Allow directing scenes by key - so object isn't required
+- Keep director keys, whitelist/blacklist denials in hubot brain
+- Save transcript to brain (through dialogue or in scene)
+- Add context key/value collection methods from callbacks, store with user key
+- Parse Playbook messages with context for template tags e.g. ok {{ username }}
+
+### Release Roadmap
+
+- Fix generated docs!
+- Save/restore director config in hubot brain against key if provided
+- Example setup steps for a Playbook bot without development requirements
+- Queue dialogue.receive calls to ensure messages process synchronously
+- Optional config for send middleware to throttle hearing consecutive res
+- Display "thinking" ellipses (emit event for use by adapters)

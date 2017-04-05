@@ -85,20 +85,6 @@ docs = gulp.series 'lint', 'clean:docs', gulp.parallel 'docs:coverage', 'docs:so
 watchDocs = gulp.series docs, -> gulp.watch paths.watch, docs
 publish = gulp.series docs
 
-###
-  CLI tasks for development
-  - `gulp test` to run tests once for debugging known issues
-  - `gulp watch` while developing, to see tests in console
-  - `gulp watch --modules {name}` for quicker tests of single module
-  - `gulp watch --reporter {name}`
-  - `gulp watch --modules Scene --reporter spec` example of above combined
-  - `gulp docs` to review generated docs (skips running tests)
-  - `gulp watch:docs` while documenting code, to auto-refresh docs on edit
-  - `gulp watch:docs` before publishing,
-  - `gulp publish` to publish a completed version or patch -- TODO: this
-  # TODO: add to README.md
-###
-
 gulp.task 'test', test
 gulp.task 'watch', watch
 gulp.task 'docs', docs

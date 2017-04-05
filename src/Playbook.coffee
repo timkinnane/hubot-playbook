@@ -74,10 +74,6 @@ class Playbook
 
 module.exports = Playbook
 
-# TODO: Optional config for send middleware to throttle hearing consecutive res
-# - display "thinking" elipses
-# TODO: Refactor class and usage as singleton (add startup method with hubot)
-# TODO: Add Playbook.test method that returns a mock room with observers. e.g:
 ###
 Write your own basic unit tests with Playbook - e.g. basic listener response:
 ```
