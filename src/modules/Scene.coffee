@@ -1,6 +1,5 @@
 # credit to lmarkus/hubot-conversation for the original concept
 _ = require 'underscore'
-{inspect} = require 'util'
 
 Dialogue = require './Dialogue'
 Helpers = require './Helpers'
@@ -84,6 +83,7 @@ class Scene
     @robot[type] regex, id: id, (res) =>
       dialogue = @enter res # may fail if enter hooks override (from Director)
       callback.call dialogue, res if dialogue? # in callback dialogue is 'this'
+      # callback res, dialogue if dialogue? # TODO
 
     return id
 

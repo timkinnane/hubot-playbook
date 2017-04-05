@@ -17,7 +17,7 @@ Getting started with Playbook depends on setting up a new [Hubot](https://hubot.
 You will need [node.js and npm](https://docs.npmjs.com/getting-started/installing-node).
 Once those are installed, we can install the hubot generator and dev tools used by Playbook:
 
-Globals: `npm install -g coffee-script gulp nodemon yo generator-hubot`
+Globals: `npm install -g coffee-script gulp-cli nodemon yo generator-hubot`
 
 Follow the rest of the [getting started with hubot steps](https://github.com/github/hubot/blob/master/docs/index.md#getting-started-with-hubot).
 

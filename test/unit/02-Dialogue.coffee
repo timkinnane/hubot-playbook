@@ -349,7 +349,8 @@ describe '#Dialogue', ->
 
       beforeEach ->
         @callback = sinon.spy()
-        @dialogue.branch /confirm/, => @dialogue.branch /yes/, @callback
+        @dialogue.branch /confirm/, =>
+          @dialogue.branch /yes/, @callback
         @room.user.say 'tester', 'confirm'
 
       it 'has new branch after matching original', ->

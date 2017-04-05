@@ -1,259 +1,260 @@
 Q = require 'q'
 _ = require 'underscore'
-{generate} = require 'randomstring'
-mute = require 'mute'
-{inspect} = require 'util'
-sinon = require 'sinon'
 chai = require 'chai'
 should = chai.should()
-chai.use require 'sinon-chai'
+co = require 'co'
 
-{Robot, User, TextMessage} = require 'hubot'
+Pretend = require 'hubot-pretend'
 Playbook = require '../../src/Playbook'
-
-# TODO: Add example usage of directed scenes
-# TODO: Replace ropey robot sends with better hubot-test-helper for multi rooms
+pretend = new Pretend() # init without scripts, will be read per each context
 
 describe 'Playbook usage (messaging test cases)', ->
 
-  before ->
-    # helper to send messages to bot, returns promise
-    @send = (user, text) =>
-      unmute = mute()
-      deferred = Q.defer()
-      msg = new TextMessage user, text, generate 6 # random id
-      @robot.receive msg, -> deferred.resolve() # resolve as callback
-      return deferred.promise.then -> unmute()
-    # same username in two rooms should be recognised as same user
-    @nimaInA = new User 1,
-      name: 'nima'
-      room: '#A'
-    @pemaInA = new User 2,
-      name: 'pema'
-      room: '#A'
-    @nimaInB = new User 1,
-      name: 'nima'
-      room: '#B'
-    @pemaInB = new User 2,
-      name: 'pema'
-      room: '#B'
-
-  beforeEach ->
-    # prepare robot to store every message
-    @messages = []
-    @robot = new Robot 'hubot/src/adapters', 'shell'
-    require('../scripts/ping.coffee') @robot # run hubot through test script
-    @robot.on 'receive', (res) =>
-      msg = res.message if res.message instanceof TextMessage
-      @messages.push [ msg.room, msg.user.name, msg.text ] if msg?
-    @robot.on 'respond', (res, strings, method) =>
-      msg = res.message if res.message instanceof TextMessage and strings?
-      txt = strings[0]
-      txt = "@#{ msg.user.name } #{ txt }" if method is 'reply'
-      @messages.push [ msg.room, 'hubot', txt ] if msg?
-    @robot.logger.info = @robot.logger.debug = -> # silence
-
-    # fire it up
-    @playbook = new Playbook @robot
-
   afterEach ->
-    @playbook.shutdown()
-    @robot.shutdown()
+    pretend.robot.shutdown()
 
   context 'knock knock test - user scene', ->
 
     beforeEach ->
-      @playbook.sceneHear /knock/, 'user', ->
-        @send "Who's there?"
-        @branch /.*/, (res) =>
-          @send "#{ res.match[0] } who?"
-          @branch /.*/, "Hello #{ res.match[0] }"
+      pretend.read '../scripts/usage/knock-knock-user.coffee'
+      pretend.startup()
+      @nima = pretend.user 'nima'
+      @pema = pretend.user 'pema'
 
     context 'Nima begins in A, continues in B, Pema tries in both', ->
 
       beforeEach ->
-        @send @nimaInA, "knock knock" # ...Who's there?
-        .then => @send @pemaInA, "Pema in A" # ...ignored
-        .then => @send @nimaInB, "Nima in B" # ...Nima in B who?
-        .then => @send @pemaInB, "Pema in B" # ...ignored
+        co =>
+          yield @nima.in('#A').send "knock knock" # ... Who's there?
+          yield @pema.in('#A').send "Pema A"      # ... -ignored-
+          yield @nima.in('#B').send "Nima B"      # ... Nima B who?
+          yield @pema.in('#B').send "Pema B"      # ... -ignored-
 
       it 'responds to Nima in both, ignores Pema in both', ->
-        @messages.should.eql [
-          [ '#A', 'nima', "knock knock" ],
-          [ '#A', 'hubot', "Who's there?" ],
-          [ '#A', 'pema', "Pema in A" ],
-          [ '#B', 'nima', "Nima in B" ],
-          [ '#A', 'hubot', "Nima in B who?" ],
-          [ '#B', 'pema', "Pema in B" ]
+        pretend.messages.should.eql [
+          [ '#A', 'nima',   "knock knock" ]
+          [ '#A', 'hubot',  "Who's there?" ]
+          [ '#A', 'pema',   "Pema A" ]
+          [ '#B', 'nima',   "Nima B" ]
+          [ '#B', 'hubot',  "Nima B who?" ]
+          [ '#B', 'pema',   "Pema B" ]
         ]
 
   context 'knock knock test - room scene', ->
 
     beforeEach ->
-      @playbook.sceneHear /knock/, 'room', sendReplies: false, ->
-        @send "Who's there?"
-        @branch /.*/, (res) =>
-          @send "#{ res.match[0] } who?"
-          @branch /.*/, (res) =>
-            @send "Hello #{ res.match[0] }"
+      pretend.read '../scripts/usage/knock-knock-room.coffee'
+      pretend.startup()
+      @nima = pretend.user 'nima'
+      @pema = pretend.user 'pema'
+      @A = pretend.room '#A'
+      @B = pretend.room '#B'
 
     context 'Nima begins in A, continues in B, Pema responds in A', ->
 
       beforeEach ->
-        @send @nimaInA, "knock knock" # ...Who's there?
-        .then => @send @nimaInB, "Nima" # ...ignored
-        .then => @send @pemaInA, "Pema" # ...Pema who?
-        .then => @send @pemaInB, "Pema in B" # ...ignored
-        .then => @send @nimaInA, "No it's Nima" # No it"s Nima who?
-        .then => @send @pemaInA, "Hey!?" # ...ignored
+        co =>
+          yield @A.receive @nima, "knock knock"   # ... Who's there?
+          yield @B.receive @nima, "Nima"          # ... -ignored-
+          yield @A.receive @pema, "Pema"          # ... Pema who?
+          yield @B.receive @pema, "Pema B"        # ... -ignored-
+          yield @A.receive @nima, "No it's Nima!" # ... No it's Nima who?
 
-      it 'responds to Nima or Pema in A, ignores both in B', ->
-        @messages.should.eql [
-          [ '#A', 'nima', "knock knock" ],
-          [ '#A', 'hubot', "Who's there?" ],
-          [ '#B', 'nima', "Nima" ],
-          [ '#A', 'pema', "Pema" ],
-          [ '#A', 'hubot', "Pema who?" ],
-          [ '#B', 'pema', "Pema in B" ],
-          [ '#A', 'nima', "No it's Nima" ],
-          [ '#A', 'hubot', "Hello No it's Nima" ],
-          [ '#A', 'pema', "Hey!?" ]
+      # TODO: Fix the responses here, it's replying to all as the first (@nima)
+
+      it 'responds to Nima or Pema in A', ->
+        @A.received().should.eql [
+          [ 'nima',   "knock knock" ]
+          [ 'hubot',  "@nima Who's there?" ]
+          [ 'pema',   "Pema" ]
+          [ 'hubot',  "@pema Pema who?" ]
+          [ 'nima',   "No it's Nima!" ]
+          [ 'hubot',  "@nima lol" ]
+        ]
+
+      it 'ignores both in B', ->
+        @B.received().should.eql [
+          [ 'nima',   "Nima" ]
+          [ 'pema',   "Pema B" ]
         ]
 
   context 'knock knock test - direct scene', ->
 
     beforeEach ->
-      @playbook.sceneHear /knock/, 'direct', ->
-        @send "Who's there?"
-        @branch /.*/, (res) =>
-          @send "#{ res.match[0] } who?"
-          @branch /.*/, (res) =>
-            @send "Hello #{ res.match[0] }"
+      pretend.read '../scripts/usage/knock-knock-direct-noreply.coffee'
+      pretend.startup()
+      @nima = pretend.user 'nima'
+      @pema = pretend.user 'pema'
+      @A = pretend.room '#A'
+      @B = pretend.room '#B'
 
     context 'Nima begins in A, continues in both, Pema responds in A', ->
 
       beforeEach ->
-        @send @nimaInA, "knock knock" # ...Who's there?
-        .then => @send @nimaInB, "Nima" # ...ignored
-        .then => @send @pemaInA, "Pema" # ...ignored
-        .then => @send @pemaInB, "Pema in B" # ...ignored
-        .then => @send @nimaInA, "Nima" # Nima who?
-        .then => @send @nimaInA, "Nima in A" # Hello Nima in A
+        co =>
+          yield @A.receive @nima, "knock knock" # ... Who's there?
+          yield @B.receive @nima, "Nima"        # ... -ignored-
+          yield @A.receive @pema, "Pema"        # ... -ignored-
+          yield @B.receive @pema, "Pema B"      # ... -ignored-
+          yield @A.receive @nima, "Nima"        # ... Nima who?
+          yield @A.receive @nima, "Nima A"      # ... lol
 
-      it 'responds only to Nima in A, ignores both in B', ->
-        @messages.should.eql [
-          [ '#A', 'nima', "knock knock" ],
-          [ '#A', 'hubot', "Who's there?" ],
-          [ '#B', 'nima', "Nima" ],
-          [ '#A', 'pema', "Pema" ],
-          [ '#B', 'pema', "Pema in B" ],
-          [ '#A', 'nima', "Nima" ],
-          [ '#A', 'hubot', "Nima who?" ],
-          [ '#A', 'nima', "Nima in A" ],
-          [ '#A', 'hubot', "Hello Nima in A" ],
+      it 'responds only to Nima in A', ->
+        @A.received().should.eql [
+          [ 'nima',   "knock knock" ]
+          [ 'hubot',  "Who's there?" ]
+          [ 'pema',   "Pema" ]
+          [ 'nima',   "Nima" ]
+          [ 'hubot',  "Nima who?" ]
+          [ 'nima',   "Nima A" ]
+          [ 'hubot',  "lol" ]
+        ]
+
+      it 'ignores both in B', ->
+        @B.received().should.eql [
+          [ 'nima', "Nima" ]
+          [ 'pema', "Pema B" ]
         ]
 
   context 'knock knock test - parallel direct scenes + reply', ->
 
     beforeEach ->
-      @playbook.sceneHear /knock/, 'direct', sendReplies: true, ->
-        @send "Who's there?"
-        @branch /.*/, (res) =>
-          @send "#{ res.match[0] } who?"
-          @branch /.*/, (res) =>
-            @send "Hello #{ res.match[0] }"
+      pretend.read '../scripts/usage/knock-knock-direct-reply.coffee'
+      pretend.startup()
+      @nima = pretend.user 'nima'
+      @pema = pretend.user 'pema'
 
     context 'Nima begins, Pema begins, both continue in same room', ->
 
       beforeEach ->
-        @send @nimaInA, "knock knock" # ...Who's there?
-        .then => @send @pemaInA, "knock knock" # ...Who's there?
-        .then => @send @nimaInA, "Nima" # ...Nima who?
-        .then => @send @pemaInA, "Pema" # ...Pema who?
-        .then => @send @pemaInA, "Pema in A" # Hello Pema in A
-        .then => @send @nimaInA, "Nima in A" # Hello Pema in A
+        co =>
+          yield @nima.send "knock knock"  # ... Who's there?
+          yield @pema.send "knock knock"  # ... Who's there?
+          yield @nima.send "Nima"         # ... Nima who?
+          yield @pema.send "Pema"         # ... Pema who?
+          yield @pema.send "Just Pema"    # ... lol
+          yield @nima.send "Just Nima"    # ... lol
 
       it 'responds to both without conflict', ->
-        @messages.should.eql [
-          [ '#A', 'nima', "knock knock" ],
-          [ '#A', 'hubot', "@nima Who's there?" ],
-          [ '#A', 'pema', "knock knock" ],
-          [ '#A', 'hubot', "@pema Who's there?" ],
-          [ '#A', 'nima', "Nima" ],
-          [ '#A', 'hubot', "@nima Nima who?" ],
-          [ '#A', 'pema', "Pema" ],
-          [ '#A', 'hubot', "@pema Pema who?" ],
-          [ '#A', 'pema', "Pema in A" ],
-          [ '#A', 'hubot', "@pema Hello Pema in A" ],
-          [ '#A', 'nima', "Nima in A" ],
-          [ '#A', 'hubot', "@nima Hello Nima in A" ]
+        pretend.messages.should.eql [
+          [ 'nima',   "knock knock" ]
+          [ 'hubot',  "@nima Who's there?" ]
+          [ 'pema',   "knock knock" ]
+          [ 'hubot',  "@pema Who's there?" ]
+          [ 'nima',   "Nima" ]
+          [ 'hubot',  "@nima Nima who?" ]
+          [ 'pema',   "Pema" ]
+          [ 'hubot',  "@pema Pema who?" ]
+          [ 'pema',   "Just Pema" ]
+          [ 'hubot',  "@pema lol" ]
+          [ 'nima',   "Just Nima" ]
+          [ 'hubot',  "@nima lol" ]
         ]
 
-  context 'knock and enter test - directed scene', ->
+  context 'knock and enter test - directed user scene', ->
 
     beforeEach ->
-      @scene = @playbook.sceneHear /knock/, sendReplies: true, ->
-        @send "You may enter!"
+      pretend.read '../scripts/usage/knock-and-enter-user.coffee'
+      pretend.startup()
+      @director = pretend.user 'director'
+      @nima = pretend.user 'nima'
+      @pema = pretend.user 'pema'
 
-    context 'Nima is whitelisted user, both try to enter', ->
+    context 'Nima gets whitelisted, both try to enter', ->
 
       beforeEach ->
-        @playbook.director deniedReply: "Sorry, Nima's only."
-          .add 'nima'
-          .directScene @scene
-        @send @pemaInA, 'knock knock'
-        .then => @send @nimaInA, 'knock knock'
+        co =>
+          yield @director.send "allow nima"
+          yield @pema.send "knock knock"
+          yield @nima.send "knock knock"
 
-      it 'answers to Nima only, otherwise default response', ->
-        @messages.should.eql [
-          [ '#A', 'pema', "knock knock" ],
-          [ '#A', 'hubot', "@pema Sorry, Nima's only." ],
-          [ '#A', 'nima', "knock knock" ],
-          [ '#A', 'hubot', "@nima You may enter!" ]
+      it 'allows Nima only, otherwise default response', ->
+        pretend.messages.should.eql [
+          [ 'director', "allow nima" ]
+          [ 'pema',     "knock knock" ]
+          [ 'hubot',    "@pema Sorry, nima's only." ]
+          [ 'nima',     "knock knock" ]
+          [ 'hubot',    "@nima You may enter!" ]
         ]
 
     context 'Nima is blacklisted user, both try to enter', ->
 
       beforeEach ->
-        @playbook.director
-          type: 'blacklist'
-          deniedReply: "Sorry, no Nima's."
-        .add 'nima'
-        .directScene @scene
-        @send @pemaInA, 'knock knock'
-        .then => @send @nimaInA, 'knock knock'
+        co =>
+          yield @director.send "deny nima"
+          yield @pema.send "knock knock"
+          yield @nima.send "knock knock"
 
-      it 'answers to Nima only, otherwise default response', ->
-        @messages.should.eql [
-          [ '#A', 'pema', "knock knock" ],
-          [ '#A', 'hubot', "@pema You may enter!" ],
-          [ '#A', 'nima', "knock knock" ],
-          [ '#A', 'hubot', "@nima Sorry, no Nima's." ]
+      it 'allows any but Nima, otherwise default response', ->
+        pretend.messages.should.eql [
+          [ 'director', "deny nima" ]
+          [ 'pema',   "knock knock" ]
+          [ 'hubot',  "@pema You may enter!" ]
+          [ 'nima',   "knock knock" ]
+          [ 'hubot',  "@nima Sorry, no nima's." ]
         ]
 
-    #TODO: Fix this test - isn't responding to unallowed room
-    # context 'Room #A is whitelisted, nima and pema try to enter in both', ->
-    #
-    #   beforeEach ->
-    #     @playbook.director
-    #       scope: 'room'
-    #       deniedReply: "Sorry, #A users only."
-    #     .add '#A'
-    #     .directScene @scene
-    #     @send @pemaInA, 'knock knock'
-    #     .then => @send @nimaInA, 'knock knock'
-    #     .then => @send @pemaInB, 'knock knock'
-    #     .then => @send @nimaInB, 'knock knock'
-    #
-    #   it 'answers to room #A only, otherwise default response', ->
-    #     console.log @messages
-    #     @messages.should.eql [
-    #       [ '#A', 'pema', "knock knock" ],
-    #       [ '#A', 'hubot', "@pema You may enter!" ],
-    #       [ '#A', 'nima', "knock knock" ],
-    #       [ '#A', 'hubot', "@nima You may enter!" ],
-    #       [ '#B', 'pema', "knock knock" ],
-    #       [ '#B', 'hubot', "@pema Sorry, #A users only." ],
-    #       [ '#B', 'nima', "knock knock" ],
-    #       [ '#B', 'hubot', "@nima Sorry, #A users only." ],
-    #     ]
+  context 'knock and enter test - directed room scene', ->
+
+    beforeEach ->
+      pretend.read '../scripts/usage/knock-and-enter-room.coffee'
+      pretend.startup()
+      @director = pretend.user 'director'
+      @nima = pretend.user 'nima'
+      @pema = pretend.user 'pema'
+      @A = pretend.room '#A'
+      @B = pretend.room '#B'
+
+    context 'Room #A is whitelisted, nima and pema try to enter in both', ->
+
+      beforeEach ->
+        co =>
+          yield @A.receive @director, "allow #A"
+          yield @A.receive @pema, "knock knock"
+          yield @A.receive @nima, "knock knock"
+          yield @B.receive @pema, "knock knock"
+          yield @B.receive @nima, "knock knock"
+
+      it 'allows any in room #A', ->
+        @A.received().should.eql [
+          [ 'director',  "allow #A" ]
+          [ 'pema',     "knock knock" ]
+          [ 'hubot',    "@pema You may enter!" ]
+          [ 'nima',     "knock knock" ]
+          [ 'hubot',    "@nima You may enter!" ]
+        ]
+
+      it 'sends default response to other rooms', ->
+        @B.received().should.eql [
+          [ 'pema',   "knock knock" ]
+          [ 'hubot',  "@pema Sorry, #A users only." ]
+          [ 'nima',   "knock knock" ]
+          [ 'hubot',  "@nima Sorry, #A users only." ]
+        ]
+
+    context 'Room #A is blacklisted, nima and pema try to enter in both', ->
+
+      beforeEach ->
+        co =>
+          yield @A.receive @director, "deny #A"
+          yield @A.receive @pema, "knock knock"
+          yield @A.receive @nima, "knock knock"
+          yield @B.receive @pema, "knock knock"
+          yield @B.receive @nima, "knock knock"
+
+      it 'allows any in room #A', ->
+        @A.received().should.eql [
+          [ 'director',  "deny #A" ]
+          [ 'pema',   "knock knock" ]
+          [ 'hubot',  "@pema Sorry, no #A users." ]
+          [ 'nima',   "knock knock" ]
+          [ 'hubot',  "@nima Sorry, no #A users." ]
+        ]
+
+      it 'sends default response to other rooms', ->
+        @B.received().should.eql [
+          [ 'pema',     "knock knock" ]
+          [ 'hubot',    "@pema You may enter!" ]
+          [ 'nima',     "knock knock" ]
+          [ 'hubot',    "@nima You may enter!" ]
+        ]

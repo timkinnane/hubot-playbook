@@ -14,6 +14,7 @@ Helpers = require './Helpers'
 # @param opts, key/vals for config, e.g overide timeout default
 class Dialogue extends EventEmitter
   constructor: (@res, opts={}) ->
+    @lastRes = _.clone @res # lastRes may be updated, res is initiating response
     @log = @res.robot.logger
     @paths = {} # builds as dialogue progresses
     @pathId = null # pointer for current path
@@ -134,6 +135,7 @@ class Dialogue extends EventEmitter
         @clearBranches()
         @clearTimeout()
         res.match = match # override the original match from hubot listener
+        @lastRes = res # override the original response with current one
         branch.handler res # may add additional branches / restarting timeout
         return true # don't process further matches
 
@@ -145,7 +147,7 @@ class Dialogue extends EventEmitter
   # Send response using original response object
   # Address the participants appropriately (i.e. @user reply or send to channel)
   send: (line) ->
-    if @config.sendReplies then @res.reply line else @res.send line
+    if @config.sendReplies then @lastRes.reply line else @lastRes.send line
     @record 'send', 'bot', line
     return
 
@@ -174,3 +176,6 @@ class Dialogue extends EventEmitter
     return @ended
 
 module.exports = Dialogue
+
+# TODO - replace faux "this" in dialogue callbacks with something better
+# ^ makes it complicated for this replacement for other reasons, i.e. fat arrows

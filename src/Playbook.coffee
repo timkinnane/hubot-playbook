@@ -1,4 +1,5 @@
 _ = require 'underscore'
+hooker = require 'hooker'
 Dialogue = require './modules/Dialogue'
 Scene = require './modules/Scene'
 Director = require './modules/Director'
@@ -17,20 +18,28 @@ class Playbook
     @scenes = []
     @dialogues = []
 
+    # make modules accessable individually
+    @Director = Director
+    @Dialogue = Dialogue
+    @Scene = Scene
+
+    # shutdown playbook after robot shutdown called
+    hooker.hook @robot, 'shutdown', post: => @shutdown()
+
   # create and return director
   director: (args...) ->
-    @directors.push new Director @robot, args...
+    @directors.push new @Director @robot, args...
     return _.last @directors
 
   # create and return scene
   scene: (args...) ->
-    @scenes.push new Scene @robot, args...
+    @scenes.push new @Scene @robot, args...
     return _.last @scenes
 
   # create and enter scene, returns dialogue, or false if failed to enter
   sceneEnter: (args...) ->
     type = args.shift() if typeof args[0] is 'string'
-    @scenes.push new Scene @robot, type
+    @scenes.push new @Scene @robot, type
     dialogue = _.last @scenes
       .enter args...
     return dialogue
@@ -53,7 +62,7 @@ class Playbook
 
   # create stand-alone dialogue (not within scene)
   dialogue: (args...) ->
-    @dialogues.push new Dialogue args...
+    @dialogues.push new @Dialogue args...
     return _.last @dialogues
 
   # exit all scenes and end all dialogues

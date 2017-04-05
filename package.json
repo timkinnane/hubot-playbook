@@ -11,7 +11,7 @@
     "watch": "gulp watch",
     "hubot": "coffee --nodejs '--debug' ./test/scripts/shell.coffee",
     "kill": "kill -9 `ps ax | grep hubot | awk '{print $1}'`",
-    "coveralls": "gulp test && cat coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
+    "coverage": "gulp test && cat coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
   },
   "repository": {
     "type": "git",
@@ -48,6 +48,7 @@
   "devDependencies": {
     "boolify-string": "^2.0.2",
     "chai": "^3.5.0",
+    "co": "^4.6.0",
     "coffee-coverage": "^2.0.1",
     "coveralls": "^2.11.16",
     "del": "^2.2.2",
@@ -66,6 +67,7 @@
     "gulp-sourcemaps": "^2.4.1",
     "gulp-util": "^3.0.8",
     "hubot": "^2.19.0",
+    "hubot-pretend": "^0.1.0",
     "hubot-test-helper": "^1.5.1",
     "minimatch": "^3.0.3",
     "minimist": "^1.2.0",
