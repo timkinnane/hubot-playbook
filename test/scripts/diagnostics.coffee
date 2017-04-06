@@ -19,7 +19,7 @@
 #   ...also works with bot name and alias
 #
 # Author:
-#   Tim Kinnane[@4thParty]
+#   Tim Kinnane
 
 module.exports = (robot) ->
 

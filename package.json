@@ -72,7 +72,6 @@
     "minimatch": "^3.0.3",
     "minimist": "^1.2.0",
     "mute": "^2.0.6",
-    "power-assert": "^1.4.2",
     "sinon": "^1.17.7",
     "sinon-chai": "^2.8.0",
     "traceur": "0.0.111",

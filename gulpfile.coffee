@@ -27,12 +27,11 @@ paths =
 knownOptions =
   string: ['modules','reporter']
   default:
-    module: null
+    modules: null
     reporter: 'landing'
 
 options = minimist process.argv.slice(2), knownOptions
 if options.modules?
-  paths.source = ["./src/**/*#{ options.modules }*.coffee"]
   paths.tests[0] = "./test/unit/**/*#{ options.modules }*.coffee"
 
 gulp.task 'lint', ->
@@ -55,7 +54,8 @@ gulp.task 'coverage', (done) ->
       bail: true
       compilers: 'coffee:coffee-script/register'
       require: 'coffee-coverage/register-istanbul'
-    .pipe $.coffeeIstanbul.writeReports dir: './coverage'
+    .pipe $.if options.modules is null, $.coffeeIstanbul.writeReports
+      dir: './coverage'
     .on 'finish', done
   return
 

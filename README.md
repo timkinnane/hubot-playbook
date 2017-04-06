@@ -2,10 +2,13 @@
 
 Conversation branching library for Hubots. Development ongoing, docs to come...
 
+[![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
+[![npm version](https://img.shields.io/npm/v/hubot-playbook.svg?style=flat)](https://www.npmjs.com/package/hubot-playbook)
 [![Build Status](https://travis-ci.org/timkinnane/hubot-playbook.svg?branch=master)](https://travis-ci.org/timkinnane/hubot-playbook)
-
 [![Coverage Status](https://coveralls.io/repos/github/timkinnane/hubot-playbook/badge.svg?branch=master)](https://coveralls.io/github/timkinnane/hubot-playbook?branch=master)
-
+[![dependencies Status](https://david-dm.org/timkinnane/hubot-playbook/status.svg)](https://david-dm.org/timkinnane/hubot-playbook)
+[![devDependencies Status](https://david-dm.org/timkinnane/hubot-playbook/dev-status.svg)](https://david-dm.org/timkinnane/hubot-playbook?type=dev)
+[![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg)](http://commitizen.github.io/cz-cli/)
 [![Join the chat at https://gitter.im/hubot-playbook/Lobby](https://img.shields.io/gitter/room/nwjs/nw.js.svg)](https://gitter.im/hubot-playbook/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 # Setup
@@ -63,21 +66,26 @@ Look at [examples] and [docs] for how to use Playbook and it's modules to add co
 - Let modules refer back up to Playbook and use that instead of Helpers
 - Move message observer methods into Hubot Pretend
 - Create integration test, to replace diagnostics
+- Implement semantic-release
 
 ### Beta Features
 
-- Allow directing dialogues
-- Allow directing scenes by key - so object isn't required
+- Replace underscore with lodash and Q with bluebird
 - Keep director keys, whitelist/blacklist denials in hubot brain
-- Save transcript to brain (through dialogue or in scene)
+- Add transcript module to collect and query dialogue transcripts (from scene)
+- Save transcripts to brain
 - Add context key/value collection methods from callbacks, store with user key
 - Parse Playbook messages with context for template tags e.g. ok {{ username }}
+- Add outline module, to define behavior models in YML and load from S3 etc
 
 ### Release Roadmap
 
 - Fix generated docs!
-- Save/restore director config in hubot brain against key if provided
 - Example setup steps for a Playbook bot without development requirements
+- Save/restore director config in hubot brain against key if provided
+- Allow directing dialogues
+- Allow directing scene/dialogue by key string
 - Queue dialogue.receive calls to ensure messages process synchronously
 - Optional config for send middleware to throttle hearing consecutive res
 - Display "thinking" ellipses (emit event for use by adapters)
+- Make interactive demo bots, illustrating features
