@@ -63,7 +63,7 @@ describe 'Playbook usage (messaging test cases)', ->
       # TODO: Fix the responses here, it's replying to all as the first (@nima)
 
       it 'responds to Nima or Pema in A', ->
-        @A..should.eql [
+        @A.filterMessages().should.eql [
           [ 'nima',   "knock knock" ]
           [ 'hubot',  "@nima Who's there?" ]
           [ 'pema',   "Pema" ]
@@ -73,7 +73,7 @@ describe 'Playbook usage (messaging test cases)', ->
         ]
 
       it 'ignores both in B', ->
-        @B..should.eql [
+        @B.filterMessages().should.eql [
           [ 'nima',   "Nima" ]
           [ 'pema',   "Pema B" ]
         ]
@@ -100,7 +100,7 @@ describe 'Playbook usage (messaging test cases)', ->
           yield @A.receive @nima, "Nima A"      # ... lol
 
       it 'responds only to Nima in A', ->
-        @A..should.eql [
+        @A.filterMessages().should.eql [
           [ 'nima',   "knock knock" ]
           [ 'hubot',  "Who's there?" ]
           [ 'pema',   "Pema" ]
@@ -111,7 +111,7 @@ describe 'Playbook usage (messaging test cases)', ->
         ]
 
       it 'ignores both in B', ->
-        @B..should.eql [
+        @B.filterMessages().should.eql [
           [ 'nima', "Nima" ]
           [ 'pema', "Pema B" ]
         ]
@@ -216,7 +216,7 @@ describe 'Playbook usage (messaging test cases)', ->
           yield @B.receive @nima, "knock knock"
 
       it 'allows any in room #A', ->
-        @A..should.eql [
+        @A.filterMessages().should.eql [
           [ 'director',  "allow #A" ]
           [ 'pema',     "knock knock" ]
           [ 'hubot',    "@pema You may enter!" ]
@@ -225,7 +225,7 @@ describe 'Playbook usage (messaging test cases)', ->
         ]
 
       it 'sends default response to other rooms', ->
-        @B..should.eql [
+        @B.filterMessages().should.eql [
           [ 'pema',   "knock knock" ]
           [ 'hubot',  "@pema Sorry, #A users only." ]
           [ 'nima',   "knock knock" ]
@@ -243,7 +243,7 @@ describe 'Playbook usage (messaging test cases)', ->
           yield @B.receive @nima, "knock knock"
 
       it 'allows any in room #A', ->
-        @A..should.eql [
+        @A.filterMessages().should.eql [
           [ 'director',  "deny #A" ]
           [ 'pema',   "knock knock" ]
           [ 'hubot',  "@pema Sorry, no #A users." ]
@@ -252,7 +252,7 @@ describe 'Playbook usage (messaging test cases)', ->
         ]
 
       it 'sends default response to other rooms', ->
-        @B..should.eql [
+        @B.filterMessages().should.eql [
           [ 'pema',     "knock knock" ]
           [ 'hubot',    "@pema You may enter!" ]
           [ 'nima',     "knock knock" ]
