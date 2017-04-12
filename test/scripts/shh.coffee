@@ -11,7 +11,7 @@
 #   N/A
 #
 # Author:
-#   timkinnane
+#   Tim Kinnane
 #
 
 module.exports = (robot) ->

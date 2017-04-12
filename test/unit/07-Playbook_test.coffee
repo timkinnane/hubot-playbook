@@ -1,40 +1,35 @@
 Q = require 'q'
 _ = require 'underscore'
-mute = require 'mute'
-{inspect} = require 'util'
 sinon = require 'sinon'
 chai = require 'chai'
 should = chai.should()
 chai.use require 'sinon-chai'
 
-Helper = require 'hubot-test-helper'
-helper = new Helper "../scripts/ping.coffee"
-Dialogue = require '../../src/modules/Dialogue'
-Scene = require '../../src/modules/Scene'
-Director = require '../../src/modules/Director'
+Pretend = require 'hubot-pretend'
+pretend = new Pretend '../scripts/shh.coffee'
 Playbook = require '../../src/Playbook'
 
 describe '#Playbook', ->
 
   beforeEach ->
-    @room = helper.createRoom name: 'testing'
-    @robot = @room.robot
-    @robot.on 'respond', (res) => @res = res # store every response sent
-    @robot.logger.info = @robot.logger.debug = -> # silence
-    @spy = _.mapObject Playbook.prototype, (val, key) ->
-      sinon.spy Playbook.prototype, key # spy on all the class methods
-    @room.user.say 'tester', 'hubot ping' # create first response
+    pretend.startup()
+    pretend.user('tester').in('testing').send 'test'
+    .then => @res = pretend.responses.incoming[0]
+
+    # spy on all the class methods
+    _.mapObject Playbook.prototype, (val, key) ->
+      sinon.spy Playbook.prototype, key
 
   afterEach ->
-    _.invoke @spy, 'restore' # restore all the methods
-    @room.destroy()
+    _.mapObject Playbook.prototype, (v,key) -> Playbook.prototype[key].restore()
+    pretend.shutdown()
 
   describe 'constructor', ->
 
     beforeEach ->
       namespace = Playbook: require "../../src/Playbook"
       @constructor = sinon.spy namespace, 'Playbook'
-      @playbook = new namespace.Playbook @robot
+      @playbook = new namespace.Playbook pretend.robot
 
     it 'does not throw', ->
       @constructor.should.not.have.threw
@@ -48,11 +43,11 @@ describe '#Playbook', ->
   describe '.director', ->
 
     beforeEach ->
-      @playbook = new Playbook @robot
+      @playbook = new Playbook pretend.robot
       @director = @playbook.director()
 
     it 'creates and returns director', ->
-      @director.should.be.instanceof Director
+      @director.should.be.instanceof @playbook.Director
 
     it 'stores it in the directors array', ->
       @playbook.directors[0].should.eql @director
@@ -60,11 +55,11 @@ describe '#Playbook', ->
   describe '.scene', ->
 
     beforeEach ->
-      @playbook = new Playbook @robot
+      @playbook = new Playbook pretend.robot
       @scene = @playbook.scene()
 
     it 'makes a Scene :P', ->
-      @scene.should.be.instanceof Scene
+      @scene.should.be.instanceof @playbook.Scene
 
     it 'stores it in the scenes array', ->
       @playbook.scenes[0].should.eql @scene
@@ -74,17 +69,17 @@ describe '#Playbook', ->
     context 'with type, without options args', ->
 
       beforeEach ->
-        @playbook = new Playbook @robot
+        @playbook = new Playbook pretend.robot
         @dialogue = @playbook.sceneEnter 'room', @res
 
       it 'makes a Scene (stored, not returned)', ->
-        @playbook.scenes[0].should.be.instanceof Scene
+        @playbook.scenes[0].should.be.instanceof @playbook.Scene
 
       it 'used the given room type', ->
         @playbook.scenes[0].type.should.equal 'room'
 
       it 'returns a dialogue', ->
-        @dialogue.should.be.instanceof Dialogue
+        @dialogue.should.be.instanceof @playbook.Dialogue
 
       it 'enters scene, engaging room', ->
         @playbook.scenes[0].engaged['testing'].should.eql @dialogue
@@ -92,7 +87,7 @@ describe '#Playbook', ->
     context 'with type and options args', ->
 
       beforeEach ->
-        @playbook = new Playbook @robot
+        @playbook = new Playbook pretend.robot
         @dialogue = @playbook.sceneEnter 'room', @res, reply: false
 
       it 'used the given room type', ->
@@ -104,11 +99,11 @@ describe '#Playbook', ->
     context 'without type or args (other than response)', ->
 
       beforeEach ->
-        @playbook = new Playbook @robot
+        @playbook = new Playbook pretend.robot
         @dialogue = @playbook.sceneEnter @res
 
       it 'makes scene with default user type', ->
-        @playbook.scenes[0].should.be.instanceof Scene
+        @playbook.scenes[0].should.be.instanceof @playbook.Scene
         @playbook.scenes[0].type.should.equal 'user'
 
   describe '.sceneListen', ->
@@ -116,89 +111,89 @@ describe '#Playbook', ->
     context 'with scene args', ->
 
       beforeEach ->
-        @playbook = new Playbook @robot
-        @robot.hear /.*/, (@res) => null # get any response for comparison
+        @playbook = new Playbook pretend.robot
+        pretend.robot.hear /.*/, (@res) => null # get any response for comparison
         opts = sendReplies: false
-        @listenSpy = sinon.spy Scene.prototype, 'listen'
+        @listen = sinon.spy @playbook.Scene.prototype, 'listen'
         @scene = @playbook.sceneListen 'hear', /test/, 'room', opts, (res) ->
 
       afterEach ->
-        @listenSpy.restore()
+        @listen.restore()
 
       it 'creates Scene instance', ->
-        @scene.should.be.instanceof Scene
+        @scene.should.be.instanceof @playbook.Scene
 
       it 'passed args to the scene', ->
-        @spy.scene.getCall(0).should.have.calledWith 'room', sendReplies: false
+        @playbook.scene.getCall(0).should.have.calledWith 'room', sendReplies: false
 
       it 'calls .listen on the scene with type, regex and callback', ->
         args = ['hear', /test/, sinon.match.func]
-        @listenSpy.getCall(0).should.have.calledWith args...
+        @listen.getCall(0).should.have.calledWith args...
 
     context 'without scene args', ->
 
       beforeEach ->
-        @playbook = new Playbook @robot
-        @listenSpy = sinon.spy Scene.prototype, 'listen'
+        @playbook = new Playbook pretend.robot
+        @listen = sinon.spy @playbook.Scene.prototype, 'listen'
         @scene = @playbook.sceneListen 'hear', /test/, (res) ->
 
       afterEach ->
-        @listenSpy.restore()
+        @listen.restore()
 
       it 'creates Scene instance', ->
-        @scene.should.be.instanceof Scene
+        @scene.should.be.instanceof @playbook.Scene
 
       it 'passed no args to the scene', ->
-        @spy.scene.getCall(0).should.have.calledWith()
+        @playbook.scene.getCall(0).should.have.calledWith()
 
       it 'calls .listen on the scene with type, regex and callback', ->
         args = ['hear', /test/, sinon.match.func]
-        @listenSpy.getCall(0).should.have.calledWith args...
+        @listen.getCall(0).should.have.calledWith args...
 
   describe '.sceneHear', ->
 
     beforeEach ->
-      @playbook = new Playbook @robot
+      @playbook = new Playbook pretend.robot
       @playbook.sceneHear /test/, 'room', (res) ->
 
     it 'calls .sceneListen with hear type and any other args', ->
       args = ['hear', /test/, 'room', sinon.match.func]
-      @spy.sceneListen.getCall(0).should.have.calledWith args...
+      @playbook.sceneListen.getCall(0).should.have.calledWith args...
 
   describe '.sceneRespond', ->
 
     beforeEach ->
-      @playbook = new Playbook @robot
+      @playbook = new Playbook pretend.robot
       @playbook.sceneRespond /test/, 'room', (res) ->
 
     it 'calls .sceneListen with respond type and any other args', ->
       args = ['respond', /test/, 'room', sinon.match.func]
-      @spy.sceneListen.getCall(0).should.have.calledWith args...
+      @playbook.sceneListen.getCall(0).should.have.calledWith args...
 
   describe '.dialogue', ->
 
     beforeEach ->
-      @playbook = new Playbook @robot
+      @playbook = new Playbook pretend.robot
       @dialogue = @playbook.dialogue @res
 
     it 'creates Dialogue instance', ->
-      @dialogue.should.be.instanceof Dialogue
+      @dialogue.should.be.instanceof @playbook.Dialogue
 
     it 'does not throw any errors', ->
-      @spy.dialogue.should.not.have.threw
+      @playbook.dialogue.should.not.have.threw
 
   describe '.shutdown', ->
 
     beforeEach ->
-      @playbook = new Playbook @robot
+      @playbook = new Playbook pretend.robot
       @dialogue = @playbook.dialogue @res
       @scene = @playbook.scene()
-      @endSpy = sinon.spy @dialogue, 'end'
-      @exitSpy = sinon.spy @scene, 'exitAll'
+      @end = sinon.spy @dialogue, 'end'
+      @exit = sinon.spy @scene, 'exitAll'
       @playbook.shutdown()
 
     it 'calls .exitAll on scenes', ->
-      @exitSpy.should.have.calledOnce
+      @exit.should.have.calledOnce
 
     it 'calls .end on dialogues', ->
-      @endSpy.should.have.calledOnce
+      @end.should.have.calledOnce

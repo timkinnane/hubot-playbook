@@ -1,21 +1,18 @@
 Q = require 'q'
 _ = require 'underscore'
-mute = require 'mute'
-{inspect} = require 'util'
 sinon = require 'sinon'
 chai = require 'chai'
 should = chai.should()
 chai.use require 'sinon-chai'
 
-Helper = require 'hubot-test-helper'
-helper = new Helper '../scripts/ping.coffee'
-Observer = require '../utils/observer'
-Dialogue = require '../../src/modules/Dialogue'
+Pretend = require 'hubot-pretend'
+pretend = new Pretend '../scripts/shh.coffee'
+{Dialogue} = require '../../src/modules'
+
 Timeout = setTimeout () ->
   null
 , 0
 .constructor # get the null Timeout prototype instance for comparison
-Helpers = require '../../src/modules/Helpers'
 
 # prevent environment changing tests
 delete process.env.DIALOGUE_TIMEOUT
@@ -23,25 +20,20 @@ delete process.env.DIALOGUE_TIMEOUT_LINE
 
 describe '#Dialogue', ->
 
-  # Create bot and initiate a response to test with
   beforeEach ->
-    @room = helper.createRoom()
-    @observer = new Observer @room.messages
-    @robot = @room.robot
-    @robot.on 'respond', (res) => @res = res # store every response sent
-    @robot.on 'receive', (res) => @rec = res # store every message received
 
-    # spy on all the class and helper methods
-    _.map _.keys(Dialogue.prototype), (key) -> sinon.spy Dialogue.prototype, key
-    _.map _.keys(Helpers), (key) -> sinon.spy Helpers, key
+    # spy on all the class methods
+    _.mapObject Dialogue.prototype, (val, key) ->
+      sinon.spy Dialogue.prototype, key
 
-    # trigger first response
-    @room.user.say 'tester', 'hubot ping'
+    # start dialogue by generating an incoming response object
+    pretend.startup()
+    pretend.user('tester').in('testing').send 'test'
+    .then => @res = pretend.responses.incoming[0]
 
   afterEach ->
-    _.map _.keys(Dialogue.prototype), (key) -> Dialogue.prototype[key].restore()
-    _.map _.keys(Helpers), (key) -> Helpers[key].restore()
-    @room.destroy()
+    _.mapObject Dialogue.prototype, (v,key) -> Dialogue.prototype[key].restore()
+    pretend.shutdown()
 
   describe 'constructor', ->
 
@@ -49,7 +41,6 @@ describe '#Dialogue', ->
 
       beforeEach ->
         @dialogue = new Dialogue @res
-        @robot.hear /.*/, (res) => @result = @dialogue.receive res # hear all
 
       afterEach ->
         @dialogue.end()
@@ -135,12 +126,11 @@ describe '#Dialogue', ->
 
     beforeEach ->
       @dialogue = new Dialogue @res
-      @robot.hear /.*/, (res) => @result = @dialogue.receive res # hear all
+      pretend.robot.hear /.*/, (res) => @result = @dialogue.receive res
 
     context 'with a prompt, branches and key', ->
 
-      beforeEach (done) ->
-        @observer.next().then -> done() # watch for prompt before proceeding
+      beforeEach ->
         @pathId = @dialogue.path
           prompt: 'Turn left or right?'
           branches: [
@@ -538,8 +528,6 @@ describe '#Dialogue', ->
   describe '.record', ->
 
     beforeEach ->
-      @dialogue = new Dialogue @res
-      @robot.hear /.*/, (res) => @dialogue.receive res # hear all
       @match = sinon.spy()
       @mismatch = sinon.spy()
       @dialogue.on 'match', @match

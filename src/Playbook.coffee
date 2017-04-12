@@ -1,8 +1,7 @@
 _ = require 'underscore'
 hooker = require 'hooker'
-Dialogue = require './modules/Dialogue'
-Scene = require './modules/Scene'
-Director = require './modules/Director'
+
+{Dialogue, Scene, Director, Helpers} = require './modules'
 
 ###*
  * Wrangler for modules provided by the Playbook library
@@ -12,16 +11,20 @@ Director = require './modules/Director'
 ###
 class Playbook
   constructor: (@robot) ->
+    @robot.playbook = @
     @log = @robot.logger
     @log.info 'Playbook starting up'
     @directors = []
     @scenes = []
     @dialogues = []
 
-    # make modules accessable individually
+    # expose modules for individual usage
     @Director = Director
     @Dialogue = Dialogue
     @Scene = Scene
+
+    # expose helper functions at top level
+    @keygen = Helpers.keygen
 
     # shutdown playbook after robot shutdown called
     hooker.hook @robot, 'shutdown', post: => @shutdown()
@@ -73,26 +76,3 @@ class Playbook
     return
 
 module.exports = Playbook
-
-###
-Write your own basic unit tests with Playbook - e.g. basic listener response:
-```
-  beforeEach (done) ->
-    Playbook.startup new Robot()
-    Playbook.sceneHear /hello/i, sendReplies: true, ->
-      @send "Hello"
-      done()
-    Playbook.test.send 'room', 'user', 'Hello!'
-
-  afterEach -> Playbook.shutdown()
-
-  it 'says hello back' ->
-    Playbook.test.messages.pop().should.eql [ 'room', 'hubot', '@user Hello' ]
-```
-or test a whole script:
-```
-  before (done) -> Playbook.test.read '/src/script.coffee'
-  beforeEach ->
-    Playbook.test.send 'room', 'user', 'Hello!'
-```
-###

@@ -3,8 +3,7 @@
 _ = require 'underscore'
 {inspect} = require 'util'
 {EventEmitter} = require 'events'
-
-Helpers = require './Helpers'
+{keygen} = require './Helpers'
 
 # multiple-choice dialogue interactions
 # the timeout will trigger a timeout message if nothing matches in time
@@ -24,6 +23,9 @@ class Dialogue extends EventEmitter
       timeout: parseInt process.env.DIALOGUE_TIMEOUT or 30000
       timeoutLine: process.env.DIALOGUE_TIMEOUT_LINE or
         'Timed out! Please start again.'
+
+  # include some helper methods
+  keygen: keygen
 
   startTimeout: ->
     @countdown = setTimeout () =>
@@ -58,7 +60,7 @@ class Dialogue extends EventEmitter
     opts = branches: opts if _.isArray opts # move branches array into property
 
     # generate unique id (using source string if key or prompt given)
-    @pathId = Helpers.keygen 'path', opts.key or opts.prompt
+    @pathId = keygen 'path', opts.key or opts.prompt
 
     # setup new path object and dialogue state
     @clearBranches()
