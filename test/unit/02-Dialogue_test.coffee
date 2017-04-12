@@ -1,5 +1,4 @@
-Q = require 'q'
-_ = require 'underscore'
+_ = require 'lodash'
 sinon = require 'sinon'
 chai = require 'chai'
 should = chai.should()
@@ -9,10 +8,11 @@ Pretend = require 'hubot-pretend'
 pretend = new Pretend '../scripts/shh.coffee'
 {Dialogue} = require '../../src/modules'
 
+# get the null Timeout prototype instance for comparison
 Timeout = setTimeout () ->
   null
 , 0
-.constructor # get the null Timeout prototype instance for comparison
+.constructor
 
 # prevent environment changing tests
 delete process.env.DIALOGUE_TIMEOUT
@@ -21,19 +21,22 @@ delete process.env.DIALOGUE_TIMEOUT_LINE
 describe '#Dialogue', ->
 
   beforeEach ->
-
-    # spy on all the class methods
-    _.mapObject Dialogue.prototype, (val, key) ->
-      sinon.spy Dialogue.prototype, key
+    pretend.startup()
+    _.forIn Dialogue.prototype, (val, key) ->
+      sinon.spy Dialogue.prototype, key if _.isFunction val
 
     # start dialogue by generating an incoming response object
-    pretend.startup()
     pretend.user('tester').in('testing').send 'test'
     .then => @res = pretend.responses.incoming[0]
 
+    @clock = sinon.useFakeTimers()
+    @tester = pretend.user 'tester'
+
   afterEach ->
-    _.mapObject Dialogue.prototype, (v,key) -> Dialogue.prototype[key].restore()
     pretend.shutdown()
+    @clock.restore()
+    _.forIn Dialogue.prototype, (val, key) ->
+      Dialogue.prototype[key].restore() if _.isFunction val
 
   describe 'constructor', ->
 
@@ -46,23 +49,22 @@ describe '#Dialogue', ->
         @dialogue.end()
 
       it 'has empty paths object', ->
-        @dialogue.paths.should.be.an 'object'
-        _.size(@paths).should.equal 0
+        @dialogue.paths.should.eql {}
 
       it 'has a null value for current path', ->
         should.equal @dialogue.pathId, null
 
       it 'has an empty branches array', ->
-        @dialogue.branches.should.be.an 'array'
-        @dialogue.branches.length.should.equal 0
+        @dialogue.branches.should.eql []
 
       it 'has an ended status of false', ->
         @dialogue.ended.should.be.false
 
-      it 'has config with defaults of correct type', ->
-        @dialogue.config.should.be.an 'object'
+      it 'has timeout value configured', ->
         @dialogue.config.timeout.should.be.a 'number'
-        @dialogue.config.timeoutLine.should.be.a 'string'
+
+      it 'has timeout text configured', ->
+        @dialogue.config.timeoutText.should.be.a 'string'
 
       it 'has not started the timeout', ->
         should.not.exist @dialogue.countdown
@@ -79,36 +81,40 @@ describe '#Dialogue', ->
         delete process.env.DIALOGUE_TIMEOUT
         delete process.env.DIALOGUE_TIMEOUT_LINE
 
-      it 'uses the environment timeout settings', ->
+      it 'uses the environment timeout value', ->
         @dialogue.config.timeout.should.equal 500
-        @dialogue.config.timeoutLine.should.equal 'Testing timeout env'
+
+      it 'uses the environment timeout text', ->
+        @dialogue.config.timeoutText.should.equal 'Testing timeout env'
 
     context 'with timeout options', ->
 
       beforeEach ->
         @dialogue = new Dialogue @res,
           timeout: 555
-          timeoutLine: 'Testing timeout options'
+          timeoutText: 'Testing timeout options'
 
       afterEach ->
         @dialogue.end()
 
-      it 'uses passed options', ->
+      it 'uses passed timeout value', ->
         @dialogue.config.timeout.should.equal 555
-        @dialogue.config.timeoutLine.should.equal 'Testing timeout options'
+
+      it 'uses passed timeout text', ->
+        @dialogue.config.timeoutText.should.equal 'Testing timeout options'
 
   describe '.startTimeout', ->
 
-    context 'with 10ms timeout', ->
+    context 'with 1 second timeout', ->
 
       beforeEach ->
         @timeout = sinon.spy()
         @end = sinon.spy()
-        @dialogue = new Dialogue @res, timeout: 10
+        @dialogue = new Dialogue @res, timeout: 1000
         @dialogue.on 'timeout', @timeout
         @dialogue.on 'end', @end
         @dialogue.startTimeout()
-        Q.delay 15
+        @clock.tick 1000
 
       it 'emits timeout event', ->
         @timeout.should.have.calledOnce
@@ -140,7 +146,7 @@ describe '#Dialogue', ->
           key: 'which-way'
 
       it 'creates id from path scope and key', ->
-        Helpers.keygen.should.have.calledWith 'path', 'which-way'
+        @dialogue.keygen.should.have.calledWith 'path_which-way'
 
       it 'clears branches', ->
         @dialogue.clearBranches.should.have.calledOnce
@@ -172,21 +178,22 @@ describe '#Dialogue', ->
         ]]
 
       it 'sends the prompt to room', ->
-        @room.messages.pop().should.eql [ 'hubot', 'Turn left or right?' ]
+        pretend.messages.pop().should.eql [ 'hubot', 'Turn left or right?' ]
 
     context 'with a prompt and branches (no key)', ->
 
       beforeEach (done) ->
-        @observer.next().then -> done() # watch for prompt before proceeding
+        wait = pretend.observer.next()
         @result = @dialogue.path
           prompt: 'Pick door 1 or 2?'
           branches: [
             [ /1/, 'You get cake!' ]
             [ /2/, 'You get cake!' ]
           ]
+        wait
 
       it 'creates id from path scope and prompt', ->
-        Helpers.keygen.should.have.calledWith 'path', 'Pick door 1 or 2?'
+        @dialogue.keygen.should.have.calledWith 'path_Pick door 1 or 2?'
 
       it 'returned id corresponds to a path object', ->
         @dialogue.paths[@result].should.be.an.object
@@ -207,7 +214,7 @@ describe '#Dialogue', ->
           ]
 
       it 'creates id from path scope alone', ->
-        Helpers.keygen.should.have.calledWith 'path'
+        @dialogue.keygen.should.have.calledWith 'path_'
 
       it 'creates branches with branch property array elements', ->
         @dialogue.branch.should.have.calledWith /1/, 'You get cake!'
@@ -234,7 +241,7 @@ describe '#Dialogue', ->
         ]
 
       it 'creates id from path scope alone', ->
-        Helpers.keygen.should.have.calledWith 'path'
+        @dialogue.keygen.should.have.calledWith 'path_'
 
       it 'creates branches with array elements', ->
         @dialogue.branch.should.have.calledWith /1/, 'You get cake!'
@@ -341,13 +348,13 @@ describe '#Dialogue', ->
         @callback = sinon.spy()
         @dialogue.branch /confirm/, =>
           @dialogue.branch /yes/, @callback
-        @room.user.say 'tester', 'confirm'
+        @tester.send 'confirm'
 
       it 'has new branch after matching original', ->
         @dialogue.branches.length.should.equal 1
 
       it 'calls second callback after matching sequence', ->
-        @room.user.say 'tester', 'yes'
+        @tester.send 'yes'
         .then => @callback.should.have.calledOnce
 
     context 'when already ended', ->
@@ -373,7 +380,7 @@ describe '#Dialogue', ->
       @callback = sinon.spy()
       @dialogue.branch /.*/, @callback
       @dialogue.clearBranches()
-      @room.user.say 'tester', 'test'
+      @tester.send 'test'
 
     it 'clears the array of branches', ->
       @dialogue.branches.length.should.equal 0
@@ -399,7 +406,7 @@ describe '#Dialogue', ->
     context 'match for branch with reply string', ->
 
       beforeEach ->
-        @room.user.say 'tester', '1'
+        @tester.send '1'
 
       it 'records the match (with user, line, match, regex)', ->
         @dialogue.record.should.have.calledWith 'match',
@@ -412,12 +419,12 @@ describe '#Dialogue', ->
         @handler1.should.have.calledOnce
 
       it 'sends the response', ->
-        @room.messages.pop().should.eql [ 'hubot', 'got 1' ]
+        pretend.messages.pop().should.eql [ 'hubot', 'got 1' ]
 
     context 'matching branch with no reply and custom handler', ->
 
       beforeEach ->
-        @room.user.say 'tester', '2'
+        @tester.send '2'
 
       it 'records the match (with user, line, match, regex)', ->
         @dialogue.record.should.have.calledWith 'match',
@@ -430,12 +437,12 @@ describe '#Dialogue', ->
         @handler2.should.have.calledOnce
 
       it 'hubot does not reply', ->
-        @room.messages.pop().should.eql [ 'tester', '2' ]
+        pretend.messages.pop().should.eql [ 'tester', '2' ]
 
     context 'matching branch with reply and custom handler', ->
 
       beforeEach ->
-        @room.user.say 'tester', '3'
+        @tester.send '3'
 
       it 'records the match (with user, line, match, regex)', ->
         @dialogue.record.should.have.calledWith 'match',
@@ -448,7 +455,7 @@ describe '#Dialogue', ->
         @handler3.should.have.calledOnce
 
       it 'sends the response', ->
-        @room.messages.pop().should.eql [ 'hubot', 'got 3' ]
+        pretend.messages.pop().should.eql [ 'hubot', 'got 3' ]
 
       it 'clears branches after match', ->
         @dialogue.clearBranches.should.have.calledOnce
@@ -456,19 +463,19 @@ describe '#Dialogue', ->
     context 'received matching branches consecutively', ->
 
       beforeEach ->
-        @room.user.say 'tester', '1'
-        @room.user.say 'tester', '2'
+        @tester.send '1'
+        @tester.send '2'
 
       it 'clears branches after first only', ->
         @dialogue.clearBranches.should.have.calledOnce
 
       it 'does not reply to the second', ->
-        @room.messages.pop().should.eql [ 'hubot', 'got 1' ]
+        pretend.messages.pop().should.eql [ 'hubot', 'got 1' ]
 
     context 'when branch is matched and none added', ->
 
       beforeEach ->
-        @room.user.say 'tester', '1'
+        @tester.send '1'
 
       it 'ends dialogue', ->
         @dialogue.end.should.have.called
@@ -476,7 +483,7 @@ describe '#Dialogue', ->
     context 'when branch is not matched', ->
 
       beforeEach ->
-        @room.user.say 'tester', '?'
+        @tester.send '?'
 
       it 'records mismatch (with user, line)', ->
         @dialogue.record.should.have.calledWith 'mismatch',
@@ -490,7 +497,7 @@ describe '#Dialogue', ->
 
       beforeEach ->
         @dialogue.end()
-        @room.user.say 'tester', '1'
+        @tester.send '1'
 
       it 'returns false', ->
         @result.should.be.false
@@ -508,22 +515,24 @@ describe '#Dialogue', ->
 
     context 'with config.sendReplies set to false', ->
 
-      beforeEach (done) ->
-        @observer.next().then -> done() # watch for response before proceeding
+      beforeEach ->
+        wait = pretend.observer.next()
         @dialogue.send 'test'
+        wait
 
       it 'sends to the room from original res', ->
-        @room.messages.pop().should.eql [ 'hubot', 'test' ]
+        pretend.messages.pop().should.eql [ 'hubot', 'test' ]
 
     context 'with config.sendReplies set to true', ->
 
       beforeEach (done) ->
-        @observer.next().then -> done() # watch for response before proceeding
+        wait = pretend.observer.next()
         @dialogue.config.sendReplies = true
         @dialogue.send 'test'
+        wait
 
       it 'sends to the room from original res, responding to the @user', ->
-        @room.messages.pop().should.eql ['hubot', '@tester test' ]
+        pretend.messages.pop().should.eql ['hubot', '@tester test' ]
 
   describe '.record', ->
 
@@ -553,7 +562,7 @@ describe '#Dialogue', ->
     context 'with arguments from a matched choice', ->
 
       beforeEach ->
-        @room.user.say 'tester', 'left'
+        @tester.send 'left'
 
       it 'adds match type, user and content to transcript', ->
         @dialogue.paths[@key].transcript[1].should.eql [
@@ -568,7 +577,7 @@ describe '#Dialogue', ->
     context 'with arguments from a mismatched choice', ->
 
       beforeEach ->
-        @room.user.say 'tester', 'up'
+        @tester.send 'up'
 
       it 'adds match type, user and content to transcript', ->
         @dialogue.paths[@key].transcript[1].should.eql [
@@ -606,7 +615,7 @@ describe '#Dialogue', ->
     context 'when triggered by last branch match', ->
 
       beforeEach ->
-        @room.user.say 'tester', '1'
+        @tester.send '1'
 
       it 'emits end event with unsuccessful status', ->
         @end.should.have.calledWith true
@@ -620,7 +629,7 @@ describe '#Dialogue', ->
     context 'when already ended (by last branch match)', ->
 
       beforeEach ->
-        @room.user.say 'tester', '1'
+        @tester.send '1'
         .then => @result = @dialogue.end()
 
       it 'should not process consecutively', ->
@@ -634,24 +643,24 @@ describe '#Dialogue', ->
     context 'default method', ->
 
       beforeEach ->
-        @dialogue = new Dialogue @res, timeout: 10
+        @dialogue = new Dialogue @res, timeout: 1000
         @dialogue.startTimeout()
-        Q.delay 15
+        @clock.tick 1000
 
       it 'sends timeout message to room', ->
-        @room.messages.pop().should.eql [
-          'hubot', @dialogue.config.timeoutLine
+        pretend.messages.pop().should.eql [
+          'hubot', @dialogue.config.timeoutText
         ]
 
     context 'method override (as argument)', ->
 
       beforeEach ->
         @newTimeout = sinon.spy()
-        @dialogue = new Dialogue @res, timeout: 10
+        @dialogue = new Dialogue @res, timeout: 1000
         @oldTimeout = @dialogue.onTimeout
         @dialogue.onTimeout @newTimeout
         @dialogue.startTimeout()
-        Q.delay 15
+        @clock.tick 1000
 
       afterEach ->
         @dialogue.onTimeout = @oldTimeout
@@ -660,19 +669,19 @@ describe '#Dialogue', ->
         @newTimeout.should.have.calledOnce
 
       it 'does not send the default timeout message', ->
-        @room.messages.pop().should.not.eql [
-          'hubot', @dialogue.config.timeoutLine
+        pretend.messages.pop().should.not.eql [
+          'hubot', @dialogue.config.timeoutText
         ]
 
     context 'method override (by assignment)', ->
 
       beforeEach ->
         @newTimeout = sinon.spy()
-        @dialogue = new Dialogue @res, timeout: 10
+        @dialogue = new Dialogue @res, timeout: 1000
         @oldTimeout = @dialogue.onTimeout
         @dialogue.onTimeout = @newTimeout
         @dialogue.startTimeout()
-        Q.delay 15
+        @clock.tick 1000
 
       afterEach ->
         @dialogue.onTimeout = @oldTimeout
@@ -683,14 +692,12 @@ describe '#Dialogue', ->
     context 'method override with invalid function', ->
 
       beforeEach ->
-        unmute = mute()
-        @dialogue = new Dialogue @res, timeout: 10
+        @dialogue = new Dialogue @res, timeout: 1000
         @oldTimeout = @dialogue.onTimeout
         @dialogue.onTimeout -> throw new Error "Test exception"
         @override = sinon.spy @dialogue, 'onTimeout'
         @dialogue.startTimeout()
-        Q.delay 15
-          .then unmute
+        @clock.tick 1000
 
       afterEach ->
         @dialogue.onTimeout = @oldTimeout

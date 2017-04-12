@@ -6,9 +6,8 @@ slug = require 'slug'
 ###*
  * Base class inherited by modules for consistent structure and common behaviour
  * Inherits EventEmitter so all modules can emit events.
- * @param  {String} name   The class name (prefix for generating keys)
- * @param  {Robot} @robot  Robot instance
- * @return {[type]}        [description]
+ * @param  {String} name  - The class name (prefix for generating keys)
+ * @param  {Robot} robot  - Robot instance
 ###
 class Base extends EventEmitter
   defaults: {} # class (not instance) property - reference with Class::defaults
@@ -22,9 +21,9 @@ class Base extends EventEmitter
 
   ###*
    * Generic error handling, logs and emits event before throwing
-   * @param  {String} err Description of error (optional)
-   * @param  {Error} err  Error instance (optional)
-   * @return null         Throws, never returns
+   * @param  {String} [err] - Description of error (optional)
+   * @param  {Error} [err]  - Error instance (optional)
+   * @return null           - Throws, never returns
   ###
   error: (err) ->
     if _.isString err
@@ -35,8 +34,8 @@ class Base extends EventEmitter
 
   ###*
    * Get a unique ID including class name, sequenitally unless given key string
-   * @param  {String} key (optional) to be "slugified" into a safe key string
-   * @return {String}     Concatenated key from class type and generated ID
+   * @param  {String} [key] - Input to be "slugified" into a safe key string
+   * @return {String}       - Concatenated key from class type and generated ID
   ###
   keygen: (key) ->
     scope = if @id? then "#{@id}_#{key}" else key

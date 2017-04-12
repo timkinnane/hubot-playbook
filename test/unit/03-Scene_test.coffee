@@ -287,11 +287,11 @@ describe '#Scene', ->
         @scene = new Scene @robot
         @dialogue = @scene.enter @res,
           timeout: 100
-          timeoutLine: 'foo'
+          timeoutText: 'foo'
 
       it 'passes the options to dialogue config', ->
         @dialogue.config.timeout.should.equal 100
-        @dialogue.config.timeoutLine.should.equal 'foo'
+        @dialogue.config.timeoutText.should.equal 'foo'
 
     context 'dialogue allowed to timeout after branch added', ->
 
@@ -299,7 +299,7 @@ describe '#Scene', ->
         @scene = new Scene @robot
         @dialogue = @scene.enter @res,
           timeout: 10,
-          timeoutLine: null
+          timeoutText: null
         @dialogue.on 'end', -> done()
         @dialogue.branch matchAny, ''
 
