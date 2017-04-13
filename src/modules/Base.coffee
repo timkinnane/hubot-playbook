@@ -1,6 +1,5 @@
 _ = require 'lodash'
 slug = require 'slug'
-{inspect} = require 'util'
 {EventEmitter} = require 'events'
 
 ###*
@@ -15,7 +14,7 @@ class Base extends EventEmitter
   constructor: (@name, @robot, options={}) ->
     @error 'Module requires a name' unless _.isString @name
     @error 'Module requires a robot object' unless _.isObject @robot
-    @id = @keygen @name
+    @id = @keygen "#{ @name }_#{ @config.key or '' }" # e.g. module_key_1
     @log = @robot.logger
     @config = _.defaults options, @defaults
 

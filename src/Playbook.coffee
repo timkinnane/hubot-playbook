@@ -1,13 +1,13 @@
-_ = require 'underscore'
+_ = require 'lodash'
 hooker = require 'hooker'
 
-{Dialogue, Scene, Director, Helpers} = require './modules'
+{Dialogue, Scene, Director} = require './modules'
 
 ###*
- * Wrangler for modules provided by the Playbook library
- * Provides the robot object and easy access to variants of module constructors
- * @method constructor
- * @param  {object}    @robot The Hubot
+ * Playbook is a conversation branching library for Hubots, with many utilities
+ * Provides shortcuts to module constructors and keeps track of module instances
+ * Modules are exposed as properties so they can be modified within Playbook
+ * @param  {Robot}     robot - Hubot Robot instance
 ###
 class Playbook
   constructor: (@robot) ->
@@ -17,58 +17,84 @@ class Playbook
     @directors = []
     @scenes = []
     @dialogues = []
-
-    # expose modules for individual usage
     @Director = Director
     @Dialogue = Dialogue
     @Scene = Scene
 
-    # expose helper functions at top level
-    @keygen = Helpers.keygen
-
     # shutdown playbook after robot shutdown called
     hooker.hook @robot, 'shutdown', post: => @shutdown()
 
-  # create and return director
+  ###*
+   * Create new Director
+   * @param  {Mixed} args... - Constructor args ./modules/Director.coffee
+   * @return {Director}      - New Director instance
+  ###
   director: (args...) ->
-    @directors.push new @Director @robot, args...
-    return _.last @directors
+    director = new @Director @robot, args...
+    @directors.push director
+    return director
 
-  # create and return scene
+  ###*
+   * Create new Scene
+   * @param  {Mixed} args... - Scene constructor args ./modules/Director.coffee
+   * @return {Scene}         - New Scene instance
+  ###
   scene: (args...) ->
-    @scenes.push new @Scene @robot, args...
-    return _.last @scenes
+    scene = new @Scene @robot, args...
+    @scenes.push scene
+    return scene
 
-  # create and enter scene, returns dialogue, or false if failed to enter
+  ###*
+   * Create and enter Scene
+   * @param  {String} [type]    - Scene type
+   * @param  {Mixed} args...    - Scene.enter args ./modules/Scene.coffee
+   * @return {Dialogue|Boolean} - Enter result, Dialogue or false if failed
+  ###
   sceneEnter: (args...) ->
     type = args.shift() if typeof args[0] is 'string'
-    @scenes.push new @Scene @robot, type
-    dialogue = _.last @scenes
-      .enter args...
+    scene = new @Scene @robot, type
+    dialogue = scene.enter args...
+    @scenes.push scene
     return dialogue
 
-  # create scene and setup listener callback to enter
-  # final param is another callback passing the dialogue and response on enter
-  # returns the scene
+  ###*
+   * Create scene and setup listener to enter
+   * @param  {String}   listenType - Robot listener type: hear|respond
+   * @param  {RegExp}   regex      - Match pattern
+   * @param  {Mixed}    args...    - Scene constructor args
+   * @param  {Function} callback   - Callback to fire after entered
+   * @return {Scene}               - New Scene instance
+  ###
   sceneListen: (listenType, regex, args..., callback) ->
     scene = @scene args...
     scene.listen listenType, regex, callback
     return scene
 
-  # alias of sceneListen with hear as specified type
+  ###*
+   * Alias of sceneListen with hear as specified type
+  ###
   sceneHear: (args...) ->
     return @sceneListen 'hear', args...
 
-  # alias of sceneListen with respond as specified type
+  ###*
+   * Alias of sceneListen with respond as specified type
+  ###
   sceneRespond: (args...) ->
     return @sceneListen 'respond', args...
 
-  # create stand-alone dialogue (not within scene)
+  ###*
+   * Create stand-alone dialogue (not within scene)
+   * @param  {Mixed} args... - Dialogue constructor args ./modules/Dialogue.coffee
+   * @return {Scene}         - New Scene instance
+  ###
   dialogue: (args...) ->
-    @dialogues.push new @Dialogue args...
-    return _.last @dialogues
+    dialogue = new @Dialogue args...
+    @dialogues.push dialogue
+    return dialogue
 
-  # exit all scenes and end all dialogues
+  ###*
+   * Exit all scenes, end all dialogues
+  ###
   shutdown: ->
     @log.info 'Playbook shutting down'
     _.invoke @scenes, 'exitAll'

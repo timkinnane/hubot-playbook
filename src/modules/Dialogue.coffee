@@ -1,11 +1,9 @@
-# credit to lmarkus/hubot-conversation for the original concept
-
-_ = require 'underscore'
-{inspect} = require 'util'
+_ = require 'lodash'
 Base = require './Base'
 
 ###*
  * Multiple-choice dialogue interactions
+ * Credit to lmarkus/hubot-conversation for the original concept
  * @param  {Response} res   - Hubot Response object
  * @param  {Object} [opts]  - Key/val options for config
 ###
@@ -18,7 +16,7 @@ class Dialogue extends Base
 
   constructor: (res, opts) ->
     super 'dialogue', res.robot, opts
-    @lastRes = _.clone res # lastRes may be updated, res is initiating response
+    @lastRes = res # lastRes may be updated, res is initiating response
     @paths = {} # builds as dialogue progresses
     @pathId = null # pointer for current path
     @branches = [] # branch options within current path
@@ -31,7 +29,7 @@ class Dialogue extends Base
   startTimeout: ->
     @countdown = setTimeout () =>
       @emit 'timeout'
-      try @onTimeout() catch e then @log.error "onTimeout: #{ inspect e }"
+      try @onTimeout() catch err then @handle err
       delete @countdown
       @end()
     , @config.timeout
@@ -106,7 +104,7 @@ class Dialogue extends Base
     response = args.shift() if _.isString args[0]
     callback = args[0] if _.isFunction args[0]
     if not (response? or callback?)
-      @log.error "Wrong args given for branch with regex #{ inspect regex }"
+      @log.error "Wrong args given for branch with regex #{ regex }"
       return false
 
     # call callback after sending response (if specified) or just call callback
@@ -171,17 +169,17 @@ class Dialogue extends Base
 
   ###*
    * Emit event and add to transcript if currently executing a named path
-   * @param  {String} type    Event type in context: send|match|mismatch
-   * @param  {User}   user    Hubot User object
-   * @param  {String} text    Message text
-   * @param  {Array} [match]  Match results
-   * @param  {RegExp} [regex] Matching expression
+   * @param  {String} type    - Event type in context: send|match|mismatch
+   * @param  {User}   user    - Hubot User object
+   * @param  {String} text    - Message text
+   * @param  {Array} [match]  - Match results
+   * @param  {RegExp} [regex] - Matching expression
   ###
   record: (type, user, text, match, regex) ->
     @paths[@pathId].transcript.push [ type, user, text ] if @pathId?
     switch type
       when 'match'
-        @log.debug "Received \"#{ text }\" matched #{ inspect regex }"
+        @log.debug "Received \"#{ text }\" matched #{ regex }"
         @emit 'match', user, text, match, regex
       when 'mismatch'
         @log.debug "Received \"#{ text }\" matched nothing"
@@ -192,7 +190,7 @@ class Dialogue extends Base
 
   ###*
    * Shutdown and emit status (for scene to disengage participants)
-   * @return {Boolean} Shutdown status, false if was already ended
+   * @return {Boolean} - Shutdown status, false if was already ended
   ###
   end: ->
     return false if @ended

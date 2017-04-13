@@ -1,49 +1,38 @@
-# credit to lmarkus/hubot-conversation for the original concept
-_ = require 'underscore'
-
+_ = require 'lodash'
+Base = require './Base'
 Dialogue = require './Dialogue'
-Helpers = require './Helpers'
 
-# handles array of participants engaged in dialogue
-# while engaged the robot will only follow the given dialogue choices
-# entering a user scene will engage the user
-# entering a room scene will engage the whole room
-# entering a direct scene will engage the user in that room only
-class Scene
-
-  # @param robot {Object} a hubot instance
-  # @param type (optional) {String} room, user (default) or direct
-  # @param opts (optional) {Object} for dialogue config, e.g set reply method
-  constructor: (@robot, args...) ->
-
-    # take arguments in param order, for all optional arguments
+###*
+ * Handle array of participants engaged in dialogue with bot
+ * Credit to lmarkus/hubot-conversation for the original concept
+ * Engaged bot will ignore global listeners, only respond to dialogue choices
+ * - entering a user scene will engage the user
+ * - entering a room scene will engage the whole room
+ * - entering a direct scene will engage the user in that room only
+ * @param  {Robot}  @robot - Hubot Robot instance
+ * @param  {String} [type] - Type of scene: user(default)|room|direct
+ * @param  {Object} [opts] - For dialogue config, e.g set reply method
+###
+class Scene extends Base
+  constructor: (robot, args...) ->
     @type = if _.isString args[0] then args.shift() else 'user'
-    opts = if _.isObject args[0] then args.shift() else {}
+    @handle "invalid scene type" if @type not in [ 'room', 'user', 'direct' ]
 
-    if @type not in [ 'room', 'user', 'direct' ]
-      throw new Error "invalid scene type given"
+    super 'scene', robot, args...
+    @engaged = {}
 
-    # create an id using scene scope (and key if given)
-    @id = Helpers.keygen 'scene', opts.key or undefined
-
-    # '@user hello' vs 'hello'
-    sendReplies = if @type is 'room' then true else false
-
-    # extend options with defaults (or env vars) (passed to dialogue)
-    @config = _.defaults opts,
-      sendReplies: process.env.SEND_REPLIES or sendReplies
-
-    # cast send config as proper bool in case string came from environment var
-    @config.sendReplies = true if @config.sendReplies in ['true', 'TRUE']
-    @config.sendReplies = false if @config.sendReplies in ['false', 'FALSE']
-
-    @engaged = {} # dialogues of each engaged participant type
-    @log = @robot.logger # shorthand helper
+    # override default for room type only if not explicitly set
+    @config.sendReplies ?= true if @type is 'room'
 
     # attach middleware
     @robot.receiveMiddleware (c, n, d) => @middleware.call @, c, n, d
 
-  # process all incoming messages, re-route to dialogue for engaged participants
+  ###*
+   * Process incoming messages, re-route to dialogue for engaged participants
+   * @param  {Object}   context - Passed through the middleware stack, with res
+   * @param  {Function} next    - Called when all middleware is complete
+   * @param  {Function} done    - Initial (final) completion callback
+  ###
   middleware: (context, next, done) ->
     res = context.response
     participants = @whoSpeaks res
@@ -59,91 +48,103 @@ class Scene
       next done
     return
 
-  # setup listener callback to enter scene
-  # @param type - the listener type, should be hear or respond
-  # @param
-  listen: (type, args...) ->
-    throw new Error "Invalid listener type" if type not in ['hear','respond']
+  ###*
+   * Add listener with callback to enter scene
+   * @param  {String} type       - The listener type: hear|respond
+   * @param  {RegExp} regex      - Matcher for listener
+   * @param  {Function} callback - Callback to fire when matched
+   * @return {String}            - Generated ID for listener
+  ###
+  listen: (type, regex, callback) ->
+    @handle "Invalid listener type" if type not in ['hear','respond']
+    @handle "Invalid regex for listener" if not _.isRegExp regex
+    @handle "Invalid callback for listener" if not _.isFunction callback
 
-    # valid regex as first arg (required)
-    regex = args.shift()
-    throw new Error "Invalid regex for listener" if not _.isRegExp regex
-
-    # create id from scene namespace and listener scope (and key if provided)
-    if _.isString args[0]
-      id = Helpers.keygen @id+'_listener', args.shift()
-    else
-      id = Helpers.keygen @id+'_listener'
-
-    # last arg taken as callback (required)
-    callback = args.shift()
-    throw new Error "Invalid callback for listener" if not _.isFunction callback
-
-    # setup robot listener with given or generated key, so it can be referred to
+    # setup robot listener with generated ID, for later/external reference
+    id = @keygen 'listener'
     @robot[type] regex, id: id, (res) =>
       dialogue = @enter res # may fail if enter hooks override (from Director)
-      callback.call dialogue, res if dialogue? # in callback dialogue is 'this'
-      # callback res, dialogue if dialogue? # TODO
-
+      callback res, dialogue if dialogue?
     return id
 
-  # alias of .listen with hear as specified type
+  ###*
+   * Alias of .listen with hear as specified type
+  ###
   hear: (args...) -> return @listen 'hear', args...
 
-  # alias of .listen with respond as specified type
+  ###*
+   * Alias of .listen with respond as specified type
+  ###
   respond: (args...) -> return @listen 'respond', args...
 
-  # return the source of a message (ID of user or room)
+  ###*
+   * Identify the source of a message relative to the scene type
+   * @param  {Response} res - Hubot Response object
+   * @return {String}       - ID of room, user or composite
+  ###
   whoSpeaks: (res) ->
     return switch @type
       when 'room' then return res.message.room
       when 'user' then return res.message.user.id
       when 'direct' then return "#{res.message.user.id}_#{res.message.room}"
 
-  # engage the participants in dialogue
-  # @param res, the response object
-  # @param opts (optional), key/vals for dialogue config, e.g overide timeout
+  ###*
+   * Engage the participants in dialogue
+   * @param  {Response} res  - Hubot Response object
+   * @param  {Object} [opts] - Options for dialogue, merged with scene config
+   * @return {Dialogue}      - The started dialogue
+  ###
   enter: (res, opts={}) ->
-
-    # extend dialogue options with scene config
-    opts = _.defaults @config, opts
-
-    # setup dialogue to handle choices for response branching
     participants = @whoSpeaks res
     return null if @inDialogue participants
     @log.info "Engaging #{ @type } #{ participants } in dialogue"
-    @engaged[participants] = new Dialogue res, opts
-
-    # remove participants from engaged participants on timeout or completion
+    @engaged[participants] = new Dialogue res, _.defaults @config, opts
     @engaged[participants].on 'timeout', => @exit res, 'timeout'
     @engaged[participants].on 'end', (completed) =>
       @exit res, "#{ if completed then 'complete' else 'incomplete' }"
-    return @engaged[participants] # return started dialogue
+    return @engaged[participants]
 
-  # disengage an participants from dialogue (can help in case of error)
-  exit: (res, reason='unknown') ->
+  ###*
+   * Disengage participants from dialogue e.g. in case of timeout or error
+   * @param  {Response} res    - Hubot
+   * @param  {String} [reason] - Some context, for logs
+   * @return {Boolean}         - Exit success (may fail if already disengaged)
+  ###
+  exit: (res, reason) ->
+    reason ?= 'unknown'
     participants = @whoSpeaks res
     if @engaged[participants]?
       @log.info "Disengaging #{ @type } #{ participants } because #{ reason }"
       @engaged[participants].clearTimeout()
       delete @engaged[participants]
       return true
-
-    # user may have been already removed by timeout event before end:incomplete
     @log.debug "Cannot disengage #{ participants }, not in #{ @type } scene"
     return false
 
-  # end all engaged dialogues
+  ###*
+   * End all engaged dialogues
+  ###
   exitAll: ->
     @log.info "Disengaging all in #{ @type } scene"
     _.invoke @engaged, 'clearTimeout'
     @engaged = []
     return
 
-  # return the dialogue for an engaged participants
-  dialogue: (participants) -> return @engaged[participants] or null
+  ###*
+   * Get the dialogue for engaged participants (relative to scene type)
+   * @param  {String} participants - ID of user, room or composite
+   * @return {Dialogue}            - Engaged dialogue instance
+  ###
+  dialogue: (participants) ->
+    return @engaged[participants] or null
 
   # return the engaged status for an participants
-  inDialogue: (participants) -> return participants in _.keys @engaged
+  ###*
+   * Get the engaged status for participants
+   * @param  {String} participants - ID of user, room or composite
+   * @return {Boolean}             - Is engaged status
+  ###
+  inDialogue: (participants) ->
+    return participants in _.keys @engaged
 
 module.exports = Scene
