@@ -4,6 +4,9 @@ chai = require 'chai'
 should = chai.should()
 chai.use require 'sinon-chai'
 
+# test with env for defaults
+process.env.DIALOGUE_TIMEOUT = 500
+
 Pretend = require 'hubot-pretend'
 pretend = new Pretend '../scripts/shh.coffee'
 {Dialogue} = require '../../src/modules'
@@ -14,33 +17,30 @@ Timeout = setTimeout () ->
 , 0
 .constructor
 
-# prevent environment changing tests
-delete process.env.DIALOGUE_TIMEOUT
-delete process.env.DIALOGUE_TIMEOUT_LINE
-
 describe '#Dialogue', ->
 
   beforeEach ->
     pretend.startup()
+    @tester = pretend.user 'tester'
+    @clock = sinon.useFakeTimers()
+
     _.forIn Dialogue.prototype, (val, key) ->
       sinon.spy Dialogue.prototype, key if _.isFunction val
 
-    # start dialogue by generating an incoming response object
+    # generate a response object for starting dialogues
     pretend.user('tester').in('testing').send 'test'
     .then => @res = pretend.responses.incoming[0]
-
-    @clock = sinon.useFakeTimers()
-    @tester = pretend.user 'tester'
 
   afterEach ->
     pretend.shutdown()
     @clock.restore()
+
     _.forIn Dialogue.prototype, (val, key) ->
       Dialogue.prototype[key].restore() if _.isFunction val
 
   describe 'constructor', ->
 
-    context 'with defaults', ->
+    context 'with defaults, including an env var', ->
 
       beforeEach ->
         @dialogue = new Dialogue @res
@@ -48,44 +48,11 @@ describe '#Dialogue', ->
       afterEach ->
         @dialogue.end()
 
-      it 'has empty paths object', ->
-        @dialogue.paths.should.eql {}
-
-      it 'has a null value for current path', ->
-        should.equal @dialogue.pathId, null
-
-      it 'has an empty branches array', ->
-        @dialogue.branches.should.eql []
-
-      it 'has an ended status of false', ->
-        @dialogue.ended.should.be.false
-
       it 'has timeout value configured', ->
-        @dialogue.config.timeout.should.be.a 'number'
+        @dialogue.config.timeout.should.equal 500
 
       it 'has timeout text configured', ->
         @dialogue.config.timeoutText.should.be.a 'string'
-
-      it 'has not started the timeout', ->
-        should.not.exist @dialogue.countdown
-
-    context 'with env vars set', ->
-
-      beforeEach ->
-        process.env.DIALOGUE_TIMEOUT = 500
-        process.env.DIALOGUE_TIMEOUT_LINE = 'Testing timeout env'
-        @dialogue = new Dialogue @res
-
-      afterEach ->
-        @dialogue.end()
-        delete process.env.DIALOGUE_TIMEOUT
-        delete process.env.DIALOGUE_TIMEOUT_LINE
-
-      it 'uses the environment timeout value', ->
-        @dialogue.config.timeout.should.equal 500
-
-      it 'uses the environment timeout text', ->
-        @dialogue.config.timeoutText.should.equal 'Testing timeout env'
 
     context 'with timeout options', ->
 
@@ -145,15 +112,14 @@ describe '#Dialogue', ->
           ]
           key: 'which-way'
 
-      it 'creates id from path scope and key', ->
-        @dialogue.keygen.should.have.calledWith 'path_which-way'
-
       it 'clears branches', ->
         @dialogue.clearBranches.should.have.calledOnce
 
       it 'creates branches with branch property array elements', ->
-        @dialogue.branch.getCall(0).should.have.calledWith /left/, 'Ok, going left!'
-        @dialogue.branch.getCall(1).should.have.calledWith /right/, 'Ok, going right!'
+        @dialogue.branch.should.have.calledWith [
+          [ /left/, 'Ok, going left!' ]
+          [ /right/, 'Ok, going right!' ]
+        ]
 
       it 'returns the id using namespace and key', ->
         @pathId.should.match /^path_which-way/
@@ -171,11 +137,9 @@ describe '#Dialogue', ->
         @dialogue.paths[@pathId].status.should.eql [ true, true ]
 
       it 'path object has transcript containing sent prompt', ->
-        @dialogue.paths[@pathId].transcript.should.eql [[
-          'send'
-          'bot'
-          'Turn left or right?'
-        ]]
+        @dialogue.paths[@pathId].transcript.should.eql [
+          [ 'send', 'bot', 'Turn left or right?']
+        ]
 
       it 'sends the prompt to room', ->
         pretend.messages.pop().should.eql [ 'hubot', 'Turn left or right?' ]
@@ -394,14 +358,14 @@ describe '#Dialogue', ->
       @dialogue = new Dialogue @res
       @robot.hear /.*/, (res) => @result = @dialogue.receive res # hear all
       @dialogue.branch /1/, 'got 1'
-      @handler1 = sinon.spy @dialogue.branches[0], 'handler'
-      @handler2 = sinon.spy()
-      @dialogue.branch /2/, @handler2
-      @handler3 = sinon.spy()
-      @dialogue.branch /3/, 'got 3', @handler3
+      @errorr1 = sinon.spy @dialogue.branches[0], 'handler'
+      @errorr2 = sinon.spy()
+      @dialogue.branch /2/, @errorr2
+      @errorr3 = sinon.spy()
+      @dialogue.branch /3/, 'got 3', @errorr3
 
     afterEach ->
-      @handler1.restore()
+      @errorr1.restore()
 
     context 'match for branch with reply string', ->
 
@@ -416,7 +380,7 @@ describe '#Dialogue', ->
         /1/
 
       it 'calls the created handler', ->
-        @handler1.should.have.calledOnce
+        @errorr1.should.have.calledOnce
 
       it 'sends the response', ->
         pretend.messages.pop().should.eql [ 'hubot', 'got 1' ]
@@ -434,7 +398,7 @@ describe '#Dialogue', ->
         /2/
 
       it 'calls the custom handler', ->
-        @handler2.should.have.calledOnce
+        @errorr2.should.have.calledOnce
 
       it 'hubot does not reply', ->
         pretend.messages.pop().should.eql [ 'tester', '2' ]
@@ -452,7 +416,7 @@ describe '#Dialogue', ->
         /3/
 
       it 'calls the custom handler', ->
-        @handler3.should.have.calledOnce
+        @errorr3.should.have.calledOnce
 
       it 'sends the response', ->
         pretend.messages.pop().should.eql [ 'hubot', 'got 3' ]
@@ -503,7 +467,7 @@ describe '#Dialogue', ->
         @result.should.be.false
 
       it 'does not call the handler', ->
-        @handler1.should.not.have.called
+        @errorr1.should.not.have.called
 
       it 'does not record anything', ->
         @dialogue.record.should.not.have.called

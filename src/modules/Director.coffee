@@ -1,9 +1,9 @@
-_ = require 'underscore'
+_ = require 'lodash'
 Base = require './Base'
 hooker = require 'hooker'
 
 ###*
- * Control listener and scene enter access, can operate as blacklist or whitelist.
+ * Control listener and scene enter access, operates as blacklist or whitelist.
  * Allows external logic via authorise...
  * - given the user or room name and response object to allow or deny
  * - return bool to determine access as fallback for anyone not on lists
@@ -26,8 +26,8 @@ class Director extends Base
     @authorise = if _.isFunction args[0] then args.shift()
     opts = if _.isObject args[0] then opts = args.shift() else {}
     super 'director', robot, opts
-    @handle "Invalid type" unless @config.type in ['whitelist','blacklist']
-    @handle "Invalid scope" unless @config.scope in ['username','room']
+    @error "Invalid type" unless @config.type in ['whitelist','blacklist']
+    @error "Invalid scope" unless @config.scope in ['username','room']
     @log.info "New #{ @config.scope } Director #{ @config.type }: #{ @id }"
 
     # Process environment settings for default lists
@@ -48,8 +48,7 @@ class Director extends Base
   ###
   add: (names) ->
     @log.info "Adding #{ names.toString() } to #{ @id } #{ @config.type }"
-    names = [names] if not _.isArray names # cast single as array
-    @names = _.union @names, names
+    @names = _.union @names, _.castArray names
     return @
 
   ###*
@@ -59,8 +58,7 @@ class Director extends Base
   ###
   remove: (names) ->
     @log.info "Removing #{ names.toString() } from #{ @id } #{ @config.type }"
-    names = [names] if not _.isArray names # cast single as array
-    @names = _.without @names, names...
+    @names = _.without @names, _.castArray(names)...
     return @
 
   ###*
@@ -109,7 +107,7 @@ class Director extends Base
    * @return {Director}     - Self, for chaining methods
   ###
   directMatch: (regex) ->
-    @handle "Invalid regex" if not _.isRegExp regex
+    @error "Invalid regex" if not _.isRegExp regex
     @log.info "#{ @id } now controlling access to listeners matching #{ regex }"
     @robot.listenerMiddleware (context, next, done) =>
       res = context.response

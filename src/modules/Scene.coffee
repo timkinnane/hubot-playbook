@@ -16,7 +16,7 @@ Dialogue = require './Dialogue'
 class Scene extends Base
   constructor: (robot, args...) ->
     @type = if _.isString args[0] then args.shift() else 'user'
-    @handle "invalid scene type" if @type not in [ 'room', 'user', 'direct' ]
+    @error "invalid scene type" if @type not in [ 'room', 'user', 'direct' ]
 
     super 'scene', robot, args...
     @engaged = {}
@@ -56,9 +56,9 @@ class Scene extends Base
    * @return {String}            - Generated ID for listener
   ###
   listen: (type, regex, callback) ->
-    @handle "Invalid listener type" if type not in ['hear','respond']
-    @handle "Invalid regex for listener" if not _.isRegExp regex
-    @handle "Invalid callback for listener" if not _.isFunction callback
+    @error "Invalid listener type" if type not in ['hear','respond']
+    @error "Invalid regex for listener" if not _.isRegExp regex
+    @error "Invalid callback for listener" if not _.isFunction callback
 
     # setup robot listener with generated ID, for later/external reference
     id = @keygen 'listener'

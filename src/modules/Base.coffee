@@ -8,15 +8,17 @@ slug = require 'slug'
  * @param  {String} name  - The class name (prefix for generating keys)
  * @param  {Robot} robot  - Robot instance
 ###
-class Base extends EventEmitter
+class Base
   defaults: {} # class (not instance) property - reference with Class::defaults
 
   constructor: (@name, @robot, options={}) ->
     @error 'Module requires a name' unless _.isString @name
     @error 'Module requires a robot object' unless _.isObject @robot
-    @id = @keygen "#{ @name }_#{ @config.key or '' }" # e.g. module_key_1
-    @log = @robot.logger
     @config = _.defaults options, @defaults
+
+    key = if @config.key? then "#{ @name }_#{ @config.key }" else @name
+    @id = @keygen key # e.g. module_key_1
+    @log = @robot.logger
 
   ###*
    * Generic error handling, logs and emits event before throwing

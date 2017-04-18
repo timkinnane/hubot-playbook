@@ -66,6 +66,14 @@ describe '#Base', ->
       it 'stores options over defaults in config', ->
         @base.config.should.eql test: true
 
+    context 'with key specified in options', ->
+
+      beforeEach ->
+        @base = new Base 'test', pretend.robot, key: 'foo'
+
+      it 'creates composite ID from name and key', ->
+        @base.id.should.match /test_foo_\d*/
+
     context 'without robot', ->
 
       beforeEach ->

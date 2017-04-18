@@ -26,8 +26,8 @@ class Playbook
 
   ###*
    * Create new Director
-   * @param  {Mixed} args... - Constructor args ./modules/Director.coffee
-   * @return {Director}      - New Director instance
+   * @param  {Mixed} args - Constructor args ./modules/Director.coffee
+   * @return {Director}   - New Director instance
   ###
   director: (args...) ->
     director = new @Director @robot, args...
@@ -36,8 +36,8 @@ class Playbook
 
   ###*
    * Create new Scene
-   * @param  {Mixed} args... - Scene constructor args ./modules/Director.coffee
-   * @return {Scene}         - New Scene instance
+   * @param  {Mixed} args - Scene constructor args ./modules/Director.coffee
+   * @return {Scene}      - New Scene instance
   ###
   scene: (args...) ->
     scene = new @Scene @robot, args...
@@ -84,8 +84,8 @@ class Playbook
 
   ###*
    * Create stand-alone dialogue (not within scene)
-   * @param  {Mixed} args... - Dialogue constructor args ./modules/Dialogue.coffee
-   * @return {Scene}         - New Scene instance
+   * @param  {Mixed} args - Dialogue constructor args ./modules/Dialogue.coffee
+   * @return {Scene}      - New Scene instance
   ###
   dialogue: (args...) ->
     dialogue = new @Dialogue args...
