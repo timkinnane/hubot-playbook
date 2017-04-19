@@ -11,8 +11,6 @@ Base = require './Base'
  *                               - string for sending on match OR
  *                               - callback to fire on match
  * @param  {Object} [opts]     - Config key/vals
- * TODO: add catch-all handler for mismatch replies in context with options
- *       *would not close path
 ###
 class Path extends Base
   constructor: (robot, branches, opts) ->
@@ -43,10 +41,22 @@ class Path extends Base
     return
 
   ###*
+   * Called when nothing matches, runs as configured in constructor options:
+   * - catchMessage: Message to send via handler
+   * - catchCallback: Function to call within handler
+   * @return {Object}     Contains .handler (function) or null if not configured
+  ###
+  catch: ->
+    return unless @config.catchMessage or @config.catchCallback
+    return handler: (res, dialogue) =>
+      dialogue.send @config.catchMessage if @config.catchMessage?
+      @config.catchCallback res, dialogue if @config.catchCallback?
+
+  ###*
    * Attempt to match an incoming response object
-   * Overrides the original match (catch-all from dialogue listener) in response
-   * Even if not matched, still overrides as a null match for further processes
+   * Overrides the response match (from dialogue listener) even if null match
    * Matching closes the path, but the handler may add branches, re-opening it
+   * Without match, will attempt catch (may also return null)
    * @param  {Response} res     - Hubot Response object
    * @return {Object|undefined} - Matched branch with regex and handler
   ###
@@ -56,6 +66,6 @@ class Path extends Base
       res.match = text.match branch.regex
       return res.match # truthy / falsey
     @closed = true if branch?
-    return branch
+    return branch or @catch()
 
 module.exports = Path

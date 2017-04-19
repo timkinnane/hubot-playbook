@@ -15,6 +15,10 @@ describe '#Path', ->
     _.forIn Path.prototype, (val, key) ->
       sinon.spy Path.prototype, key if _.isFunction val
 
+    @mockRes = reply: sinon.spy()
+    @mockDlg = send: sinon.spy()
+    @callback = sinon.spy()
+
   afterEach ->
     pretend.shutdown()
     _.forIn Path.prototype, (val, key) ->
@@ -85,13 +89,11 @@ describe '#Path', ->
 
     beforeEach ->
       @path = new Path pretend.robot
-      @mockRes = reply: sinon.spy()
-      @mockDlg = send: sinon.spy()
 
-    context 'with regex and message', ->
+    context 'with regex, message and callback', ->
 
       beforeEach ->
-        @path.addBranch /.*/, 'foo'
+        @path.addBranch /.*/, 'foo', @callback
 
       it 'creates branch object', ->
         @path.branches[0].should.be.an 'object'
@@ -104,52 +106,6 @@ describe '#Path', ->
 
       it 'opens path', ->
         @path.closed.should.be.false
-
-      context 'when handler called', ->
-
-        beforeEach ->
-          @path.branches[0].handler @mockRes, @mockDlg
-
-        it 'sends the message with given dialogue', ->
-          @mockDlg.send.should.have.calledWith 'foo'
-
-    context 'with regex and callback', ->
-
-      beforeEach ->
-        @callback = sinon.spy()
-        @path.addBranch /.*/, @callback
-
-      it 'creates branch object', ->
-        @path.branches[0].should.be.an 'object'
-
-      it 'branch has valid regex', ->
-        @path.branches[0].regex.should.be.instanceof RegExp
-
-      it 'branch has valid handler', ->
-        @path.branches[0].handler.should.be.a 'function'
-
-      context 'when handler called', ->
-
-        beforeEach ->
-          @path.branches[0].handler @mockRes, @mockDlg
-
-        it 'calls callback with response and dialogue', ->
-          @callback.should.have.calledWithExactly @mockRes, @mockDlg
-
-    context 'with regex, message and callback', ->
-
-      beforeEach ->
-        @callback = sinon.spy()
-        @path.addBranch /.*/, 'foo', @callback
-
-      it 'creates branch object', ->
-        @path.branches[0].should.be.an 'object'
-
-      it 'branch has valid regex', ->
-        @path.branches[0].regex.should.be.instanceof RegExp
-
-      it 'branch has valid handler', ->
-        @path.branches[0].handler.should.be.a 'function'
 
       context 'when handler called', ->
 
@@ -179,6 +135,39 @@ describe '#Path', ->
 
       it 'always throws', ->
         @path.addBranch.should.have.alwaysThrew
+
+  describe '.catch', ->
+
+    context 'with message and callback in config', ->
+
+      beforeEach ->
+        @path = new Path pretend.robot, null,
+          catchMessage: 'always be catching'
+          catchCallback: @callback
+        @path.catch()
+
+      it 'returns valid handler', ->
+        @path.catch.returnValues[0].handler.should.be.a 'function'
+
+      context 'when handler called', ->
+
+        beforeEach ->
+          @path.catch().handler @mockRes, @mockDlg
+
+        it 'sends the message with given dialogue', ->
+          @mockDlg.send.should.have.calledWith 'always be catching'
+
+        it 'calls the callback with response and dialogue', ->
+          @callback.should.have.calledWithExactly @mockRes, @mockDlg
+
+    context 'with no catch configured', ->
+
+        beforeEach ->
+          @path = new Path pretend.robot
+          @path.catch()
+
+        it 'returns undefined', ->
+          should.not.exist @path.catch.returnValues[0]
 
   describe '.match', ->
 
