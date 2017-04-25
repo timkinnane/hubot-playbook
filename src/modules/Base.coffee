@@ -8,7 +8,7 @@ slug = require 'slug'
  * @param  {String} name  - The class name (prefix for generating keys)
  * @param  {Robot} robot  - Robot instance
 ###
-class Base
+class Base extends EventEmitter
   defaults: {} # class (not instance) property - reference with Class::defaults
 
   constructor: (@name, @robot, options={}) ->

@@ -16,9 +16,58 @@ class Dialogue extends Base
       'Timed out! Please start again.'
 
   constructor: (@res, opts) ->
-    super 'dialogue', res.robot, opts
+    super 'dialogue', @res.robot, opts
+    @Path = Path
     @path = null
     @ended = false
+
+  ###*
+   * Shutdown and emit status (for scene to disengage participants)
+   * @return {Boolean} - Shutdown status, false if was already ended
+  ###
+  end: ->
+    return false if @ended
+    if @path?
+      @log.debug "Dialog ended #{ 'in' if @path.closed }complete"
+      @clearTimeout()
+      @emit 'end', @path.closed
+    else
+      @log.debug "Dialog ended before paths added"
+      @emit 'end', false
+    @ended = true
+    return @ended
+
+  ###*
+   * Send or reply with message as configured (@user reply or send to room)
+   * @param  {String} text Message text
+   * TODO: return promise that resolves when robot reply/send completes process
+   * TODO: update tests that wait for observer to use promise instead
+  ###
+  send: (text) ->
+    if @config.sendReplies then @res.reply text else @res.send text
+    @emit 'send', @res, text, @path?.id
+    return
+
+  ###*
+   * Default timeout method sends message, unless null or method overriden
+   * If given a method it will call that or can be reassigned as a new function
+   * @param  {Function} [override] - New function to call (optional)
+  ###
+  onTimeout: (override) ->
+    if override?
+      @onTimeout = override
+    else
+      @send @config.timeoutText if @config.timeoutText?
+    return
+
+  ###*
+   * Stop countdown for matching dialogue branches
+  ###
+  clearTimeout: ->
+    if @countdown?
+      clearTimeout @countdown
+      delete @countdown
+    return
 
   ###*
    * Start (or restart) countdown for matching dialogue branches
@@ -35,43 +84,24 @@ class Dialogue extends Base
     return @countdown
 
   ###*
-   * Stop countdown for matching dialogue branches
-  ###
-  clearTimeout: ->
-    if @countdown?
-      clearTimeout @countdown
-      delete @countdown
-    return
-
-  ###*
-   * Default timeout method sends message, unless null or method overriden
-   * If given a method it will call that or can be reassigned as a new function
-   * @param  {Function} [override] - New function to call (optional)
-  ###
-  onTimeout: (override) ->
-    if override?
-      @onTimeout = override
-    else
-      @send @config.timeoutText if @config.timeoutText?
-    return
-
-  ###*
    * Add a dialogue path, with branches to follow and a prompt (optional)
-   * @param  {Array} branches  - Arguments for each brancch, each containing:
-   *                             - regex for listener
-   *                             - string for sending on match
-   *                             AND/OR
-   *                             - callback to fire on match
-   * @param  {String} [prompt] - To send on path setup
-   * @param  {Object} [opts]   - Config key/vals
-   * @return {Path}            - New path instance
+   * @param  {String} [prompt]  - To send on path setup
+   * @param  {Array} [branches] - Arguments for each brancch, each containing:
+   *                              - regex for listener
+   *                              - string for sending on match
+   *                              AND/OR
+   *                              - callback to fire on match
+   * @param  {Object} [opts]    - Config key/vals
+   * @return {Path}             - New path instance
+   * TODO: when .send uses promise, return promise that resolves with @path
   ###
-  addPath: (branches, args...) ->
+  addPath: (args...) ->
     prompt = args.shift() if _.isString args[0]
+    branches = args.shift() if _.isArray args[0]
     opts = if _.isObject args[0] then opts = args.shift() else {}
-    @path = new Path @robot, branches, opts # current path overwrites previous
+    @path = new @Path @robot, branches, opts # current path overwrites previous
     @send prompt if prompt? # kick-off dialogue exchange
-    startTimeout()
+    @startTimeout() if branches?
     return @path
 
   ###*
@@ -82,8 +112,8 @@ class Dialogue extends Base
   ###
   addBranch: (args...) ->
     @addPath() unless @path?
-    @path.branch args...
-    startTimeout()
+    @path.addBranch args...
+    @startTimeout()
     return
 
   ###*
@@ -97,7 +127,7 @@ class Dialogue extends Base
   ###
   receive: (@res) ->
     return false if @ended # dialogue is over, don't process
-    @log.debug "Dialogue received #{ res.message.text }"
+    @log.debug "Dialogue received #{ @res.message.text }"
     branch = @path.match @res
     if branch? and @res.match
       @clearTimeout()
@@ -110,26 +140,5 @@ class Dialogue extends Base
       @emit 'mismatch', @res, @path.id
     @end() if @path.closed
     return
-
-  ###*
-   * Send or reply with message as configured (@user reply or send to room)
-   * @param  {String} text Message text
-  ###
-  send: (text) ->
-    if @config.sendReplies then @res.reply text else @res.send text
-    @emit 'send', res, text, @path.id
-    return
-
-  ###*
-   * Shutdown and emit status (for scene to disengage participants)
-   * @return {Boolean} - Shutdown status, false if was already ended
-  ###
-  end: ->
-    return false if @ended
-    @log.debug "Dialog ended #{ 'in' if @path.closed }complete"
-    @clearTimeout()
-    @emit 'end', @path.closed
-    @ended = true
-    return @ended
 
 module.exports = Dialogue

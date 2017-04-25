@@ -69,7 +69,7 @@
     "gulp-sourcemaps": "^2.4.1",
     "gulp-util": "^3.0.8",
     "hubot": "^2.19.0",
-    "hubot-pretend": "^0.4.1",
+    "hubot-pretend": "^0.5.0",
     "hubot-test-helper": "^1.5.1",
     "minimatch": "^3.0.3",
     "minimist": "^1.2.0",

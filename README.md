@@ -61,6 +61,7 @@ Look at [examples] and [docs] for how to use Playbook and it's modules to add co
 
 ### Pre-release
 
+- Make sinon usage consistent, e.g. used `returnValues` instead of `@result =`
 - Replace bound "this" in dialogue callbacks with dialogue as param
 - Refactor Playbook usage as singleton (add startup method with hubot)
 - Let modules refer back up to Playbook and use that instead of Helpers
