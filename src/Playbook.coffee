@@ -97,8 +97,8 @@ class Playbook
   ###
   shutdown: ->
     @log.info 'Playbook shutting down'
-    _.invoke @scenes, 'exitAll'
-    _.invoke @dialogues, 'end'
+    _.invokeMap @scenes, 'exitAll'
+    _.invokeMap @dialogues, 'end'
     return
 
 module.exports = Playbook

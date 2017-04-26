@@ -192,7 +192,7 @@ describe '#Scene', ->
         @scene = new Scene pretend.robot, 'direct'
         @scene.whoSpeaks @res
 
-      it 'returns the concatenated username and room ID', ->
+      it 'returns the concatenated user ID and room ID', ->
         @scene.whoSpeaks.returnValues.pop().should.equal 'tester_testing'
 
   describe '.enter', ->
@@ -203,7 +203,7 @@ describe '#Scene', ->
         @scene = new Scene pretend.robot, 'user'
         @dialogue = @scene.enter @res
 
-      it 'saves engaged Dialogue instance with username key', ->
+      it 'saves engaged Dialogue instance with user ID', ->
         @scene.engaged['tester'].should.be.instanceof Dialogue
 
     context 'room scene', ->
@@ -351,50 +351,46 @@ describe '#Scene', ->
       beforeEach ->
         @scene = new Scene pretend.robot
         co =>
-          yield pretend.user('A').send 'foo' # trigger 1st response
-          yield pretend.user('B').send 'bar' # trigger 2nd response
+          yield pretend.user('A').send 'foo'
+          yield pretend.user('B').send 'bar'
         .then =>
-          @dlgA = @scene.enter pretend.responses.incoming[0]
-          # @dlgB = @scene.enter pretend.responses.incoming[1]
-          console.log pretend.users.A.id
-          console.log pretend.users.B.id
-          console.log @scene.inDialogue @scene.whoSpeaks pretend.responses.incoming[0]
-          console.log @scene.inDialogue @scene.whoSpeaks pretend.responses.incoming[1]
-          sinon.spy @dlgA.clearTimeout = sinon.spy()
-          sinon.spy @dlgB.clearTimeout = sinon.spy()
+          @dialogueB = @scene.enter pretend.responses.incoming.pop()
+          @dialogueA = @scene.enter pretend.responses.incoming.pop()
+          @dialogueA.clearTimeout = sinon.spy()
+          @dialogueB.clearTimeout = sinon.spy()
           @scene.exitAll()
 
       it 'created two dialogues', ->
-        @dlgA.should.be.instanceof Dialogue
-        @dlgB.should.be.instanceof Dialogue
+        @dialogueA.should.be.instanceof Dialogue
+        @dialogueB.should.be.instanceof Dialogue
 
       it 'calls clearTimeout on both dialogues', ->
-        @dlgA.clearTimeout.should.have.calledOnce
-        @dlgB.clearTimeout.should.have.calledOnce
+        @dialogueA.clearTimeout.should.have.calledOnce
+        @dialogueB.clearTimeout.should.have.calledOnce
 
       it 'has no remaining engaged dialogues', ->
         @scene.engaged.length.should.equal 0
 
-  describe '.dialogue', ->
+  describe '.getDialogue', ->
 
     context 'with user in scene', ->
 
       beforeEach ->
         @scene = new Scene pretend.robot
-        @dialogue = @scene.enter @res
-        @scene.dialogue 'tester'
+        @dialogueA = @scene.enter @res
+        @dialogueB = @scene.getDialogue 'tester'
 
       it 'returns the matching dialogue', ->
-        @scene.dialogue.returnValues.pop().should.eql @dialogue
+        @dialogueB.should.eql @dialogueA
 
     context 'no user in scene', ->
 
       beforeEach ->
         @scene = new Scene pretend.robot
-        @scene.dialogue 'tester'
+        @dialogue = @scene.getDialogue 'tester'
 
-      it 'returns null', ->
-        @scene.dialogue.returnValues.should.eql []
+      it 'returns undefined', ->
+        should.not.exist @dialogue
 
   describe '.inDialogue', ->
 
@@ -406,7 +402,7 @@ describe '#Scene', ->
         @userEngaged = @scene.inDialogue 'tester'
         @roomEngaged = @scene.inDialogue 'testing'
 
-      it 'returns true with username', ->
+      it 'returns true with user ID', ->
         @userEngaged.should.be.true
 
       it 'returns false with room name', ->
@@ -432,7 +428,7 @@ describe '#Scene', ->
       it 'returns true with roomname', ->
         @roomEngaged.should.be.true
 
-      it 'returns false with username', ->
+      it 'returns false with user ID', ->
         @userEngaged.should.be.false
 
     context 'direct scene, in scene', ->
@@ -444,11 +440,11 @@ describe '#Scene', ->
         @userEngaged = @scene.inDialogue 'tester'
         @directEngaged = @scene.inDialogue 'tester_testing'
 
-      it 'returns true with ${username}_${roomID}', ->
+      it 'returns true with userID_roomID', ->
         @directEngaged.should.be.true
 
       it 'returns false with roomname', ->
         @roomEngaged.should.be.false
 
-      it 'returns false with username', ->
+      it 'returns false with user ID', ->
         @userEngaged.should.be.false

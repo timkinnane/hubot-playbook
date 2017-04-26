@@ -128,7 +128,7 @@ class Scene extends Base
   ###
   exitAll: ->
     @log.info "Disengaging all in #{ @type } scene"
-    _.invoke @engaged, 'clearTimeout'
+    _.invokeMap @engaged, 'clearTimeout'
     @engaged = []
     return
 
@@ -137,8 +137,8 @@ class Scene extends Base
    * @param  {String} participants - ID of user, room or composite
    * @return {Dialogue}            - Engaged dialogue instance
   ###
-  dialogue: (participants) ->
-    return @engaged[participants] or null
+  getDialogue: (participants) ->
+    return @engaged[participants]
 
   # return the engaged status for an participants
   ###*
@@ -147,7 +147,6 @@ class Scene extends Base
    * @return {Boolean}             - Is engaged status
   ###
   inDialogue: (participants) ->
-    console.log participants, _.keys @engaged
     return participants in _.keys @engaged
 
 module.exports = Scene
