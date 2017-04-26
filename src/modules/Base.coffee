@@ -24,7 +24,6 @@ class Base extends EventEmitter
    * Generic error handling, logs and emits event before throwing
    * @param  {String} [err] - Description of error (optional)
    * @param  {Error} [err]  - Error instance (optional)
-   * @return null           - Throws, never returns
   ###
   error: (err) ->
     if _.isString err

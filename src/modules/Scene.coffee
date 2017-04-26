@@ -19,6 +19,7 @@ class Scene extends Base
     @error "invalid scene type" if @type not in [ 'room', 'user', 'direct' ]
 
     super 'scene', robot, args...
+    @Dialogue = Dialogue
     @engaged = {}
 
     # override default for room type only if not explicitly set
@@ -84,9 +85,9 @@ class Scene extends Base
   ###
   whoSpeaks: (res) ->
     return switch @type
-      when 'room' then return res.message.room
-      when 'user' then return res.message.user.id
-      when 'direct' then return "#{res.message.user.id}_#{res.message.room}"
+      when 'room' then return res.message.room.toString()
+      when 'user' then return res.message.user.id.toString()
+      when 'direct' then return "#{ res.message.user.id }_#{ res.message.room }"
 
   ###*
    * Engage the participants in dialogue
@@ -96,13 +97,14 @@ class Scene extends Base
   ###
   enter: (res, opts={}) ->
     participants = @whoSpeaks res
-    return null if @inDialogue participants
+    return if @inDialogue participants
     @log.info "Engaging #{ @type } #{ participants } in dialogue"
-    @engaged[participants] = new Dialogue res, _.defaults @config, opts
-    @engaged[participants].on 'timeout', => @exit res, 'timeout'
-    @engaged[participants].on 'end', (completed) =>
+    @dialogue = new @Dialogue res, _.defaults @config, opts
+    @dialogue.on 'timeout', => @exit res, 'timeout'
+    @dialogue.on 'end', (completed) =>
       @exit res, "#{ if completed then 'complete' else 'incomplete' }"
-    return @engaged[participants]
+    @engaged[participants] = @dialogue
+    return @dialogue
 
   ###*
    * Disengage participants from dialogue e.g. in case of timeout or error
@@ -145,6 +147,7 @@ class Scene extends Base
    * @return {Boolean}             - Is engaged status
   ###
   inDialogue: (participants) ->
+    console.log participants, _.keys @engaged
     return participants in _.keys @engaged
 
 module.exports = Scene
