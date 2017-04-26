@@ -68,7 +68,7 @@ describe '#Dialogue', ->
 
     beforeEach ->
       @dialogue = new Dialogue @res
-      pretend.robot.hear /.*/, (res) => @dialogue.receive res # hear all
+      pretend.robot.hear /.*/, (res) => @dialogue.receive res # receive all
       @end = sinon.spy()
       @dialogue.on 'end', @end
 
@@ -89,6 +89,8 @@ describe '#Dialogue', ->
     context 'when path is not closed', ->
 
       beforeEach ->
+        # simulate dialogue with active path
+        @dialogue.startTimeout()
         @dialogue.path = closed: false
         @dialogue.end()
 
@@ -110,8 +112,8 @@ describe '#Dialogue', ->
         @dialogue.path = closed: true
         @dialogue.end()
 
-      it 'clears the timeout', ->
-        @dialogue.clearTimeout.should.have.calledOnce
+      it 'does not clear timeout (never started)', ->
+        @dialogue.clearTimeout.should.not.have.called
 
       it 'emits end event with success status (true)', ->
         @end.should.have.calledWith true
@@ -364,106 +366,24 @@ describe '#Dialogue', ->
 
     beforeEach ->
       @dialogue = new Dialogue @res
-      pretend.robot.hear /.*/, (res) => @result = @dialogue.receive res # hear all
-      @dialogue.branch /1/, 'got 1'
-      @errorr1 = sinon.spy @dialogue.branches[0], 'handler'
-      @errorr2 = sinon.spy()
-      @dialogue.branch /2/, @errorr2
-      @errorr3 = sinon.spy()
-      @dialogue.branch /3/, 'got 3', @errorr3
-
-    afterEach ->
-      @errorr1.restore()
-
-    context 'match for branch with reply string', ->
-
-      beforeEach ->
-        @tester.send '1'
-
-      it 'records the match (with user, line, match, regex)', ->
-        @dialogue.record.should.have.calledWith 'match',
-        @rec.message.user,
-        '1',
-        '1'.match('1'),
-        /1/
-
-      it 'calls the created handler', ->
-        @errorr1.should.have.calledOnce
-
-      it 'sends the response', ->
-        pretend.messages.pop().should.eql [ 'hubot', 'got 1' ]
-
-    context 'matching branch with no reply and custom handler', ->
-
-      beforeEach ->
-        @tester.send '2'
-
-      it 'records the match (with user, line, match, regex)', ->
-        @dialogue.record.should.have.calledWith 'match',
-        @rec.message.user,
-        '2',
-        '2'.match('2'),
-        /2/
-
-      it 'calls the custom handler', ->
-        @errorr2.should.have.calledOnce
-
-      it 'hubot does not reply', ->
-        pretend.messages.pop().should.eql [ 'tester', '2' ]
-
-    context 'matching branch with reply and custom handler', ->
-
-      beforeEach ->
-        @tester.send '3'
-
-      it 'records the match (with user, line, match, regex)', ->
-        @dialogue.record.should.have.calledWith 'match',
-        @rec.message.user,
-        '3',
-        '3'.match('3'),
-        /3/
-
-      it 'calls the custom handler', ->
-        @errorr3.should.have.calledOnce
-
-      it 'sends the response', ->
-        pretend.messages.pop().should.eql [ 'hubot', 'got 3' ]
-
-      it 'clears branches after match', ->
-        @dialogue.clearBranches.should.have.calledOnce
-
-    context 'received matching branches consecutively', ->
-
-      beforeEach ->
-        @tester.send '1'
-        @tester.send '2'
-
-      it 'clears branches after first only', ->
-        @dialogue.clearBranches.should.have.calledOnce
-
-      it 'does not reply to the second', ->
-        pretend.messages.pop().should.eql [ 'hubot', 'got 1' ]
-
-    context 'when branch is matched and none added', ->
-
-      beforeEach ->
-        @tester.send '1'
-
-      it 'ends dialogue', ->
-        @dialogue.end.should.have.called
-
-    context 'when branch is not matched', ->
-
-      beforeEach ->
-        @tester.send '?'
-
-      it 'records mismatch (with user, line)', ->
-        @dialogue.record.should.have.calledWith 'mismatch',
-        @rec.message.user,
-        '?'
-
-      it 'does not call end', ->
-        @dialogue.end.should.not.have.called
+      pretend.robot.hear /.*/, (res) => @dialogue.receive res # receive all
+      @handler1 = sinon.spy()
+      @handler2 = sinon.spy()
+      @dialogue.addPath [
+        [ /foo/, 'bar' ]
+        [ /1/, 'got 1', @handler1 ]
+        [ /2/, @handler2 ]
+        [ /3/, 'got 3' ]
+      ], key: 'receive-test'
+      @handler3 = sinon.spy @dialogue.path.branches[3], 'handler'
+      @match = sinon.spy()
+      @mismatch = sinon.spy()
+      @catch = sinon.spy()
+      @dialogue.on 'match', @match
+      @dialogue.on 'mismatch', @mismatch
+      @dialogue.on 'catch', @catch
+      @matchResponse = sinon.match.instanceOf pretend.Response
+      @matchID = sinon.match /path_receive-test_\d*/
 
     context 'when already ended', ->
 
@@ -472,10 +392,130 @@ describe '#Dialogue', ->
         @tester.send '1'
 
       it 'returns false', ->
-        @result.should.be.false
+        @dialogue.receive.returnValues[0].should.be.false
 
       it 'does not call the handler', ->
-        @errorr1.should.not.have.called
+        @handler1.should.not.have.called
 
-      it 'does not record anything', ->
-        @dialogue.record.should.not.have.called
+    context 'on matching branch', ->
+
+      beforeEach ->
+        @tester.send 'foo'
+
+      it 'clears timeout', ->
+        @dialogue.clearTimeout.should.have.calledOnce
+
+      it 'emits match with res and path ID', ->
+        @match.should.have.calledWith @matchResponse, @matchID
+
+      it 'ends dialogue', ->
+        @dialogue.end.should.have.calledOnce
+
+    context 'on matching branch with message and handler', ->
+
+      beforeEach ->
+        @tester.send '1'
+
+      it 'calls the created handler', ->
+        @handler1.should.have.calledOnce
+
+      it 'sends the message', ->
+        @dialogue.send.should.have.calledWith 'got 1'
+
+    context 'on matching branch with just a handler', ->
+
+      beforeEach ->
+        @tester.send '2'
+
+      it 'calls the custom handler', ->
+        @handler2.should.have.calledOnce
+
+      it 'does not send any messages', ->
+        @dialogue.send.should.not.have.called
+
+    context 'on matching branch with just a message', ->
+
+      beforeEach ->
+        @tester.send '3'
+
+      it 'calls the default handler', ->
+        @handler3.should.have.calledOnce
+
+      it 'sends the response', ->
+        @dialogue.send.should.have.calledWith 'got 3'
+
+    context 'on matching branches consecutively', ->
+
+      beforeEach ->
+        @tester.send '1'
+        @tester.send '2'
+
+      it 'only processes first match', ->
+        @match.should.have.calledOnce
+
+      it 'does not reply to the second', ->
+        @dialogue.send.should.not.have.calledWith 'got 2'
+
+    context 'on mismatch with catch', ->
+
+      beforeEach ->
+        @dialogue.path.config.catchMessage = 'huh?'
+        @tester.send '?'
+
+      it 'emits catch', ->
+        @catch.should.have.calledOnce
+
+      it 'sends the catch message', ->
+        @dialogue.send.should.have.calledWith 'huh?'
+
+      it 'does not clear timeout', ->
+        @dialogue.clearTimeout.should.not.have.called
+
+      it 'does not call end', ->
+        @dialogue.end.should.not.have.called
+
+    context 'on mismatch without catch', ->
+
+      beforeEach ->
+        @tester.send '?'
+
+      it 'emits mismatch', ->
+        @mismatch.should.have.calledOnce
+
+      it 'does not clear timeout', ->
+        @dialogue.clearTimeout.should.not.have.called
+
+      it 'does not call end', ->
+        @dialogue.end.should.not.have.called
+
+    context 'on matching branch that adds a new branch', ->
+
+      beforeEach ->
+        @dialogue.addBranch /more/, =>
+          @dialogue.addBranch /4/, 'got 4'
+          @dialogue.addBranch /5/, 'got 5'
+        @tester.send 'more'
+
+      it 'added branches to current path', ->
+        _.map @dialogue.path.branches, (branch) -> branch.regex
+          .should.eql [ /foo/, /1/, /2/, /3/, /more/, /4/, /5/ ]
+
+      it 'does not call end', ->
+        @dialogue.end.should.not.have.called
+
+    context 'on matching branch that adds a new path', ->
+
+      beforeEach ->
+        @dialogue.addBranch /new/, =>
+          @dialogue.addPath [
+            [ /1/, 'got 1' ]
+            [ /2/, 'got 2' ]
+          ]
+        @tester.send 'new'
+
+      it 'added new branches to new path, overwrites prev path', ->
+        _.map @dialogue.path.branches, (branch) -> branch.regex
+          .should.eql [ /1/, /2/ ]
+
+      it 'does not call end', ->
+        @dialogue.end.should.not.have.called
