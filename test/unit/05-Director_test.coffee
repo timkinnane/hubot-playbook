@@ -1,78 +1,55 @@
-Q = require 'q'
-_ = require 'underscore'
-mute = require 'mute'
-{inspect} = require 'util'
+_ = require 'lodash'
 sinon = require 'sinon'
 chai = require 'chai'
 should = chai.should()
 chai.use require 'sinon-chai'
+co = require 'co'
 
-Helper = require 'hubot-test-helper'
-helper = new Helper "../scripts/ping.coffee"
-Dialogue = require '../../src/modules/Dialogue'
-Scene = require '../../src/modules/Scene'
-Director = require '../../src/modules/Director'
-Playbook = require '../../src/Playbook'
-Helpers = require '../../src/modules/Helpers'
+process.env.DENIED_REPLY = "403 Sorry." # for testing env inherited
 
-matchAny = new RegExp /.*/
+Pretend = require 'hubot-pretend'
+pretend = new Pretend '../scripts/shh.coffee'
+{Dialogue, Scene, Director} = require '../../src/modules'
 
 describe '#Director', ->
 
-  # create room and initiate a response to test with
   beforeEach ->
-    @room = helper.createRoom name: 'testing'
+    pretend.startup()
+    @tester = pretend.user 'tester', id:'tester', room: 'testing'
 
-    # store and log all responses sent and messages received
-    @robot = @room.robot
-    @robot.on 'receive', (@rec,txt) => @robot.logger.debug "Bot receives: " +txt
-    @robot.on 'respond', (@res,txt) => @robot.logger.debug "Bot responds: " +txt
-    @robot.logger.info = @robot.logger.debug = -> # silence
+    _.forIn Director.prototype, (val, key) ->
+      sinon.spy Director.prototype, key if _.isFunction val
 
-    # spy on all the class and helper methods
-    _.map _.keys(Director.prototype), (key) -> sinon.spy Director.prototype, key
-    _.map _.keys(Helpers), (key) -> sinon.spy Helpers, key
-
-    # trigger first response
-    @room.user.say 'tester', 'hubot ping'
+    # generate first response for starting dialogues
+    @tester.send('test').then => @res = pretend.responses.incoming[0]
 
   afterEach ->
-    _.map _.keys(Director.prototype), (key) -> Director.prototype[key].restore()
-    _.map _.keys(Helpers), (key) -> Helpers[key].restore()
-    @room.destroy()
+    pretend.shutdown()
+
+    _.forIn Director.prototype, (val, key) ->
+      Director.prototype[key].restore() if _.isFunction val
 
   describe 'constructor', ->
 
-    context 'without env vars or optional args', ->
+    context 'without optional args', ->
 
       beforeEach ->
-        namespace = Director: require "../../src/modules/Director"
-        @constructor = sinon.spy namespace, 'Director'
-        @director = new namespace.Director @robot
-
-      it 'does not throw', ->
-        @constructor.should.not.have.threw
+        @director = new Director pretend.robot
 
       it 'has empty array names', ->
         @director.names.should.eql []
 
-      it 'has default config', ->
+      it 'has default config with env inherited', ->
         @director.config.should.eql
           type: 'whitelist'
           scope: 'username'
-          deniedReply: "Sorry, I can't do that."
-
-      it 'creates an id with director scope', ->
-        Helpers.keygen.should.have.calledWith 'director'
-
-      it 'stores the generated key as an attribute', ->
-        Helpers.keygen.returnValues[0].should.equal @director.id
+          deniedReply: "403 Sorry."
 
     context 'with authorise function', ->
 
       beforeEach ->
         @authorise = -> null
-        @director = new Director @robot, @authorise
+        @director = new Director pretend.robot, @authorise
 
       it 'stores the given function as its authorise method', ->
         @director.authorise = @authorise
@@ -80,18 +57,12 @@ describe '#Director', ->
     context 'with options (denied reply and key string)', ->
 
       beforeEach ->
-        @director = new Director @robot,
+        @director = new Director pretend.robot,
           deniedReply: "DENIED!"
           key: 'Orson Welles'
 
       it 'stores passed options in config', ->
         @director.config.deniedReply.should.equal "DENIED!"
-
-      it 'creates an id from director scope and key', ->
-        Helpers.keygen.should.have.calledWith 'director', 'Orson Welles'
-
-      it 'stores generated id as its id', ->
-        @director.id.should.equal Helpers.keygen.returnValues.pop()
 
     context 'with env var for names', ->
 
@@ -110,7 +81,7 @@ describe '#Director', ->
       context 'whitelist type, username scope', ->
 
         beforeEach ->
-          @director = new Director @robot,
+          @director = new Director pretend.robot,
             type: 'whitelist'
             scope: 'username'
 
@@ -120,7 +91,7 @@ describe '#Director', ->
       context 'whitelist type, room scope', ->
 
         beforeEach ->
-          @director = new Director @robot,
+          @director = new Director pretend.robot,
             type: 'whitelist'
             scope: 'room'
 
@@ -130,7 +101,7 @@ describe '#Director', ->
       context 'blacklist type, username scope', ->
 
         beforeEach ->
-          @director = new Director @robot,
+          @director = new Director pretend.robot,
             type: 'blacklist'
             scope: 'username'
 
@@ -140,64 +111,44 @@ describe '#Director', ->
       context 'blacklist type, room scope', ->
 
         beforeEach ->
-          @director = new Director @robot,
+          @director = new Director pretend.robot,
             type: 'blacklist'
             scope: 'room'
 
         it 'stores the blacklisted rooms from env', ->
           @director.names.should.eql ['Labour']
 
-    context 'with env var for reply', ->
+    context 'with options arg for reply', ->
 
       beforeEach ->
-        process.env.DENIED_REPLY = "403 Sorry."
-        @director = new Director @robot
+        @director = new Director pretend.robot, deniedReply: "DENIED!"
 
-      afterEach ->
-        delete process.env.DENIED_REPLY
-
-      it 'stores env vars in config', ->
-        @director.config.deniedReply.should.equal "403 Sorry."
-
-    context 'with env vars and args for reply', ->
-
-      beforeEach ->
-        process.env.DENIED_REPLY = "403 Sorry."
-        @director = new Director @robot, deniedReply: "DENIED!"
-
-      afterEach ->
-        delete process.env.DENIED_REPLY
-
-      it 'stores passed options in config (overriding env vars)', ->
+      it 'stores passed options in config (overriding defaults)', ->
         @director.config.deniedReply.should.equal "DENIED!"
 
     context 'with invalid option for type', ->
 
       beforeEach ->
-        namespace = Director: require "../../src/modules/Director"
-        @constructor = sinon.spy namespace, 'Director'
-        try @director = new namespace.Director @robot,
+        try @director = new Director pretend.robot,
           type: 'pinklist'
 
       it 'should throw error', ->
-        @constructor.should.have.threw
+        Director.prototype.constructor.should.have.threw
 
     context 'with invalid option for scope', ->
 
       beforeEach ->
-        namespace = Director: require "../../src/modules/Director"
-        @constructor = sinon.spy namespace, 'Director'
-        try @director = new namespace.Director @robot,
+        try @director = new Director pretend.robot,
           scope: 'robot'
 
       it 'should throw error', ->
-        @constructor.should.have.threw
+        Director.prototype.constructor.should.have.threw
 
     context 'without key, with authorise function and options', ->
 
       beforeEach ->
         @authorise = -> null
-        @director = new Director @robot, @authorise,
+        @director = new Director pretend.robot, @authorise,
           scope: 'room'
 
       it 'uses options', ->
@@ -209,7 +160,7 @@ describe '#Director', ->
   describe '.add', ->
 
     beforeEach ->
-      @director = new Director @robot
+      @director = new Director pretend.robot
 
     context 'given array of names', ->
 
@@ -239,7 +190,7 @@ describe '#Director', ->
   describe '.remove', ->
 
     beforeEach ->
-      @director = new Director @robot
+      @director = new Director pretend.robot
       @director.names = ['yeon', 'pema', 'juan', 'nima']
 
     context 'given array of names', ->
@@ -271,7 +222,7 @@ describe '#Director', ->
     context 'whitelist without authorise function', ->
 
       beforeEach ->
-        @director = new Director @robot
+        @director = new Director pretend.robot
 
       context 'no list', ->
 
@@ -302,7 +253,7 @@ describe '#Director', ->
     context 'blacklist without authorise function', ->
 
       beforeEach ->
-        @director = new Director @robot,
+        @director = new Director pretend.robot,
           type: 'blacklist'
 
       context 'no list', ->
@@ -335,7 +286,7 @@ describe '#Director', ->
 
       beforeEach ->
         @authorise = sinon.spy -> 'AUTHORISE'
-        @director = new Director @robot, @authorise
+        @director = new Director pretend.robot, @authorise
 
       context 'no list', ->
 
@@ -373,7 +324,7 @@ describe '#Director', ->
 
       beforeEach ->
         @authorise = sinon.spy -> 'AUTHORISE'
-        @director = new Director @robot, @authorise,
+        @director = new Director pretend.robot, @authorise,
           type: 'blacklist'
 
       context 'no list', ->
@@ -408,12 +359,36 @@ describe '#Director', ->
         it 'returns value of authorise function', ->
           @result.should.equal 'AUTHORISE'
 
+    context 'room scope, blacklist room', ->
+
+      beforeEach ->
+        @director = new Director pretend.robot,
+          type: 'blacklist'
+          scope: 'room'
+        @director.names = ['testing']
+        @result = @director.isAllowed @res
+
+      it 'returns false', ->
+        @result.should.be.false
+
+    context 'room scope, whitelist room', ->
+
+      beforeEach ->
+        @director = new Director pretend.robot,
+          type: 'whitelist'
+          scope: 'room'
+        @director.names = ['testing']
+        @result = @director.isAllowed @res
+
+      it 'returns true', ->
+        @result.should.be.true
+
   describe '.process', ->
 
     beforeEach ->
       @reply = sinon.spy @res, 'reply'
-      @director = new Director @robot
-      @scene = new Scene @robot
+      @director = new Director pretend.robot
+      @scene = new Scene pretend.robot
 
     context 'denied user', ->
 
@@ -461,16 +436,16 @@ describe '#Director', ->
   describe '.directMatch', ->
 
     beforeEach ->
-      @director = new Director @robot
+      @director = new Director pretend.robot
       @callback = sinon.spy()
-      @robot.hear /test/, @callback
+      pretend.robot.hear /test/, @callback
       @director.directMatch /test/
 
     context 'allowed user sending message matching directed match', ->
 
       beforeEach ->
         @director.names = ['tester']
-        @room.user.say 'tester', 'test'
+        @tester.send 'test'
 
       it 'calls .process with response to perform access checks and reply', ->
         @director.process.should.have.calledOnce
@@ -481,7 +456,7 @@ describe '#Director', ->
     context 'denied user sending message matching directed match', ->
 
       beforeEach ->
-        @room.user.say 'tester', 'test'
+        @tester.send 'test'
 
       it 'calls .process to perform access checks and reply', ->
         @director.process.should.have.calledOnce
@@ -492,7 +467,7 @@ describe '#Director', ->
     context 'denied user sending unmatched message', ->
 
       beforeEach ->
-        @room.user.say 'tester', 'foo'
+        @tester.send 'foo'
 
       it 'does not call .process because middleware did not match', ->
         @director.process.should.not.have.called
@@ -500,16 +475,16 @@ describe '#Director', ->
   describe '.directListener', ->
 
     beforeEach ->
-      @director = new Director @robot
+      @director = new Director pretend.robot
       @callback = sinon.spy()
-      @robot.hear /test/, id: 'testyMcTest', @callback
+      pretend.robot.hear /test/, id: 'testyMcTest', @callback
       @director.directListener 'McTest'
 
     context 'allowed user sending message matching directed listener id', ->
 
       beforeEach ->
         @director.names = ['tester']
-        @room.user.say 'tester', 'test'
+        @tester.send 'test'
 
       it 'calls .process with response to perform access checks and reply', ->
         @director.process.should.have.calledOnce
@@ -520,7 +495,7 @@ describe '#Director', ->
     context 'denied user sending message matching directed match', ->
 
       beforeEach ->
-        @room.user.say 'tester', 'test'
+        @tester.send 'test'
 
       it 'calls .process to perform access checks and reply', ->
         @director.process.should.have.calledOnce
@@ -531,7 +506,7 @@ describe '#Director', ->
     context 'denied user sending unmatched message', ->
 
       beforeEach ->
-        @room.user.say 'tester', 'foo'
+        @tester.send 'foo'
 
       it 'does not call .process because middleware did not match', ->
         @director.process.should.not.have.called
@@ -539,8 +514,8 @@ describe '#Director', ->
   describe '.directScene', ->
 
     beforeEach ->
-      @director = new Director @robot
-      @scene = new Scene @robot
+      @director = new Director pretend.robot
+      @scene = new Scene pretend.robot
       @enter = sinon.spy @scene, 'enter'
       @director.directScene @scene
 
@@ -576,7 +551,7 @@ describe '#Director', ->
         callback = @callback = sinon.spy()
         @scene.hear /test/, callback
         @director.names = ['tester']
-        @room.user.say 'tester', 'test'
+        @tester.send 'test'
 
       it 'triggers the scene enter method', ->
         @enter.should.have.calledOnce
@@ -589,7 +564,7 @@ describe '#Director', ->
       beforeEach ->
         callback = @callback = sinon.spy()
         @scene.hear /test/, callback
-        @room.user.say 'tester', 'test'
+        @tester.send 'test'
 
       it 'prevents the scene enter method', ->
         @enter.should.not.have.calledOnce

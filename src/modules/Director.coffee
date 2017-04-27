@@ -39,7 +39,8 @@ class Director extends Base
     @names = switch @config.scope
       when 'username' then process.env["#{ listEnv }_USERNAMES"]
       when 'room' then process.env["#{ listEnv }_ROOMS"]
-    @names = @names.split ',' if _.isArray @names
+    @names = @names.split ',' if @names?
+    @names ?= []
 
   ###*
    * Add new usernames/rooms to list
@@ -139,6 +140,7 @@ class Director extends Base
    * Hooks into .enter method to control access for manually entered scenes
    * @param  {Scene} scene - The Scene instance
    * @return {Director}    - Self, for chaining methods
+   * TODO: replace hooker usage with new Hubot.Middleware on scene enter
   ###
   directScene: (scene) ->
     @log.info "#{ @id } now controlling #{ scene.id }"

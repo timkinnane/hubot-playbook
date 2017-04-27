@@ -41,10 +41,7 @@
     "handlebars-intl": "^1.1.2",
     "hooker": "^0.2.3",
     "lodash": "^4.17.4",
-    "q": "^1.4.1",
-    "randomstring": "^1.1.5",
     "slug": "^0.9.1",
-    "underscore": "^1.8.3",
     "yamljs": "^0.2.8"
   },
   "devDependencies": {
@@ -73,10 +70,8 @@
     "hubot-test-helper": "^1.5.1",
     "minimatch": "^3.0.3",
     "minimist": "^1.2.0",
-    "mute": "^2.0.6",
     "sinon": "^1.17.7",
     "sinon-chai": "^2.8.0",
-    "traceur": "0.0.111",
-    "underscore-observe": "git+https://github.com/mennovanslooten/underscore-observe.git"
+    "traceur": "0.0.111"
   }
 }
