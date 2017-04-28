@@ -5,8 +5,6 @@ should = chai.should()
 chai.use require 'sinon-chai'
 co = require 'co'
 
-process.env.DENIED_REPLY = "403 Sorry." # for testing env inherited
-
 Pretend = require 'hubot-pretend'
 pretend = new Pretend '../scripts/shh.coffee'
 {Dialogue, Scene, Director} = require '../../src/modules'
@@ -38,12 +36,6 @@ describe '#Director', ->
 
       it 'has empty array names', ->
         @director.names.should.eql []
-
-      it 'has default config with env inherited', ->
-        @director.config.should.eql
-          type: 'whitelist'
-          scope: 'username'
-          deniedReply: "403 Sorry."
 
     context 'with authorise function', ->
 

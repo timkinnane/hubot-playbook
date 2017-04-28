@@ -4,9 +4,6 @@ chai = require 'chai'
 should = chai.should()
 chai.use require 'sinon-chai'
 
-# test with env for defaults
-process.env.DIALOGUE_TIMEOUT = 500
-
 Pretend = require 'hubot-pretend'
 pretend = new Pretend '../scripts/shh.coffee'
 {Dialogue} = require '../../src/modules'
@@ -40,29 +37,14 @@ describe '#Dialogue', ->
 
   describe 'constructor', ->
 
-    context 'with defaults, including an env var', ->
+    beforeEach ->
+      @dialogue = new Dialogue @res
 
-      beforeEach ->
-        @dialogue = new Dialogue @res
+    it 'has null path', ->
+      should.equal @dialogue.path, null
 
-      it 'has timeout value configured', ->
-        @dialogue.config.timeout.should.equal 500
-
-      it 'has timeout text configured', ->
-        @dialogue.config.timeoutText.should.be.a 'string'
-
-    context 'with timeout options', ->
-
-      beforeEach ->
-        @dialogue = new Dialogue @res,
-          timeout: 555
-          timeoutText: 'Testing timeout options'
-
-      it 'uses passed timeout value', ->
-        @dialogue.config.timeout.should.equal 555
-
-      it 'uses passed timeout text', ->
-        @dialogue.config.timeoutText.should.equal 'Testing timeout options'
+    it 'is not ended', ->
+      @dialogue.ended.should.be.false
 
   describe '.end', ->
 

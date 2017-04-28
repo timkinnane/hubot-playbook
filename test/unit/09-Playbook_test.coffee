@@ -1,5 +1,4 @@
-Q = require 'q'
-_ = require 'underscore'
+_ = require 'lodash'
 sinon = require 'sinon'
 chai = require 'chai'
 should = chai.should()
@@ -16,28 +15,27 @@ describe '#Playbook', ->
     pretend.user('tester').in('testing').send 'test'
     .then => @res = pretend.responses.incoming[0]
 
-    # spy on all the class methods
-    _.mapObject Playbook.prototype, (val, key) ->
-      sinon.spy Playbook.prototype, key
+    _.forIn Playbook.prototype, (val, key) ->
+      sinon.spy Playbook.prototype, key if _.isFunction val
 
   afterEach ->
-    _.mapObject Playbook.prototype, (v,key) -> Playbook.prototype[key].restore()
     pretend.shutdown()
+
+    _.forIn Playbook.prototype, (val, key) ->
+      Playbook.prototype[key].restore() if _.isFunction val
 
   describe 'constructor', ->
 
     beforeEach ->
-      namespace = Playbook: require "../../src/Playbook"
-      @constructor = sinon.spy namespace, 'Playbook'
-      @playbook = new namespace.Playbook pretend.robot
+      @playbook = new Playbook pretend.robot
 
-    it 'does not throw', ->
-      @constructor.should.not.have.threw
+    it 'has an empty array of dialogues', ->
+      @playbook.dialogues.should.eql []
 
     it 'has an empty array of scenes', ->
       @playbook.scenes.should.eql []
 
-    it 'has an empty array of dialogues', ->
+    it 'has an empty array of directors', ->
       @playbook.dialogues.should.eql []
 
   describe '.director', ->

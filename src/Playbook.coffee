@@ -1,17 +1,14 @@
 _ = require 'lodash'
-hooker = require 'hooker'
 
 {Dialogue, Scene, Director} = require './modules'
 
 ###*
- * Playbook is a conversation branching library for Hubots, with many utilities
- * Provides shortcuts to module constructors and keeps track of module instances
- * Modules are exposed as properties so they can be modified within Playbook
+ * Playbook is a conversation branching library for Hubots, with many utilities.
+ * Modules are available as properties and their instances as collection items.
  * @param  {Robot}     robot - Hubot Robot instance
 ###
 class Playbook
   constructor: (@robot) ->
-    @robot.playbook = @
     @log = @robot.logger
     @log.info 'Playbook starting up'
     @directors = []
@@ -20,9 +17,6 @@ class Playbook
     @Director = Director
     @Dialogue = Dialogue
     @Scene = Scene
-
-    # shutdown playbook after robot shutdown called
-    hooker.hook @robot, 'shutdown', post: => @shutdown()
 
   ###*
    * Create new Director
