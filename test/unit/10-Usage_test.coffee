@@ -1,9 +1,9 @@
 _ = require 'lodash'
+co = require 'co'
 sinon = require 'sinon'
 chai = require 'chai'
 should = chai.should()
 chai.use require 'sinon-chai'
-co = require 'co'
 
 Pretend = require 'hubot-pretend'
 Playbook = require '../../src/Playbook'

@@ -1,6 +1,6 @@
 _ = require 'lodash'
 
-{Dialogue, Scene, Director} = require './modules'
+{Dialogue, Scene, Director, Transcript} = require './modules'
 
 ###*
  * Playbook is a conversation branching library for Hubots, with many utilities.
@@ -17,6 +17,15 @@ class Playbook
     @Director = Director
     @Dialogue = Dialogue
     @Scene = Scene
+    @Transcript = Transcript
+
+  ###*
+   * Create new Transcript to record dialogue events
+   * (optionally) filter records by matching key, e.g. scene or path IDs
+   * @param  {[type]} args... [description]
+   * @return {[type]}         [description]
+  ###
+
 
   ###*
    * Create new Director

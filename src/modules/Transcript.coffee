@@ -1,3 +1,9 @@
+_ = require 'lodash'
+Base = require './Base'
+
+class Transcript extends Base
+  constructor: (robot, matchKey) ->
+
   #
   # ###*
   #  * TODO: refactor with current emit args as method of transcript module
@@ -20,3 +26,5 @@
   #     when 'send'
   #       @log.debug "Sent \"#{ text }\""
   #   return
+
+module.exports = Transcript

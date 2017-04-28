@@ -25,8 +25,8 @@ module.exports = (robot) ->
   pb = new Playbook robot
 
   # knock to enter
-  enterScene = pb.sceneHear /knock/, sendReplies: true, ->
-    @send "You may enter!"
+  enterScene = pb.sceneHear /knock/, sendReplies: true, (res, dlg) ->
+    dlg.send "You may enter!"
 
   # scene resposne adds a whitelist director to another scene
   whitelistScene = pb.sceneHear /allow (.*)/, (res) ->

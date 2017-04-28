@@ -1,5 +1,6 @@
 # Description:
 #   Tell Hubot a knock knock joke - it is guaranteed to laugh
+#   Uses inline declarations, single branch path with prompt (very compact)
 #
 # Dependencies:
 #   hubot-playbook
@@ -17,9 +18,9 @@
 Playbook = require '../../../index.coffee'
 
 module.exports = (robot) ->
-  @pb = new Playbook robot
-  @pb.sceneHear /knock/, 'direct', ->
-    @send "Who's there?"
-    @branch /.*/, (res) =>
-      @send "#{ res.match[0] } who?"
-      @branch /.*/, "lol"
+
+  new Playbook robot
+  .sceneHear /knock/, 'direct', (res, dlg) ->
+    dlg.addPath "Who's there?", [ /.*/, (res, dlg) ->
+      dlg.addPath "#{ res.match[0] } who?", [ /.*/, "lol" ]
+    ]
