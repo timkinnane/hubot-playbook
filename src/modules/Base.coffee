@@ -9,8 +9,6 @@ slug = require 'slug'
  * @param  {Robot} robot  - Robot instance
 ###
 class Base extends EventEmitter
-  defaults: {} # class (not instance) property - reference with Class::defaults
-
   constructor: (@name, @robot, options={}) ->
     @error 'Module requires a name' unless _.isString @name
     @error 'Module requires a robot object' unless _.isObject @robot

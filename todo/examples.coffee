@@ -1,7 +1,4 @@
-_ = require 'underscore'
-Dialogue = require './src/modules/Dialogue'
-Scene = require '../src/modules/Scene'
-Director = require '../src/modules/Director'
+_ = require 'lodash'
 Playbook = require '../src/Playbook'
 
 ###
@@ -17,9 +14,10 @@ TODO:
 
 module.exports = (robot) ->
 
-	soloScene = new Scene robot, 'user'
-	groupScene = new Scene robot, 'room'
-	locationScene = new Scene robot, 'userRoom'
+  pb = new Playbook robot
+	soloScene = pb.scene 'user'
+	groupScene = pb.scene 'room'
+	locationScene = pb.scene 'userRoom'
 
 	robot.hear /play/, (res) ->
 		dialogue = groupScene.enter res, "OK, I'm it! MARCO!"

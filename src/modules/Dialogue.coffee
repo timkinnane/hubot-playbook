@@ -9,13 +9,12 @@ Path = require './Path'
  * @param  {Object} [opts]  - Key/val options for config
 ###
 class Dialogue extends Base
-  defaults:
-    sendReplies: false # will send without addressing reply to sender
-    timeout: parseInt process.env.DIALOGUE_TIMEOUT or 30000
-    timeoutText: process.env.DIALOGUE_TIMEOUT_TEXT or
-      'Timed out! Please start again.'
-
   constructor: (@res, opts) ->
+    @defaults =
+      sendReplies: false # will send without addressing reply to sender
+      timeout: parseInt process.env.DIALOGUE_TIMEOUT or 30000
+      timeoutText: process.env.DIALOGUE_TIMEOUT_TEXT or
+        'Timed out! Please start again.'
     super 'dialogue', @res.robot, opts
     @Path = Path
     @path = null

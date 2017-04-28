@@ -10,8 +10,8 @@ Pretend = require 'hubot-pretend'
 pretend = new Pretend "../scripts/shh.coffee"
 
 class Module extends Base
-  defaults: test: true
   constructor: (robot, opts) ->
+    @defaults = test: true
     super 'module', robot, opts
 
 describe '#Base', ->
@@ -47,24 +47,6 @@ describe '#Base', ->
 
       it 'setup config with passed options', ->
         @base.config.test.should.equal 'testing'
-
-    context 'with different options and defaults', ->
-
-      beforeEach ->
-        Base::defaults = other: false
-        @base = new Base 'test', pretend.robot, test: 'testing'
-
-      it 'combines options and defaults in config', ->
-        @base.config.should.eql other: false, test: 'testing'
-
-    context 'with options to override defaults', ->
-
-      beforeEach ->
-        Base::defaults = test: false
-        @base = new Base 'test', pretend.robot, test: true
-
-      it 'stores options over defaults in config', ->
-        @base.config.should.eql test: true
 
     context 'with key specified in options', ->
 
@@ -163,17 +145,35 @@ describe '#Base', ->
       it 'threw error', ->
         @base.keygen.should.have.threw
 
-  context 'inherited by new Module class with own defaults', ->
+  context 'inherited by new Module class', ->
 
-    beforeEach ->
-      @module = new Module pretend.robot, other: false
-      try @module.error 'an error'
+    context 'pass options without overriding defaults', ->
 
-    it 'stores defaults and options in config', ->
-      @module.config.should.eql test: true, other: false
+      beforeEach ->
+        @module = new Module pretend.robot, other: false
 
-    it 'used the module name in super constructor as ID', ->
-      @module.id.should.match /module_\d*/
+      it 'stores defaults and options in config', ->
+        @module.config.should.eql test: true, other: false
 
-    it 'calls inherited methods', ->
-      Base::error.should.have.calledOnce
+    context 'with options overriding defaults', ->
+
+      beforeEach ->
+        @module = new Module pretend.robot, test: false, other: false
+
+      it 'stores options overriding defaults in config', ->
+        @module.config.should.eql test: false, other: false
+
+    context 'using inherited method for keygen', ->
+
+      beforeEach ->
+        @module = new Module pretend.robot
+        @subkey = @module.keygen 'sub'
+
+      it 'calls inherited method', ->
+        Base::keygen.should.have.calledWith 'sub'
+
+      it 'used the module name in super constructor as ID', ->
+        @module.id.should.match /^module_\d*$/
+
+      it 'combined the module name ID with given key', ->
+        @subkey.should.match /^module_\d*_sub_\d*$/

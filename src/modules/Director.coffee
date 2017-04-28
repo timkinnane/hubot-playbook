@@ -17,12 +17,11 @@ hooker = require 'hooker'
  *                    - key: string reference for logs, events
 ###
 class Director extends Base
-  defaults:
-    type: 'whitelist'
-    scope: 'username'
-    deniedReply: process.env.DENIED_REPLY or "Sorry, I can't do that."
-
   constructor: (robot, args...) ->
+    @defaults =
+      type: 'whitelist'
+      scope: 'username'
+      deniedReply: process.env.DENIED_REPLY or "Sorry, I can't do that."
     @authorise = if _.isFunction args[0] then args.shift()
     opts = if _.isObject args[0] then opts = args.shift() else {}
     super 'director', robot, opts

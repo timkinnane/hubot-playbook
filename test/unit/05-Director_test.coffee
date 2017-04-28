@@ -56,6 +56,21 @@ describe '#Director', ->
       it 'stores passed options in config', ->
         @director.config.deniedReply.should.equal "DENIED!"
 
+    context 'with env var for config', ->
+
+      beforeEach ->
+        process.env.DENIED_REPLY = "403 Sorry."
+        @director = new Director pretend.robot
+
+      afterEach ->
+        delete process.env.DENIED_REPLY
+
+      it 'has default config with env inherited', ->
+        @director.config.should.eql
+          type: 'whitelist'
+          scope: 'username'
+          deniedReply: "403 Sorry."
+
     context 'with env var for names', ->
 
       beforeEach ->

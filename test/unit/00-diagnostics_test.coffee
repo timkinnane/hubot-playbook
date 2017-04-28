@@ -1,5 +1,3 @@
-Q = require 'q'
-_ = require 'underscore'
 co = require 'co'
 sinon = require 'sinon'
 chai = require 'chai'

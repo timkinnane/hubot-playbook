@@ -46,6 +46,34 @@ describe '#Dialogue', ->
     it 'is not ended', ->
       @dialogue.ended.should.be.false
 
+    context 'with defaults, including an env var', ->
+
+      beforeEach ->
+        process.env.DIALOGUE_TIMEOUT = 500
+        @dialogue = new Dialogue @res
+
+      afterEach ->
+        delete process.env.DIALOGUE_TIMEOUT
+
+      it 'has timeout value configured from env', ->
+        @dialogue.config.timeout.should.equal 500
+
+      it 'has timeout text configured', ->
+        @dialogue.config.timeoutText.should.be.a 'string'
+
+    context 'with timeout options', ->
+
+      beforeEach ->
+        @dialogue = new Dialogue @res,
+          timeout: 555
+          timeoutText: 'Testing timeout options'
+
+      it 'uses passed timeout value', ->
+        @dialogue.config.timeout.should.equal 555
+
+      it 'uses passed timeout text', ->
+        @dialogue.config.timeoutText.should.equal 'Testing timeout options'
+
   describe '.end', ->
 
     beforeEach ->
