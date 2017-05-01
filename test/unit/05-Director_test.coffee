@@ -485,7 +485,7 @@ describe '#Director', ->
       @director = new Director pretend.robot
       @callback = sinon.spy()
       pretend.robot.hear /test/, id: 'testyMcTest', @callback
-      @director.directListener 'McTest'
+      @director.directListener 'testyMcTest'
 
     context 'allowed user sending message matching directed listener id', ->
 
@@ -555,8 +555,8 @@ describe '#Director', ->
     context 'allowed user sends message matching scene listener', ->
 
       beforeEach ->
-        callback = @callback = sinon.spy()
-        @scene.hear /test/, callback
+        @callback = sinon.spy()
+        @scene.hear /test/, @callback
         @director.names = ['tester']
         @tester.send 'test'
 
@@ -569,8 +569,8 @@ describe '#Director', ->
     context 'denied user sends message matching scene listener', ->
 
       beforeEach ->
-        callback = @callback = sinon.spy()
-        @scene.hear /test/, callback
+        @callback = sinon.spy()
+        @scene.hear /test/, @callback
         @tester.send 'test'
 
       it 'prevents the scene enter method', ->

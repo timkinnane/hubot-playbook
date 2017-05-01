@@ -54,19 +54,17 @@ class Scene extends Base
    * @param  {String} type       - The listener type: hear|respond
    * @param  {RegExp} regex      - Matcher for listener
    * @param  {Function} callback - Callback to fire when matched
-   * @return {String}            - Generated ID for listener
   ###
   listen: (type, regex, callback) ->
     @error "Invalid listener type" if type not in ['hear','respond']
     @error "Invalid regex for listener" if not _.isRegExp regex
     @error "Invalid callback for listener" if not _.isFunction callback
 
-    # setup robot listener with generated ID, for later/external reference
-    id = @keygen 'listener'
-    @robot[type] regex, id: id, (res) =>
+    # setup listener with scene as attribute for later/external reference
+    @robot[type] regex, id: @id, scene: @, (res) =>
       dialogue = @enter res # may fail if enter hooks override (from Director)
       callback res, dialogue if dialogue?
-    return id
+    return
 
   ###*
    * Alias of .listen with hear as specified type

@@ -86,15 +86,12 @@ describe '#Scene', ->
 
       beforeEach ->
         @callback = sinon.spy()
-        @id = @scene.listen 'hear', /test/, @callback
+        @scene.listen 'hear', /test/, @callback
         @tester.send 'test'
 
-      it 'returns ID for listener (composite with scene ID)', ->
-        @id.should.match /scene_\d*_listener_\d*/
-
-      it 'registers a robot hear listener with regex, id and callback', ->
+      it 'registers a robot hear listener with scene as attribute', ->
         pretend.robot.hear.should.have.calledWithMatch sinon.match.regexp
-        , sinon.match.has 'id', @id
+        , sinon.match.has 'scene', @scene
         , sinon.match.func
 
       it 'calls the given callback from listener', ->
@@ -110,9 +107,9 @@ describe '#Scene', ->
         @id = @scene.listen 'respond', /test/, @callback
         @tester.send 'hubot test'
 
-      it 'registers a robot respond listener with regex, id and callback', ->
+      it 'registers a robot respond listener with scene as attribute', ->
         pretend.robot.respond.should.have.calledWithMatch sinon.match.regexp
-        , sinon.match.has 'id', @id
+        , sinon.match.has 'scene', @scene
         , sinon.match.func
 
       it 'calls the given callback from listener', ->

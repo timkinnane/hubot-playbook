@@ -127,15 +127,19 @@ class Dialogue extends Base
     return false if @ended # dialogue is over, don't process
     @log.debug "Dialogue received #{ @res.message.text }"
     branch = @path.match @res
+    context =
+      response: @res
+      dialogue: @
+      path: @path
     if branch? and @res.match
       @clearTimeout()
-      @emit 'match', @res, @path.id
+      @emit 'match', context
       branch.handler @res, @
     else if branch?
-      @emit 'catch', @res, @path.id
+      @emit 'catch', context
       branch.handler @res, @
     else
-      @emit 'mismatch', @res, @path.id
+      @emit 'mismatch', context
     @end() if @path.closed
     return
 

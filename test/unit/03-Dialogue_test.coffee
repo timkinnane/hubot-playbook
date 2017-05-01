@@ -392,8 +392,10 @@ describe '#Dialogue', ->
       @dialogue.on 'match', @match
       @dialogue.on 'mismatch', @mismatch
       @dialogue.on 'catch', @catch
-      @matchResponse = sinon.match.instanceOf pretend.Response
-      @matchID = sinon.match /path_receive-test_\d*/
+      @matchContext =
+        response: sinon.match.instanceOf pretend.Response
+        dialogue: sinon.match.instanceOf Dialogue
+        path: sinon.match.instanceOf @dialogue.Path
 
     context 'when already ended', ->
 
@@ -415,8 +417,8 @@ describe '#Dialogue', ->
       it 'clears timeout', ->
         @dialogue.clearTimeout.should.have.calledOnce
 
-      it 'emits match with res and path ID', ->
-        @match.should.have.calledWith @matchResponse, @matchID
+      it 'emits match with context (res, dialogue, path)', ->
+        @match.should.have.calledWith sinon.match @matchContext
 
       it 'ends dialogue', ->
         @dialogue.end.should.have.calledOnce
@@ -472,8 +474,8 @@ describe '#Dialogue', ->
         @dialogue.path.config.catchMessage = 'huh?'
         @tester.send '?'
 
-      it 'emits catch', ->
-        @catch.should.have.calledOnce
+      it 'emits catch with context (res, dialogue, path)', ->
+        @catch.should.have.calledWith sinon.match @matchContext
 
       it 'sends the catch message', ->
         @dialogue.send.should.have.calledWith 'huh?'
@@ -489,8 +491,8 @@ describe '#Dialogue', ->
       beforeEach ->
         @tester.send '?'
 
-      it 'emits mismatch', ->
-        @mismatch.should.have.calledOnce
+      it 'emits mismatch with context (res, dialogue, path)', ->
+        @mismatch.should.have.calledWith sinon.match @matchContext
 
       it 'does not clear timeout', ->
         @dialogue.clearTimeout.should.not.have.called

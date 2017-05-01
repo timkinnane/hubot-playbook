@@ -111,25 +111,28 @@ class Director extends Base
     @log.info "#{ @id } now controlling access to listeners matching #{ regex }"
     @robot.listenerMiddleware (context, next, done) =>
       res = context.response
-      if res.message.text.match(regex) and not @process res # matched, denied
+      isMatch = res.message.text.match regex
+      isDenied = not @process res
+      if isMatch and isDenied
         res.message.finish() # don't process this message further
         return done() # don't process further middleware
       return next done # nothing matched or user allowed
     return @
 
   ###*
-   * Let this director control access to a listener by matching ID
-   * @param  {String}   id - Listener ID, can be partial match, case insensitive
+   * Let this director control access to a listener by listener or scene ID
+   * If multiple listeners use the same ID, it's assumed to deny all of them
+   * @param  {String}   id - ID of listener (may be multiple for scene)
    * @return {Director}    - Self, for chaining methods
   ###
   directListener: (id) ->
-    @log.info "#{ @id } now controlling access to listener id matching #{ id }"
+    @log.info "Director #{ @id } now controlling access to listener #{ id }"
     @robot.listenerMiddleware (context, next, done) =>
       res = context.response
-      listenerId = context.listener.options.id
-      regex = new RegExp id, 'i'
-      if listenerId.match(regex) and not @process res # listener matched, denied
-        res.message.finish() # don't process this message further
+      isMatch = context.listener.options.id is id
+      isDenied = not @process res
+      if isMatch and isDenied
+        context.response.message.finish() # don't process this message further
         return done() # don't process further middleware
       return next done # nothing matched or user allowed
     return @
