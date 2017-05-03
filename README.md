@@ -61,20 +61,12 @@ Look at [examples] and [docs] for how to use Playbook and it's modules to add co
 
 ### Pre-release
 
-- Make sinon usage consistent, e.g. used `returnValues` instead of `@result =`
-- Replace bound "this" in dialogue callbacks with dialogue as param
-- Refactor Playbook usage as singleton (add startup method with hubot)
-- Let modules refer back up to Playbook and use that instead of Helpers
-- Move message observer methods into Hubot Pretend
 - Create integration test, to replace diagnostics
+- Fix any gaps in test coverage
 - Implement semantic-release
 
 ### Beta Features
 
-- Replace underscore with lodash and Q with bluebird
-- Keep director keys, whitelist/blacklist denials in hubot brain
-- Add transcript module to collect and query dialogue transcripts (from scene)
-- Save transcripts to brain
 - Add context key/value collection methods from callbacks, store with user key
 - Parse Playbook messages with context for template tags e.g. ok {{ username }}
 - Add outline module, to define behavior models in YML and load from S3 etc
@@ -85,7 +77,6 @@ Look at [examples] and [docs] for how to use Playbook and it's modules to add co
 - Example setup steps for a Playbook bot without development requirements
 - Save/restore director config in hubot brain against key if provided
 - Allow directing dialogues
-- Allow directing scene/dialogue by key string
 - Queue dialogue.receive calls to ensure messages process synchronously
 - Optional config for send middleware to throttle hearing consecutive res
 - Display "thinking" ellipses (emit event for use by adapters)
