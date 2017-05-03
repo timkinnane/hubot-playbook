@@ -32,14 +32,22 @@ describe 'Transcript', ->
     context 'with saving enabled (default)', ->
 
       beforeEach ->
-        console.log @robot.brain
-        pretend.robot.brain.set 'transcripts', [
-          time: now(), event: 'test'
-        ]
+        @mockRecord = time: _.now(), event: 'test'
+        pretend.robot.brain.set 'transcripts', [ @mockRecord ]
         @transcript = new Transcript pretend.robot
 
-      it 'restores previously saved transcripts', ->
-        console.log @transcript.records
+      it 'uses brain for record keeping', ->
+        @transcript.records.should.eql [ @mockRecord ]
+
+    context 'with saving disabled', ->
+
+      beforeEach ->
+        @mockRecord = time: _.now(), event: 'test'
+        pretend.robot.brain.set 'transcripts', [ @mockRecord ]
+        @transcript = new Transcript pretend.robot, save: false
+
+      it 'keeps records in a new empty array', ->
+        @transcript.records.should.eql []
 
 ### copied from old Dialogue tests...
 
