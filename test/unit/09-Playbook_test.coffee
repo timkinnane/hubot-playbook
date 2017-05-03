@@ -8,7 +8,7 @@ Pretend = require 'hubot-pretend'
 pretend = new Pretend '../scripts/shh.coffee'
 Playbook = require '../../src/Playbook'
 
-describe '#Playbook', ->
+describe 'Playbook', ->
 
   beforeEach ->
     pretend.startup()

@@ -94,6 +94,7 @@ class Director extends Base
     message = res.message.text
     if allowed
       @log.debug "#{ @id } allowed #{ user } on receiving #{ message }"
+      @emit 'allowed', res
       return true
     else
       @log.info "#{ @id } denied #{ user } on receiving: #{ message }"

@@ -14,7 +14,7 @@ class Module extends Base
     @defaults = test: true
     super 'module', robot, opts
 
-describe '#Base', ->
+describe 'Base', ->
 
   beforeEach ->
     pretend.startup()

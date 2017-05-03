@@ -9,7 +9,7 @@ Dialogue = require './Dialogue'
  * - entering a user scene will engage the user
  * - entering a room scene will engage the whole room
  * - entering a direct scene will engage the user in that room only
- * @param  {Robot}  @robot - Hubot Robot instance
+ * @param  {Robot}  robot  - Hubot Robot instance
  * @param  {String} [type] - Type of scene: user(default)|room|direct
  * @param  {Object} [opts] - For dialogue config, e.g set reply method
 ###
@@ -96,27 +96,30 @@ class Scene extends Base
   enter: (res, opts={}) ->
     participants = @whoSpeaks res
     return if @inDialogue participants
+    dialogue = new @Dialogue res, _.defaults @config, opts
+    dialogue.on 'timeout', (res) =>
+      @exit res, 'timeout'
+    dialogue.on 'end', (res) =>
+      @exit res, "#{ 'in' unless @dialogue.path.closed }complete"
+    @engaged[participants] = dialogue
+    @emit 'enter', res, dialogue
     @log.info "Engaging #{ @type } #{ participants } in dialogue"
-    @dialogue = new @Dialogue res, _.defaults @config, opts
-    @dialogue.on 'timeout', => @exit res, 'timeout'
-    @dialogue.on 'end', (completed) =>
-      @exit res, "#{ if completed then 'complete' else 'incomplete' }"
-    @engaged[participants] = @dialogue
-    return @dialogue
+    return dialogue
 
   ###*
    * Disengage participants from dialogue e.g. in case of timeout or error
    * @param  {Response} res    - Hubot
-   * @param  {String} [reason] - Some context, for logs
+   * @param  {String} [status] - Some context, for logs
    * @return {Boolean}         - Exit success (may fail if already disengaged)
   ###
-  exit: (res, reason) ->
-    reason ?= 'unknown'
+  exit: (res, status) ->
+    status ?= 'unknown'
     participants = @whoSpeaks res
     if @engaged[participants]?
-      @log.info "Disengaging #{ @type } #{ participants } because #{ reason }"
       @engaged[participants].clearTimeout()
       delete @engaged[participants]
+      @emit 'exit', res, status
+      @log.info "Disengaged #{ @type } #{ participants } (#{ status })"
       return true
     @log.debug "Cannot disengage #{ participants }, not in #{ @type } scene"
     return false

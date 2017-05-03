@@ -11,7 +11,7 @@ chai.use require 'sinon-chai'
 Pretend = require 'hubot-pretend'
 pretend = new Pretend "../scripts/diagnostics.coffee"
 
-describe '#Diagnostics', ->
+describe 'Diagnostics', ->
 
   beforeEach ->
     pretend.startup()

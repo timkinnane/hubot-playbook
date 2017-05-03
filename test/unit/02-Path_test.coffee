@@ -8,7 +8,7 @@ Pretend = require 'hubot-pretend'
 pretend = new Pretend '../scripts/shh.coffee'
 {Path} = require '../../src/modules'
 
-describe '#Path', ->
+describe 'Path', ->
 
   beforeEach ->
     pretend.startup()

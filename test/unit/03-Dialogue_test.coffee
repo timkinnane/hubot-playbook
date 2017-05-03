@@ -14,7 +14,7 @@ Timeout = setTimeout () ->
 , 0
 .constructor
 
-describe '#Dialogue', ->
+describe 'Dialogue', ->
 
   beforeEach ->
     pretend.startup()
@@ -82,13 +82,13 @@ describe '#Dialogue', ->
       @end = sinon.spy()
       @dialogue.on 'end', @end
 
-    context 'when no paths added', ->
+    context 'before messages received', ->
 
       beforeEach ->
         @dialogue.end()
 
-      it 'emits end event with success status (false)', ->
-        @end.should.have.calledWith false
+      it 'emits end with initial response', ->
+        @end.should.have.calledWith @res
 
       it 'sets ended to true', ->
         @dialogue.ended.should.be.true
@@ -96,43 +96,23 @@ describe '#Dialogue', ->
       it 'returns true', ->
         @dialogue.end.returnValues.pop().should.be.true
 
-    context 'when path is not closed', ->
+    context 'after messages received', ->
 
       beforeEach ->
-        # simulate dialogue with active path
+        @tester.send 'foo'
+        @dialogue.end()
+
+      it 'emits end with latest response', ->
+        @end.should.have.calledWith pretend.responses.incoming[1]
+
+    context 'when timeout is running', ->
+
+      beforeEach ->
         @dialogue.startTimeout()
-        @dialogue.path = closed: false
         @dialogue.end()
 
       it 'clears the timeout', ->
         @dialogue.clearTimeout.should.have.calledOnce
-
-      it 'emits end event with success status (false)', ->
-        @end.should.have.calledWith false
-
-      it 'sets ended to true', ->
-        @dialogue.ended.should.be.true
-
-      it 'returns true', ->
-        @dialogue.end.returnValues.pop().should.be.true
-
-    context 'when path is closed', ->
-
-      beforeEach ->
-        @dialogue.path = closed: true
-        @dialogue.end()
-
-      it 'does not clear timeout (never started)', ->
-        @dialogue.clearTimeout.should.not.have.called
-
-      it 'emits end event with success status (true)', ->
-        @end.should.have.calledWith true
-
-      it 'sets ended to true', ->
-        @dialogue.ended.should.be.true
-
-      it 'returns true', ->
-        @dialogue.end.returnValues.pop().should.be.true
 
     context 'when already ended', ->
 
@@ -215,14 +195,14 @@ describe '#Dialogue', ->
     context 'method override (by assignment)', ->
 
       beforeEach ->
-        @timout = sinon.spy()
+        @timeout = sinon.spy()
         @dialogue = new Dialogue @res, timeout: 1000
-        @dialogue.onTimeout = @timout
+        @dialogue.onTimeout = @timeout
         @dialogue.startTimeout()
         @clock.tick 1001
 
       it 'calls the override method', ->
-        @timout.should.have.calledOnce
+        @timeout.should.have.calledOnce
 
     context 'method override with invalid function', ->
 
@@ -289,7 +269,7 @@ describe '#Dialogue', ->
       it 'sends the prompt', ->
         @dialogue.send.should.have.calledWith 'Turn left or right?'
 
-      it 'starts timout', ->
+      it 'starts timeout', ->
         @dialogue.startTimeout.should.have.calledOnce
 
     context 'with a prompt and branches (no options)', ->
@@ -306,7 +286,7 @@ describe '#Dialogue', ->
       it 'sends the prompt', ->
         @dialogue.send.should.have.calledWith 'Pick door 1 or 2?'
 
-      it 'starts timout', ->
+      it 'starts timeout', ->
         @dialogue.startTimeout.should.have.calledOnce
 
     context 'with branches only', ->
@@ -323,7 +303,7 @@ describe '#Dialogue', ->
       it 'sends nothing', ->
         @dialogue.send.should.not.have.called
 
-      it 'starts timout', ->
+      it 'starts timeout', ->
         @dialogue.startTimeout.should.have.calledOnce
 
     context 'without branches', ->
@@ -334,7 +314,7 @@ describe '#Dialogue', ->
       it 'returns new Path instance', ->
         @path.should.be.instanceof @dialogue.Path
 
-      it 'does not start timout', ->
+      it 'does not start timeout', ->
         @dialogue.startTimeout.should.not.have.called
 
   describe '.addBranch', ->
@@ -351,7 +331,7 @@ describe '#Dialogue', ->
       it 'passes branch args on to path.addBranch', ->
         @dialogue.path.addBranch.should.have.calledWith /foo/, 'foo'
 
-      it 'starts timout', ->
+      it 'starts timeout', ->
         @dialogue.startTimeout.should.have.calledOnce
 
     context 'when no path exists', ->
@@ -369,7 +349,7 @@ describe '#Dialogue', ->
       it 'passes branch args on to path.addBranch', ->
         @dialogue.path.addBranch.should.have.calledWith /foo/, 'foo'
 
-      it 'starts timout', ->
+      it 'starts timeout', ->
         @dialogue.startTimeout.should.have.calledOnce
 
   describe '.receive', ->

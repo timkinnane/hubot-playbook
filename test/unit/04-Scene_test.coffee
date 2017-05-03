@@ -9,7 +9,7 @@ Pretend = require 'hubot-pretend'
 pretend = new Pretend '../scripts/shh.coffee'
 {Dialogue, Scene} = require '../../src/modules'
 
-describe '#Scene', ->
+describe 'Scene', ->
 
   beforeEach ->
     pretend.startup()

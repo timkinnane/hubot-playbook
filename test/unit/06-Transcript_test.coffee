@@ -1,3 +1,46 @@
+_ = require 'lodash'
+sinon = require 'sinon'
+chai = require 'chai'
+should = chai.should()
+chai.use require 'sinon-chai'
+co = require 'co'
+
+Pretend = require 'hubot-pretend'
+pretend = new Pretend '../scripts/shh.coffee'
+{Transcript} = require '../../src/modules'
+
+describe 'Transcript', ->
+
+  beforeEach ->
+    pretend.startup()
+    @tester = pretend.user 'tester', id:'tester', room: 'testing'
+
+    _.forIn Transcript.prototype, (val, key) ->
+      sinon.spy Transcript.prototype, key if _.isFunction val
+
+    # generate first response for mock events
+    @tester.send('test').then => @res = pretend.responses.incoming[0]
+
+  afterEach ->
+    pretend.shutdown()
+
+    _.forIn Transcript.prototype, (val, key) ->
+      Transcript.prototype[key].restore() if _.isFunction val
+
+  describe 'constructor', ->
+
+    context 'with saving enabled (default)', ->
+
+      beforeEach ->
+        console.log @robot.brain
+        pretend.robot.brain.set 'transcripts', [
+          time: now(), event: 'test'
+        ]
+        @transcript = new Transcript pretend.robot
+
+      it 'restores previously saved transcripts', ->
+        console.log @transcript.records
+
 ### copied from old Dialogue tests...
 
   describe '.record', ->

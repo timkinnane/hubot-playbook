@@ -27,12 +27,11 @@ class Dialogue extends Base
   end: ->
     return false if @ended
     if @path?
-      @log.debug "Dialog ended #{ 'in' if @path.closed }complete"
+      @log.debug "Dialog ended #{ 'in' unless @path.closed }complete"
       @clearTimeout() if @countdown?
-      @emit 'end', @path.closed
     else
       @log.debug "Dialog ended before paths added"
-      @emit 'end', false
+    @emit 'end', @res
     @ended = true
     return @ended
 
@@ -44,7 +43,7 @@ class Dialogue extends Base
   ###
   send: (text) ->
     if @config.sendReplies then @res.reply text else @res.send text
-    @emit 'send', @res, text, @path?.id
+    @emit 'send', @res
     return
 
   ###*
@@ -74,7 +73,7 @@ class Dialogue extends Base
   startTimeout: ->
     clearTimeout() if @countdown?
     @countdown = setTimeout () =>
-      @emit 'timeout'
+      @emit 'timeout', @res
       try @onTimeout() catch err then @error err
       delete @countdown
       @end()
@@ -127,19 +126,15 @@ class Dialogue extends Base
     return false if @ended # dialogue is over, don't process
     @log.debug "Dialogue received #{ @res.message.text }"
     branch = @path.match @res
-    context =
-      response: @res
-      dialogue: @
-      path: @path
     if branch? and @res.match
       @clearTimeout()
-      @emit 'match', context
+      @emit 'match', @res
       branch.handler @res, @
     else if branch?
-      @emit 'catch', context
+      @emit 'catch', @res
       branch.handler @res, @
     else
-      @emit 'mismatch', context
+      @emit 'mismatch', @res
     @end() if @path.closed
     return
 

@@ -33,7 +33,7 @@ class Base
    * @param  {Mixed} args...  Arguments passed to event
   ###
   emit: (event, args...) ->
-    @robot.emit event, @id, args...
+    @robot.emit event, @, args...
     return
 
   ###*
@@ -42,7 +42,8 @@ class Base
    * @param  {Function} callback Function to call
   ###
   on: (event, callback) ->
-    @robot.on event, (id, args...) => callback args... if id is @id
+    @robot.on event, (instance, args...) =>
+      callback instance, args... if instance is @
     return
 
 module.exports = Base
