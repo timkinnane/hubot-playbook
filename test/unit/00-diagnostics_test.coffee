@@ -1,8 +1,9 @@
-co = require 'co'
 sinon = require 'sinon'
 chai = require 'chai'
 should = chai.should()
 chai.use require 'sinon-chai'
+
+co = require 'co'
 
 # Tests for unaltered hubot and its listeners
 # This just provides a baseline measure before doing anything complicated

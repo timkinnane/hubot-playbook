@@ -1,8 +1,9 @@
-_ = require 'lodash'
 sinon = require 'sinon'
 chai = require 'chai'
 should = chai.should()
 chai.use require 'sinon-chai'
+
+_ = require 'lodash'
 co = require 'co'
 
 Pretend = require 'hubot-pretend'

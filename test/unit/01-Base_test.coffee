@@ -1,13 +1,13 @@
-_ = require 'lodash'
 sinon = require 'sinon'
 chai = require 'chai'
 should = chai.should()
 chai.use require 'sinon-chai'
 
-Base = require '../../src/modules/Base'
+_ = require 'lodash'
 
 Pretend = require 'hubot-pretend'
 pretend = new Pretend "../scripts/shh.coffee"
+{Base} = require '../../src/modules'
 
 class Module extends Base
   constructor: (robot, opts) ->

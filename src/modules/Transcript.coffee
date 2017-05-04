@@ -1,10 +1,21 @@
 _ = require 'lodash'
 Base = require './Base'
 
+_.mixin 'hasKeys': (obj, keys) ->
+  return false unless _.isObject obj
+  return 0 is _.size _.difference keys, _.keys obj
+_.mixin 'hasPaths': (obj, paths) ->
+  return false unless _.isObject obj
+  return _.every paths, (path) -> _.hasIn obj, path
+_.mixin 'mapPaths': (src, paths) ->
+  dest = {}
+  _.each paths, (path) -> dest[path.split('.').pop()] = _.head _.at src, path
+  return dest
+
 ###
   TODO: move to docs...
   For reference, these are the event types and args used by Playbook and Hubot:
-
+  ```
   Robot
                 error       Error
                 running     -
@@ -14,6 +25,8 @@ Base = require './Base'
                 close       -
   Robot.adapter
                 connected
+  ```
+  ```
   Dialogue
                 end         Dialogue, Response
                 send        Dialogue, Response
@@ -26,6 +39,7 @@ Base = require './Base'
                 exit        Scene, Response, status(complete|incomplete|timeout)
   Director
                 denied      Dialogue, Response
+  ```
 ###
 
 ###*
@@ -46,7 +60,7 @@ class Transcript extends Base
     @defaults =
       save: true
       events: ['match', 'mismatch', 'catch', 'send']
-      responseAtts: ['user.name', 'message.text']
+      responseAtts: ['message.user.name', 'message.text']
       instanceAtts: ['name', 'config.key', 'id']
 
     super 'transcript', robot, opts
@@ -54,7 +68,31 @@ class Transcript extends Base
     @records ?= []
 
   ###*
-   * Record events emmitted by all Playbook modules and/or the robot itself
+   * Record given event in records array, save to hubot brain if configured
+   * Events emitted by Playbook always include module instance as first param
+   * @param  {String} event   - The event name
+   * @param  {Mixed} args...  - Args passed with the event, usually consists of:
+   *                            - Playbook module instance
+   *                            - Hubot response object
+   *                            - other additional (special context) arguments
+  ###
+  recordEvent: (event, args...) ->
+    instance = args.shift() if _.hasKeys args[0], ['name', 'id', 'config']
+    res = args.shift() if _.hasKeys args[0], ['envelope', 'message']
+    other = args if args.length?
+
+    record = time: _.now(), event: event
+    record.key = @config.key if @config.key?
+    record.instance = _.mapPaths instance, @config.instanceAtts if instance?
+    record.response = _.mapPaths response, @config.responseAtts if response?
+    record.other = other if other?
+
+    @records.push record
+    @robot.brain.save()
+    return
+
+  ###*
+   * Record events emitted by all Playbook modules and/or the robot itself
    * (still only applies to configured event types)
   ###
   recordAll: ->
@@ -63,7 +101,7 @@ class Transcript extends Base
     return
 
   ###*
-   * Record events emmitted by a given dialogue
+   * Record events emitted by a given dialogue
    * @param  {Dialogue} dialogue The Dialogue instance
   ###
   recordDialogue: (dialogue) ->
@@ -72,7 +110,7 @@ class Transcript extends Base
     return
 
   ###*
-   * Record events emmitted by a given scene and any dialogue it enters
+   * Record events emitted by a given scene and any dialogue it enters
    * Records all events fromn the scene but only configured events from dialogue
    * @param  {Scene} scene The Scnee instance
   ###
@@ -85,39 +123,12 @@ class Transcript extends Base
     return
 
   ###*
-   * Record denial events emmitted by a given director
+   * Record denial events emitted by a given director
    * Ignores configured events because director has distinct events
    * @param  {Director} scene The Director instance
   ###
   recordDirector: (director) ->
     director.on 'denied', (args...) => @recordEvent 'denied', director, args...
-    return
-
-  ###*
-   * Record given event in records array, save to hubot brain if configured
-   * Events emitted by Playbook always include the module instance as first param
-   * @param  {String} event   - The event name
-   * @param  {Mixed} args...  - Args passed with the event, usually consists of:
-   *                            - Playbook module instance
-   *                            - Hubot response object
-   *                            - other additional (special context) arguments
-  ###
-  recordEvent: (event, args...) ->
-    instance = args.shift() if _.has args[0], ['name', 'id', 'config']
-    res = args.shift() if _.has args[0], ['user', 'message']
-    other = args if args.length?
-
-    record = time: now(), event: event
-    record.key = @config.key if @config.key?
-    if instance?
-      _.each @config.instanceAtts, (path) -> record[path] = _.at instance, path
-    if res?
-      _.each @config.responseAtts, (path) -> record[path] = _.at res, path
-    record.other = other if other?
-
-    @records.push record
-    @robot.brain.save()
-    console.log @robot.brain
     return
 
 module.exports = Transcript
