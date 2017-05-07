@@ -25,8 +25,8 @@ class Director extends Base
     @authorise = if _.isFunction args[0] then args.shift()
     opts = if _.isObject args[0] then opts = args.shift() else {}
     super 'director', robot, opts
-    @error "Invalid type" unless @config.type in ['whitelist','blacklist']
-    @error "Invalid scope" unless @config.scope in ['username','room']
+    @error "Invalid type" unless @config.type in ['whitelist', 'blacklist']
+    @error "Invalid scope" unless @config.scope in ['username', 'room']
     @log.info "New #{ @config.scope } Director #{ @config.type }: #{ @id }"
 
     # Process environment settings for default lists

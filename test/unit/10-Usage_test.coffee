@@ -262,3 +262,4 @@ describe 'Playbook usage (messaging test cases)', ->
 e.g. transcript diagnostics for scene timeouts, to determine common causes
 - using key, returns series of users and their last message before timeout occur
 - demonstrates with non-default types
+###

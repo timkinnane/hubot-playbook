@@ -9,6 +9,7 @@ boolifyString = require 'boolify-string'
 paths =
   lint: [
     './src/**/*.coffee'
+    './test/**/*.coffee'
   ]
   watch: [
     './src/**/*.coffee'

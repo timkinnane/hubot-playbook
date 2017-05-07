@@ -163,12 +163,12 @@ describe 'Path', ->
 
     context 'with no catch configured', ->
 
-        beforeEach ->
-          @path = new Path pretend.robot
-          @path.catch()
+      beforeEach ->
+        @path = new Path pretend.robot
+        @path.catch()
 
-        it 'returns undefined', ->
-          should.not.exist @path.catch.returnValues[0]
+      it 'returns undefined', ->
+        should.not.exist @path.catch.returnValues[0]
 
   describe '.match', ->
 

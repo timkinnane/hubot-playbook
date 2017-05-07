@@ -26,9 +26,9 @@ class Dialogue extends Base
   ###
   end: ->
     return false if @ended
+    @clearTimeout() if @countdown?
     if @path?
-      @log.debug "Dialog ended #{ 'in' unless @path.closed }complete"
-      @clearTimeout() if @countdown?
+      @log.debug "Dialog ended #{ if @path.closed then '' else 'in' }complete"
     else
       @log.debug "Dialog ended before paths added"
     @emit 'end', @res

@@ -114,7 +114,7 @@ describe 'Director', ->
             scope: 'username'
 
         it 'stores the blacklisted usernames from env', ->
-          @director.names.should.eql ['Winston','Julia','Syme']
+          @director.names.should.eql ['Winston', 'Julia', 'Syme']
 
       context 'blacklist type, room scope', ->
 
@@ -189,7 +189,7 @@ describe 'Director', ->
     context 'given array of names, some existing', ->
 
       beforeEach ->
-        @director.names = ['yeon','juan']
+        @director.names = ['yeon', 'juan']
         @director.add ['pema', 'juan']
 
       it 'adds any missing, not duplicating existing', ->
@@ -204,7 +204,7 @@ describe 'Director', ->
     context 'given array of names', ->
 
       beforeEach ->
-        @director.remove ['pema','nima']
+        @director.remove ['pema', 'nima']
 
       it 'removes them from the names array', ->
         @director.names.should.eql ['yeon', 'juan']

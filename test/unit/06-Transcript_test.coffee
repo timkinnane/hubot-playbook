@@ -143,11 +143,24 @@ describe 'Transcript', ->
               id: @module.id
           ]
 
-      context 'with invalid custom atts', ->
+      context 'with invalid custom response atts', ->
 
         beforeEach ->
           @transcript.config.responseAtts = ['foo', 'bar']
           @module.emit 'mockEvent'
+
+        it 'records event without response attributes', ->
+          @transcript.records.should.eql [
+            time: @now
+            event: 'mockEvent'
+            instance:
+              name: @module.name
+              key: @module.config.key
+              id: @module.id
+          ]
+
+        it 'does not throw', ->
+          @transcript.recordEvent.should.not.have.threw
 
   describe '.recordAll', ->
 

@@ -29,5 +29,6 @@ module.exports = (robot) ->
   hearTest = ".*\\b((hu)?bot(s)?|#{robot.name}"
   hearTest+= "|#{robot.alias}" if robot.alias?
   hearTest+= ").*\\b(listening).*"
-  robot.hear new RegExp(hearTest,'i'), (res) ->
+  hearTest = new RegExp hearTest, 'i'
+  robot.hear hearTest, (res) ->
     res.send "Yes, I'm listening."

@@ -56,7 +56,7 @@ class Scene extends Base
    * @param  {Function} callback - Callback to fire when matched
   ###
   listen: (type, regex, callback) ->
-    @error "Invalid listener type" if type not in ['hear','respond']
+    @error "Invalid listener type" if type not in ['hear', 'respond']
     @error "Invalid regex for listener" if not _.isRegExp regex
     @error "Invalid callback for listener" if not _.isFunction callback
 
@@ -97,10 +97,10 @@ class Scene extends Base
     participants = @whoSpeaks res
     return if @inDialogue participants
     dialogue = new @Dialogue res, _.defaults @config, opts
-    dialogue.on 'timeout', (res) =>
+    dialogue.on 'timeout', (dlg, res) =>
       @exit res, 'timeout'
-    dialogue.on 'end', (res) =>
-      @exit res, "#{ 'in' unless @dialogue.path.closed }complete"
+    dialogue.on 'end', (dlg, res) =>
+      @exit res, "#{ if dlg.path?.closed then '' else 'in' }complete"
     @engaged[participants] = dialogue
     @emit 'enter', res, dialogue
     @log.info "Engaging #{ @type } #{ participants } in dialogue"

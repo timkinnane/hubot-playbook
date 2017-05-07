@@ -88,6 +88,9 @@
         "allowed_in_comments": false,
         "allowed_in_empty_lines": true
     },
+    "spacing_after_comma": {
+        "level": "warn"
+    },
     "no_unnecessary_double_quotes": {
         "level": "ignore"
     },

@@ -1,6 +1,6 @@
 # Description:
 #   Tell Hubot a knock knock joke - it is guaranteed to laugh
-#   Uses modular path declarations, maybe simpler to read
+#   Uses object oreiented path declarations, simpler to read and pass callbacks
 #
 # Dependencies:
 #   hubot-playbook
@@ -18,9 +18,10 @@ Playbook = require '../../../index.coffee'
 
 module.exports = (robot) ->
 
-  lolAtJoke = (res, dlg) -> dlg.send "lol"
-  youAreWho = (res, dlg) -> dlg.addPath "#{ res.match[0] } who?", [ /.*/, lolAtJoke ]
-  whoKnocks = (res, dlg) -> dlg.addPath "Who's there?", [ /.*/, youAreWho ]
+  steps =
+    who1: (res, dlg) -> dlg.addPath "Who's there?", [/.*/, steps.who2]
+    who2: (res, dlg) -> dlg.addPath "#{ res.match[0] } who?", [/.*/, steps.lol]
+    lol: (res, dlg) -> dlg.send "lol"
 
   new Playbook robot
-  .sceneHear /knock/, 'room', whoKnocks
+  .sceneHear /knock/, 'room', steps.who1

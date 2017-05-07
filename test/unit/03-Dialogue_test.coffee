@@ -9,6 +9,11 @@ Pretend = require 'hubot-pretend'
 pretend = new Pretend '../scripts/shh.coffee'
 {Dialogue} = require '../../src/modules'
 
+_.mixin 'diff': (a, b) ->
+  _.reduce a, (result, value, key) ->
+    if _.isEqual value, b[key] then result else result.concat key
+  , []
+
 # get the null Timeout prototype instance for comparison
 Timeout = setTimeout () ->
   null
@@ -88,8 +93,8 @@ describe 'Dialogue', ->
       beforeEach ->
         @dialogue.end()
 
-      it 'emits end with initial response', ->
-        @end.should.have.calledWith @res
+      it 'emits end with self and initial response', ->
+        @end.should.have.calledWith @dialogue, @res
 
       it 'sets ended to true', ->
         @dialogue.ended.should.be.true
@@ -103,8 +108,8 @@ describe 'Dialogue', ->
         @tester.send 'foo'
         @dialogue.end()
 
-      it 'emits end with latest response', ->
-        @end.should.have.calledWith pretend.responses.incoming[1]
+      it 'emits end with self and latest response', ->
+        @end.should.have.calledWith @dialogue, pretend.responses.incoming.pop()
 
     context 'when timeout is running', ->
 
@@ -373,10 +378,10 @@ describe 'Dialogue', ->
       @dialogue.on 'match', @match
       @dialogue.on 'mismatch', @mismatch
       @dialogue.on 'catch', @catch
-      @matchContext =
-        response: sinon.match.instanceOf pretend.Response
-        dialogue: sinon.match.instanceOf Dialogue
-        path: sinon.match.instanceOf @dialogue.Path
+      @matchArgs = [
+        sinon.match.instanceOf Dialogue
+        sinon.match.instanceOf pretend.Response
+      ]
 
     context 'when already ended', ->
 
@@ -398,8 +403,8 @@ describe 'Dialogue', ->
       it 'clears timeout', ->
         @dialogue.clearTimeout.should.have.calledOnce
 
-      it 'emits match with context (res, dialogue, path)', ->
-        @match.should.have.calledWith sinon.match @matchContext
+      it 'emits match with self and res', ->
+        @match.should.have.calledWith @matchArgs...
 
       it 'ends dialogue', ->
         @dialogue.end.should.have.calledOnce
@@ -455,8 +460,8 @@ describe 'Dialogue', ->
         @dialogue.path.config.catchMessage = 'huh?'
         @tester.send '?'
 
-      it 'emits catch with context (res, dialogue, path)', ->
-        @catch.should.have.calledWith sinon.match @matchContext
+      it 'emits catch with self and res', ->
+        @catch.should.have.calledWith @matchArgs...
 
       it 'sends the catch message', ->
         @dialogue.send.should.have.calledWith 'huh?'
@@ -472,8 +477,8 @@ describe 'Dialogue', ->
       beforeEach ->
         @tester.send '?'
 
-      it 'emits mismatch with context (res, dialogue, path)', ->
-        @mismatch.should.have.calledWith sinon.match @matchContext
+      it 'emits mismatch with self and res', ->
+        @mismatch.should.have.calledWith @matchArgs...
 
       it 'does not clear timeout', ->
         @dialogue.clearTimeout.should.not.have.called

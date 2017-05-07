@@ -263,8 +263,8 @@ describe 'Scene', ->
       it 'calls .exit once only', ->
         @scene.exit.should.have.calledOnce
 
-      it 'calls .exit once with "complete"', ->
-        @scene.exit.should.have.calledWith @res, 'complete'
+      it 'calls .exit once with last (matched) res and "complete"', ->
+        @scene.exit.should.have.calledWith @dialogue.res, 'complete'
 
     context 're-enter currently engaged participants', ->
 
@@ -347,7 +347,7 @@ describe 'Scene', ->
 
       beforeEach ->
         @scene = new Scene pretend.robot
-        co =>
+        co ->
           yield pretend.user('A').send 'foo'
           yield pretend.user('B').send 'bar'
         .then =>

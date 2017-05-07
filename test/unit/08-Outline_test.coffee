@@ -4,9 +4,13 @@
 # if usernameAuth? or roomAuth?
 #   authorise = (username, room, res) =>
 #     if usernameAuth?
-#       if @robot.adapter.callMethod usernameAuth, username, res.message.user.name
+#       if @robot.adapter.callMethod usernameAuth
+#       , username
+#       , res.message.user.name
 #         return true
 #     if roomAuth?
-#       if @robot.adapter.callMethod roomAuth, username, res.message.user.name
+#       if @robot.adapter.callMethod roomAuth
+#       , username
+#       , res.message.user.name
 #         return true
 #     return false

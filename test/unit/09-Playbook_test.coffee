@@ -111,7 +111,7 @@ describe 'Playbook', ->
 
       beforeEach ->
         @playbook = new Playbook pretend.robot
-        pretend.robot.hear /.*/, (@res) => null # get any response for comparison
+        pretend.robot.hear /.*/, (@res) => null # hear all responses
         opts = sendReplies: false
         @listen = sinon.spy @playbook.Scene.prototype, 'listen'
         @scene = @playbook.sceneListen 'hear', /test/, 'room', opts, (res) ->
@@ -123,7 +123,7 @@ describe 'Playbook', ->
         @scene.should.be.instanceof @playbook.Scene
 
       it 'passed args to the scene', ->
-        @playbook.scene.getCall(0).should.have.calledWith 'room', sendReplies: false
+        @playbook.scene.should.have.calledWith 'room', sendReplies: false
 
       it 'calls .listen on the scene with type, regex and callback', ->
         args = ['hear', /test/, sinon.match.func]
