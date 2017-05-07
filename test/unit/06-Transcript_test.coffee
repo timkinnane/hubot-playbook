@@ -9,7 +9,7 @@ co = require 'co'
 
 Pretend = require 'hubot-pretend'
 pretend = new Pretend '../scripts/shh.coffee'
-{Transcript, Dialogue, Base} = require '../../src/modules'
+{Transcript, Director, Scene, Dialogue, Base} = require '../../src/modules'
 
 describe 'Transcript', ->
 
@@ -92,13 +92,62 @@ describe 'Transcript', ->
             id: @module.id
 
         it 'records default response attributes', ->
-
+          @transcript.records[0].should.containSubset response:
+            id: @res.message.user.id
+            name: @res.message.user.name
+            text: @res.message.text
 
       context 'with transcript key', ->
+
+        beforeEach ->
+          @transcript.config.key = 'test-key'
+          @module.emit 'mockEvent', @res
+
+        it 'records event with key property', ->
+          @transcript.records[0].should.have.property 'key', 'test-key'
+
       context 'with custom instance atts', ->
+
+        beforeEach ->
+          @transcript.config.instanceAtts = ['name', 'config.scope']
+          @module.config.scope = 'whitelist' # act like a director for this one
+          @module.emit 'mockEvent', @res
+
+        it 'records custom instance attributes', ->
+          @transcript.records[0].should.containSubset instance:
+            name: @module.name
+            scope: @module.config.scope
+
       context 'with custom response atts', ->
+
+        beforeEach ->
+          @transcript.config.responseAtts = ['message.room']
+          @module.emit 'mockEvent', @res
+
+        it 'records custom response attributes', ->
+          @transcript.records[0].should.containSubset response:
+            room: 'testing'
+
       context 'without res argument', ->
+
+        beforeEach ->
+          @module.emit 'mockEvent'
+
+        it 'records event without response or other attributes', ->
+          @transcript.records.should.eql [
+            time: @now
+            event: 'mockEvent'
+            instance:
+              name: @module.name
+              key: @module.config.key
+              id: @module.id
+          ]
+
       context 'with invalid custom atts', ->
+
+        beforeEach ->
+          @transcript.config.responseAtts = ['foo', 'bar']
+          @module.emit 'mockEvent'
 
   describe '.recordAll', ->
 

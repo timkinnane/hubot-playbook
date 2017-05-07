@@ -60,12 +60,15 @@ class Transcript extends Base
     @defaults =
       save: true
       events: ['match', 'mismatch', 'catch', 'send']
-      responseAtts: ['message.user.name', 'message.text']
+      responseAtts: ['message.user.id', 'message.user.name', 'message.text']
       instanceAtts: ['name', 'config.key', 'id']
 
     super 'transcript', robot, opts
     @records = @robot.brain.get 'transcripts' if @config.save
     @records ?= []
+
+  # TODO: get all events for user, or by user and instance key if given
+  # e.g. getRecords joeUser, 'favourite-colour'
 
   ###*
    * Record given event in records array, save to hubot brain if configured
@@ -78,14 +81,13 @@ class Transcript extends Base
   ###
   recordEvent: (event, args...) ->
     instance = args.shift() if _.hasKeys args[0], ['name', 'id', 'config']
-    res = args.shift() if _.hasKeys args[0], ['envelope', 'message']
-    other = args if args.length?
+    response = args.shift() if _.hasKeys args[0], ['robot', 'message']
 
     record = time: _.now(), event: event
     record.key = @config.key if @config.key?
     record.instance = _.mapPaths instance, @config.instanceAtts if instance?
     record.response = _.mapPaths response, @config.responseAtts if response?
-    record.other = other if other?
+    record.other = args unless _.isEmpty args
 
     @records.push record
     @robot.brain.save()
