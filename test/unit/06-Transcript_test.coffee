@@ -95,6 +95,7 @@ describe 'Transcript', ->
           @transcript.records[0].should.containSubset response:
             id: @res.message.user.id
             name: @res.message.user.name
+            room: @res.message.room
             text: @res.message.text
 
       context 'with transcript key', ->
@@ -166,79 +167,133 @@ describe 'Transcript', ->
 
     context 'with default event set', ->
 
+      beforeEach ->
+        @transcript = new Transcript pretend.robot, save: false
+        @transcript.recordAll()
+        pretend.robot.emit 'match'
+        pretend.robot.emit 'mismatch'
+        pretend.robot.emit 'foo'
+        pretend.robot.emit 'catch'
+        pretend.robot.emit 'send'
+
+      it 'records default events only', ->
+        @transcript.recordEvent.args.should.eql [
+          ['match'], ['mismatch'], ['catch'], ['send']
+        ]
+
     context 'with custom event set', ->
 
-  describe 'recordDialogue', ->
+      beforeEach ->
+        @transcript = new Transcript pretend.robot,
+          save: false
+          events: ['foo', 'bar']
+        @transcript.recordAll()
+        pretend.robot.emit 'match'
+        pretend.robot.emit 'foo'
+        pretend.robot.emit 'mismatch'
+        pretend.robot.emit 'bar'
+
+      it 'records custom events only', ->
+        @transcript.recordEvent.args.should.eql [
+          ['foo'], ['bar']
+        ]
+
+  describe '.recordDialogue', ->
 
     beforeEach ->
       @transcript = new Transcript pretend.robot, save: false
-      @dialogue = new Dialogue pretend.robot
-      @dialogue.addPath '', [
-        [ /left/, 'Ok, going left!' ]
-        [ /right/, 'Ok, going right!' ]
-      ],
-        key: 'which-way'
-        error: 'Bzz. Left or right only!'
+      @dialogue = new Dialogue @res
 
     context 'with default event set', ->
 
+      beforeEach (done) ->
+        pretend.robot.events.removeAllListeners()
+        @transcript.recordDialogue @dialogue
+        @dialogue.on 'match', -> done()
+        @dialogue.emit 'match'
+
+      it 'attached listener for default events from dialogue', ->
+        _.keys pretend.robot.events._events
+        .should.eql @transcript.config.events
+        # TODO: could use events.eventNames() when EventEmitter in hubot updated
+
+      it 'calls the listener when event emmited from dialogue', ->
+        @transcript.recordEvent.should.have.calledWith 'match', @dialogue
+
     context 'with custom event set', ->
+
+      beforeEach (done) ->
+        pretend.robot.events.removeAllListeners()
+        @transcript.config.events = ['match', 'mismatch']
+        @transcript.recordDialogue @dialogue
+        @dialogue.emit 'send'
+        @dialogue.on 'match', -> done()
+        @dialogue.emit 'match'
+
+      it 'attached listener for default events from dialogue', ->
+        _.keys pretend.robot.events._events
+        .should.eql ['match', 'mismatch']
+
+      it 'calls the listener when event emmited from dialogue', ->
+        @transcript.recordEvent.should.have.calledWith 'match', @dialogue
+
+      it 'does not call with any unconfigured events', ->
+        @transcript.recordEvent.should.not.have.calledWith 'send', @dialogue
+
+  describe '.recordScene', ->
+
+    beforeEach (done) ->
+      pretend.robot.events.removeAllListeners()
+      @transcript = new Transcript pretend.robot,
+        save: false
+        events: ['match']
+      @scene = new Scene pretend.robot
+      @transcript.recordScene @scene
+      @dialogue = @scene.enter @res
+      @dialogue.addBranch /.*/, -> done()
+      @dialogue.receive @res
+
+    it 'attached listener for scene and dialogue events', ->
+      _.keys pretend.robot.events._events
+      .should.containSubset ['enter', 'exit', 'match']
+      # subset checked because scene enter adds its own listeners
+
+    it 'records events emitted by scene and its dialogues', ->
+      @transcript.recordEvent.args.should.eql [
+        [ 'enter', @scene, @res ]
+        [ 'match', @dialogue, @res ]
+      ]
+
+  describe '.recordDirector', ->
+
+    beforeEach (done) ->
+      pretend.robot.events.removeAllListeners()
+      @transcript = new Transcript pretend.robot, save: false
+      @director = new Director pretend.robot, type: 'blacklist'
+      @transcript.recordDirector @director
+      @director.on 'allow', -> done()
+      @director.names = ['tester']
+      @director.process @res
+      @director.config.type = 'whitelist'
+      @director.process @res
+
+    it 'attached listeners for director events', ->
+      _.keys pretend.robot.events._events
+      .should.eql ['allow', 'deny']
+
+    it 'records events emitted by director', ->
+      @transcript.recordEvent.args.should.eql [
+        [ 'deny', @director, @res ]
+        [ 'allow', @director, @res ]
+      ]
 
 ### copied from old Dialogue tests...
 
-  describe '.record', ->
-
-    beforeEach ->
-      @match = sinon.spy()
-      @mismatch = sinon.spy()
-      @dialogue.on 'match', @match
-      @dialogue.on 'mismatch', @mismatch
-      @key = @dialogue.path
-        prompt: 'Turn left or right?'
-        branches: [
-          [ /left/, 'Ok, going left!' ]
-          [ /right/, 'Ok, going right!' ]
-        ]
-        key: 'which-way'
-        error: 'Bzz. Left or right only!'
-
-    context 'with arguments from the sent prompt', ->
-
-      it 'adds match type, "bot" and content to transcript', ->
-        @dialogue.paths[@key].transcript[0].should.eql [
-          'send'
-          'bot'
-          'Turn left or right?'
-        ]
-
-    context 'with arguments from a matched choice', ->
-
-      beforeEach ->
-        @tester.send 'left'
-
-      it 'adds match type, user and content to transcript', ->
-        @dialogue.paths[@key].transcript[1].should.eql [
-          'match'
-          @rec.message.user
-          'left'
-        ]
-
-      it 'emits mismatch event with user, content', ->
-        @match.should.have.calledWith @rec.message.user, 'left'
-
-    context 'with arguments from a mismatched choice', ->
-
-      beforeEach ->
-        @tester.send 'up'
-
-      it 'adds match type, user and content to transcript', ->
-        @dialogue.paths[@key].transcript[1].should.eql [
-          'mismatch'
-          @rec.message.user
-          'up'
-        ]
-
-      it 'emits mismatch event with user, content', ->
-        @mismatch.should.have.calledWith @rec.message.user, 'up'
+  @dialogue.addPath '', [
+    [ /left/, 'Ok, going left!' ]
+    [ /right/, 'Ok, going right!' ]
+  ],
+    key: 'which-way'
+    catchMessage: 'Bzz. Left or right only!'
 
 ###

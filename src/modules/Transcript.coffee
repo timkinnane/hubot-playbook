@@ -60,8 +60,17 @@ class Transcript extends Base
     @defaults =
       save: true
       events: ['match', 'mismatch', 'catch', 'send']
-      responseAtts: ['message.user.id', 'message.user.name', 'message.text']
-      instanceAtts: ['name', 'config.key', 'id']
+      responseAtts: [
+        'message.user.id'
+        'message.user.name'
+        'message.text'
+        'message.room'
+      ]
+      instanceAtts: [
+        'name'
+        'config.key'
+        'id'
+      ]
 
     super 'transcript', robot, opts
     @records = @robot.brain.get 'transcripts' if @config.save
@@ -98,7 +107,7 @@ class Transcript extends Base
    * (still only applies to configured event types)
   ###
   recordAll: ->
-    _.each @config.events, (event) =>
+    _.each _.castArray(@config.events), (event) =>
       @robot.on event, (args...) => @recordEvent event, args...
     return
 
@@ -107,8 +116,8 @@ class Transcript extends Base
    * @param  {Dialogue} dialogue The Dialogue instance
   ###
   recordDialogue: (dialogue) ->
-    _.each @config.events, (event) =>
-      dialogue.on event, (args...) => @rerecordEvent event, args...
+    _.each _.castArray(@config.events), (event) =>
+      dialogue.on event, (args...) => @recordEvent event, args...
     return
 
   ###*
@@ -130,7 +139,10 @@ class Transcript extends Base
    * @param  {Director} scene The Director instance
   ###
   recordDirector: (director) ->
-    director.on 'denied', (args...) => @recordEvent 'denied', director, args...
+    director.on 'allow', (args...) =>
+      @recordEvent 'allow', args...
+    director.on 'deny', (args...) =>
+      @recordEvent 'deny', args...
     return
 
 module.exports = Transcript
