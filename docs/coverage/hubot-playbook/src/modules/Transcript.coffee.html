@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Code coverage report for hubot-playbook/src/modules/Transcript.coffee</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../../prettify.css" />
+    <link rel="stylesheet" href="../../../base.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+<body>
+<div class='wrapper'>
+  <div class='pad1'>
+    <h1>
+      <a href="../../../index.html">all files</a> / <a href="index.html">hubot-playbook/src/modules/</a> Transcript.coffee
+    </h1>
+    <div class='clearfix'>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">93.1% </span>
+        <span class="quiet">Statements</span>
+        <span class='fraction'>54/58</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">88.89% </span>
+        <span class="quiet">Branches</span>
+        <span class='fraction'>16/18</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">90% </span>
+        <span class="quiet">Functions</span>
+        <span class='fraction'>18/20</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">95.56% </span>
+        <span class="quiet">Lines</span>
+        <span class='fraction'>43/45</span>
+      </div>
+    </div>
+  </div>
+  <div class='status-line high'></div>
+<pre><table class="coverage">
+<tr><td class="line-count quiet">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149</td><td class="line-coverage quiet"><span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">60×</span>
+<span class="cline-any cline-yes">40×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">38×</span>
+<span class="cline-any cline-yes">125×</span>
+<span class="cline-any cline-yes">38×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">22×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">22×</span>
+<span class="cline-any cline-yes">22×</span>
+<span class="cline-any cline-yes">22×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">30×</span>
+<span class="cline-any cline-yes">30×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">30×</span>
+<span class="cline-any cline-yes">30×</span>
+<span class="cline-any cline-yes">30×</span>
+<span class="cline-any cline-yes">30×</span>
+<span class="cline-any cline-yes">30×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">30×</span>
+<span class="cline-any cline-yes">30×</span>
+<span class="cline-any cline-yes">30×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">6×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7×</span>
+<span class="cline-any cline-yes">16×</span>
+<span class="cline-any cline-yes">7×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">_ = require 'lodash'
+Base = require './Base'
+&nbsp;
+_.mixin 'hasKeys': (obj, keys) -&gt;
+  return false unless _.isObject obj
+  return 0 is _.size _.difference keys, _.keys obj
+_.mixin 'hasPaths': <span class="fstat-no" title="function not covered" >(obj, paths) -&gt;</span>
+<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >  return false</span> unless _.isObject obj</span>
+<span class="cstat-no" title="statement not covered" >  return _.every paths, <span class="fstat-no" title="function not covered" >(path) -&gt; <span class="cstat-no" title="statement not covered" >_.hasIn obj, path</span></span></span>
+_.mixin 'mapPaths': (src, paths) -&gt;
+  dest = {}
+  _.each paths, (path) -&gt; dest[path.split('.').pop()] = _.head _.at src, path
+  return dest
+&nbsp;
+###
+  TODO: move to docs...
+  For reference, these are the event types and args used by Playbook and Hubot:
+  ```
+  Robot
+                error       Error
+                running     -
+  Robot.brain
+                loaded      data
+                save        data
+                close       -
+  Robot.adapter
+                connected
+  ```
+  ```
+  Dialogue
+                end         Dialogue, Response
+                send        Dialogue, Response
+                timeout     Dialogue, Response
+                match       Dialogue, Response
+                catch       Dialogue, Response
+                mismatch    Dialogue, Response
+  Scene
+                enter       Scene, Response, Dialogue
+                exit        Scene, Response, status(complete|incomplete|timeout)
+  Director
+                denied      Dialogue, Response
+  ```
+###
+&nbsp;
+###*
+ * Keep a record of events and Playbook conversation attributes
+ * Transcript can record all events on the Robot or a specified module instance
+ * @param {Robot}  robot  - Hubot Robot instance
+ * @param {Object} [opts] - Config options:
+ *                          key: for grouping records
+ *                          events: array of event names to record
+ *                          responseAtts: Hubot Response attribute paths (array)
+ *                          to record from each event containing a response;
+ *                          defaults keep res.user.name and res.message.text
+ *                          instanceAtts: as above, for Playbook module atts
+ *                          defaults keep name, key and id
+###
+class Transcript extends Base
+  constructor: (robot, opts) -&gt;
+    @defaults =
+      save: true
+      events: ['match', 'mismatch', 'catch', 'send']
+      responseAtts: [
+        'message.user.id'
+        'message.user.name'
+        'message.text'
+        'message.room'
+      ]
+      instanceAtts: [
+        'name'
+        'config.key'
+        'id'
+      ]
+&nbsp;
+    super 'transcript', robot, opts
+    @records = @robot.brain.get 'transcripts' if @config.save
+    @records ?= []
+&nbsp;
+  # TODO: get all events for user, or by user and instance key if given
+  # e.g. getRecords joeUser, 'favourite-colour'
+&nbsp;
+  ###*
+   * Record given event in records array, save to hubot brain if configured
+   * Events emitted by Playbook always include module instance as first param
+   * @param  {String} event   - The event name
+   * @param  {Mixed} args...  - Args passed with the event, usually consists of:
+   *                            - Playbook module instance
+   *                            - Hubot response object
+   *                            - other additional (special context) arguments
+  ###
+  recordEvent: (event, args...) -&gt;
+    instance = args.shift() if _.hasKeys args[0], ['name', 'id', 'config']
+    response = args.shift() if _.hasKeys args[0], ['robot', 'message']
+&nbsp;
+    record = time: _.now(), event: event
+    record.key = @config.key if @config.key?
+    record.instance = _.mapPaths instance, @config.instanceAtts if instance?
+    record.response = _.mapPaths response, @config.responseAtts if response?
+    record.other = args unless _.isEmpty args
+&nbsp;
+    @records.push record
+    @robot.brain.save()
+    return
+&nbsp;
+  ###*
+   * Record events emitted by all Playbook modules and/or the robot itself
+   * (still only applies to configured event types)
+  ###
+  recordAll: -&gt;
+    _.each _.castArray(@config.events), (event) =&gt;
+      @robot.on event, (args...) =&gt; @recordEvent event, args...
+    return
+&nbsp;
+  ###*
+   * Record events emitted by a given dialogue
+   * @param  {Dialogue} dialogue The Dialogue instance
+  ###
+  recordDialogue: (dialogue) -&gt;
+    _.each _.castArray(@config.events), (event) =&gt;
+      dialogue.on event, (args...) =&gt; @recordEvent event, args...
+    return
+&nbsp;
+  ###*
+   * Record events emitted by a given scene and any dialogue it enters
+   * Records all events fromn the scene but only configured events from dialogue
+   * @param  {Scene} scene The Scnee instance
+  ###
+  recordScene: (scene) -&gt;
+    scene.on 'enter', (scene, res, dialogue) =&gt;
+      @recordEvent 'enter', scene, res
+      @recordDialogue dialogue
+    scene.on 'exit', (scene, res, reason) =&gt;
+      @recordEvent 'exit', scene, res, reason
+    return
+&nbsp;
+  ###*
+   * Record denial events emitted by a given director
+   * Ignores configured events because director has distinct events
+   * @param  {Director} scene The Director instance
+  ###
+  recordDirector: (director) -&gt;
+    director.on 'allow', (args...) =&gt;
+      @recordEvent 'allow', args...
+    director.on 'deny', (args...) =&gt;
+      @recordEvent 'deny', args...
+    return
+&nbsp;
+module.exports = Transcript
+&nbsp;</pre></td></tr>
+</table></pre>
+<div class='push'></div><!-- for sticky footer -->
+</div><!-- /wrapper -->
+<div class='footer quiet pad2 space-top1 center small'>
+  Code coverage
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Mon May 08 2017 23:32:42 GMT+1000 (AEST)
+</div>
+</div>
+<script src="../../../prettify.js"></script>
+<script>
+window.onload = function () {
+        if (typeof prettyPrint === 'function') {
+            prettyPrint();
+        }
+};
+</script>
+<script src="../../../sorter.js"></script>
+</body>
+</html>

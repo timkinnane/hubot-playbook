@@ -1,0 +1,28 @@
+instrumentation:
+  root: ./test/unit
+  extensions:
+    - .coffee
+  default-excludes: true
+  include-all-sources: true
+reporting:
+  print: summary
+  reports:
+    - lcov
+    - text
+  dir: ./coverage
+  watermarks:
+    statements: [50, 80]
+    lines: [50, 80]
+    functions: [50, 80]
+    branches: [50, 80]
+check:
+  global:
+    statements: 90
+    lines: 90
+    branches: 80
+    functions: 90
+  each:
+    statements: 75
+    lines: 75
+    branches: 50
+    functions: 75

@@ -1,0 +1,5 @@
+--compilers coffee:coffee-script/register
+--require ./test/cover.js
+--require mocha-clean
+--recursive
+--reporter-options reportDir=./docs/test,reportFilename=index.html,reportTitle=Playbook

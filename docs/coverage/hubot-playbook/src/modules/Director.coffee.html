@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Code coverage report for hubot-playbook/src/modules/Director.coffee</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../../prettify.css" />
+    <link rel="stylesheet" href="../../../base.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+<body>
+<div class='wrapper'>
+  <div class='pad1'>
+    <h1>
+      <a href="../../../index.html">all files</a> / <a href="index.html">hubot-playbook/src/modules/</a> Director.coffee
+    </h1>
+    <div class='clearfix'>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">99.15% </span>
+        <span class="quiet">Statements</span>
+        <span class='fraction'>116/117</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">94.74% </span>
+        <span class="quiet">Branches</span>
+        <span class='fraction'>36/38</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">100% </span>
+        <span class="quiet">Functions</span>
+        <span class='fraction'>12/12</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">100% </span>
+        <span class="quiet">Lines</span>
+        <span class='fraction'>70/70</span>
+      </div>
+    </div>
+  </div>
+  <div class='status-line high'></div>
+<pre><table class="coverage">
+<tr><td class="line-count quiet">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156</td><td class="line-coverage quiet"><span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">79×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">79×</span>
+<span class="cline-any cline-yes">79×</span>
+<span class="cline-any cline-yes">79×</span>
+<span class="cline-any cline-yes">79×</span>
+<span class="cline-any cline-yes">78×</span>
+<span class="cline-any cline-yes">77×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">77×</span>
+<span class="cline-any cline-yes">77×</span>
+<span class="cline-any cline-yes">67×</span>
+<span class="cline-any cline-yes">10×</span>
+<span class="cline-any cline-yes">77×</span>
+<span class="cline-any cline-yes">77×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">15×</span>
+<span class="cline-any cline-yes">15×</span>
+<span class="cline-any cline-yes">15×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3×</span>
+<span class="cline-any cline-yes">3×</span>
+<span class="cline-any cline-yes">3×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">135×</span>
+<span class="cline-any cline-yes">109×</span>
+<span class="cline-any cline-yes">26×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">135×</span>
+<span class="cline-any cline-yes">26×</span>
+<span class="cline-any cline-yes">15×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">109×</span>
+<span class="cline-any cline-yes">62×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">117×</span>
+<span class="cline-any cline-yes">117×</span>
+<span class="cline-any cline-yes">117×</span>
+<span class="cline-any cline-yes">117×</span>
+<span class="cline-any cline-yes">53×</span>
+<span class="cline-any cline-yes">53×</span>
+<span class="cline-any cline-yes">53×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">64×</span>
+<span class="cline-any cline-yes">64×</span>
+<span class="cline-any cline-yes">64×</span>
+<span class="cline-any cline-yes">64×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">32×</span>
+<span class="cline-any cline-yes">32×</span>
+<span class="cline-any cline-yes">80×</span>
+<span class="cline-any cline-yes">80×</span>
+<span class="cline-any cline-yes">80×</span>
+<span class="cline-any cline-yes">80×</span>
+<span class="cline-any cline-yes">14×</span>
+<span class="cline-any cline-yes">14×</span>
+<span class="cline-any cline-yes">66×</span>
+<span class="cline-any cline-yes">32×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">27×</span>
+<span class="cline-any cline-yes">27×</span>
+<span class="cline-any cline-yes">27×</span>
+<span class="cline-any cline-yes">22×</span>
+<span class="cline-any cline-yes">27×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">_ = require 'lodash'
+Base = require './Base'
+hooker = require 'hooker'
+&nbsp;
+###*
+ * Control listener and scene enter access, operates as blacklist or whitelist.
+ * Allows external logic via authorise...
+ * - given the user or room name and response object to allow or deny
+ * - return bool to determine access as fallback for anyone not on lists
+ * - e.g. pass a function to check if user has a particular role in platform
+ * @param  {Robot}    robot       - Hubot Robot instance
+ * @param  {Function} [authorise] - Function to determine access (as fallback)
+ * @param  {Object}   [opts]      - Config key/vals:
+ *                    - type: whitelist or blacklist (default: whitelist)
+ *                    - scope: user or room (default: user)
+ *                    - deniedReply: sends when denied access
+ *                    - key: string reference for logs, events
+###
+class Director extends Base
+  constructor: (robot, args...) -&gt;
+    @defaults =
+      type: 'whitelist'
+      scope: 'username'
+      deniedReply: process.env.DENIED_REPLY or "Sorry, I can't do that."
+    @authorise = if _.isFunction args[0] then args.shift()
+    opts = if _.isObject args[0] then opts = args.shift() else {}
+    super 'director', robot, opts
+    @error "Invalid type" unless @config.type in ['whitelist', 'blacklist']
+    @error "Invalid scope" unless @config.scope in ['username', 'room']
+    @log.info "New #{ @config.scope } Director #{ @config.type }: #{ @id }"
+&nbsp;
+    # Process environment settings for default lists
+    # - WHITELIST_USERNAMES for whitelist type and username scope directors
+    # - WHITELIST_ROOMS for whitelist type and room scope directors
+    # - BLACKLIST_USERNAMES for blacklist type and username scope directors
+    # - BLACKLIST_ROOMS for blacklist type and room scope directors
+    listEnv = @config.type.toUpperCase()
+    @names = switch @config.scope
+      when 'username' then process.env["#{ listEnv }_USERNAMES"]
+      when 'room' then process.env["#{ listEnv }_ROOMS"]
+    @names = @names.split ',' if @names?
+    @names ?= []
+&nbsp;
+  ###*
+   * Add new usernames/rooms to list
+   * @param  {String|Array} names - Usernames or Room names (depending on scope)
+   * @return {Director}           - Self, for chaining methods
+  ###
+  add: (names) -&gt;
+    @log.info "Adding #{ names.toString() } to #{ @id } #{ @config.type }"
+    @names = _.union @names, _.castArray names
+    return @
+&nbsp;
+  ###*
+   * Remove new usernames/rooms from list
+   * @param  {String|Array} names - Usernames or Room names (depending on scope)
+   * @return {Director}           - Self, for chaining methods
+  ###
+  remove: (names) -&gt;
+    @log.info "Removing #{ names.toString() } from #{ @id } #{ @config.type }"
+    @names = _.without @names, _.castArray(names)...
+    return @
+&nbsp;
+  ###*
+   * Determine if user has access, checking usernames/rooms against lists
+   * Blacklist blocks names on list, let anyone else through
+   # Whitelist lets names on list through, block anyone else
+   * @param  {Response} res - Hubot Response object
+   * @return {Boolean}      - Access allowed
+  ###
+  isAllowed: (res) -&gt;
+    name = switch @config.scope
+      when 'username' then res.message.user.name
+      when 'room' then res.message.room
+&nbsp;
+    if @config.type is 'blacklist'
+      return false if name in @names
+      return true if not @authorise?
+    else
+      return true if name in @names
+      return false if not @authorise?
+&nbsp;
+    # authorise function can determine access if lists didn't
+    <span class="missing-if-branch" title="else path not taken" >E</span>return @authorise name, res if @authorise?
+&nbsp;
+  ###*
+   * Process access or denial (either silently or with reply, as configured)
+   * @param  {Response} res - Hubot Response object
+   * @return {Boolean}      - Access allowed
+  ###
+  process: (res) -&gt;
+    allowed = @isAllowed res
+    user = res.message.user.name
+    message = res.message.text
+    if allowed
+      @log.debug "#{ @id } allowed #{ user } on receiving #{ message }"
+      @emit 'allow', res
+      return true
+    else
+      @log.info "#{ @id } denied #{ user } on receiving: #{ message }"
+      @emit 'deny', res
+      res.reply @config.deniedReply if @config.deniedReply not in ['', null]
+      return false
+&nbsp;
+  ###*
+   * Let this director control access to any listener matching regex
+   * @param  {Regex}  regex - Listener match pattern
+   * @return {Director}     - Self, for chaining methods
+  ###
+  directMatch: (regex) -&gt;
+<span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>@error "Invalid regex"</span> if not _.isRegExp regex
+    @log.info "#{ @id } now controlling access to listeners matching #{ regex }"
+    @robot.listenerMiddleware (context, next, done) =&gt;
+      res = context.response
+      isMatch = res.message.text.match regex
+      isDenied = not @process res
+      if isMatch and isDenied
+        res.message.finish() # don't process this message further
+        return done() # don't process further middleware
+      return next done # nothing matched or user allowed
+    return @
+&nbsp;
+  ###*
+   * Let this director control access to a listener by listener or scene ID
+   * If multiple listeners use the same ID, it's assumed to deny all of them
+   * @param  {String}   id - ID of listener (may be multiple for scene)
+   * @return {Director}    - Self, for chaining methods
+  ###
+  directListener: (id) -&gt;
+    @log.info "Director #{ @id } now controlling access to listener #{ id }"
+    @robot.listenerMiddleware (context, next, done) =&gt;
+      res = context.response
+      isMatch = context.listener.options.id is id
+      isDenied = not @process res
+      if isMatch and isDenied
+        context.response.message.finish() # don't process this message further
+        return done() # don't process further middleware
+      return next done # nothing matched or user allowed
+    return @
+&nbsp;
+  ###*
+   * Let this director control access to a given scene's listener
+   * Hooks into .enter method to control access for manually entered scenes
+   * @param  {Scene} scene - The Scene instance
+   * @return {Director}    - Self, for chaining methods
+   * TODO: replace hooker usage with new Hubot.Middleware on scene enter
+  ###
+  directScene: (scene) -&gt;
+    @log.info "#{ @id } now controlling #{ scene.id }"
+    @directListener scene.id #  to control scene's listeners
+    hooker.hook scene, 'enter', pre: (res) =&gt;
+      return hooker.preempt false unless @process res
+    return @
+&nbsp;
+module.exports = Director
+&nbsp;</pre></td></tr>
+</table></pre>
+<div class='push'></div><!-- for sticky footer -->
+</div><!-- /wrapper -->
+<div class='footer quiet pad2 space-top1 center small'>
+  Code coverage
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Mon May 08 2017 23:32:42 GMT+1000 (AEST)
+</div>
+</div>
+<script src="../../../prettify.js"></script>
+<script>
+window.onload = function () {
+        if (typeof prettyPrint === 'function') {
+            prettyPrint();
+        }
+};
+</script>
+<script src="../../../sorter.js"></script>
+</body>
+</html>
