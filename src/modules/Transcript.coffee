@@ -7,10 +7,6 @@ _.mixin 'hasKeys': (obj, keys) ->
 _.mixin 'hasPaths': (obj, paths) ->
   return false unless _.isObject obj
   return _.every paths, (path) -> _.hasIn obj, path
-_.mixin 'mapPaths': (src, paths) ->
-  dest = {}
-  _.each paths, (path) -> dest[path.split('.').pop()] = _.head _.at src, path
-  return dest
 
 ###*
  * Keep a record of events and Playbook conversation attributes
@@ -21,7 +17,7 @@ _.mixin 'mapPaths': (src, paths) ->
  *                          events: array of event names to record
  *                          responseAtts: Hubot Response attribute paths (array)
  *                          to record from each event containing a response;
- *                          defaults keep res.user.name and res.message.text
+ *                          defaults keep message and match subpaths
  *                          instanceAtts: as above, for Playbook module atts
  *                          defaults keep name, key and id
 ###
@@ -30,26 +26,19 @@ class Transcript extends Base
     @defaults =
       save: true
       events: ['match', 'mismatch', 'catch', 'send']
-      responseAtts: [
-        'message.user.id'
-        'message.user.name'
-        'message.text'
-        'message.room'
-      ]
-      instanceAtts: [
-        'name'
-        'config.key'
-        'id'
-      ]
+      instanceKeys: []
+      instanceAtts: ['name', 'config.key', 'id' ]
+      responseAtts: ['match']
+      messageAtts: ['user.id', 'user.name', 'room', 'text']
 
     super 'transcript', robot, opts
+    if 'record' in @config.events
+      @error 'cannot record record event - infinite loop'
     @records = @robot.brain.get 'transcripts' if @config.save
     @records ?= []
 
-  # TODO: get all events for user, or by user and instance key if given
-  # e.g. getRecords joeUser, 'favourite-colour'
-
   ###*
+   * TODO: TEST instanceKeys
    * Record given event in records array, save to hubot brain if configured
    * Events emitted by Playbook always include module instance as first param
    * @param  {String} event   - The event name
@@ -62,13 +51,19 @@ class Transcript extends Base
     instance = args.shift() if _.hasKeys args[0], ['name', 'id', 'config']
     response = args.shift() if _.hasKeys args[0], ['robot', 'message']
 
+    if _.size @config.instanceKeys
+      return unless instance?
+      return unless instance.config.key in @config.instanceKeys
+
     record = time: _.now(), event: event
     record.key = @config.key if @config.key?
-    record.instance = _.mapPaths instance, @config.instanceAtts if instance?
-    record.response = _.mapPaths response, @config.responseAtts if response?
+    record.instance = _.pick instance, @config.instanceAtts if instance?
+    record.response = _.pick response, @config.responseAtts if response?
+    record.message = _.pick response.message, @config.messageAtts if response?
     record.other = args unless _.isEmpty args
 
     @records.push record
+    @emit 'record', record
     @robot.brain.save()
     return
 
@@ -114,5 +109,16 @@ class Transcript extends Base
     director.on 'deny', (args...) =>
       @recordEvent 'deny', args...
     return
+
+  # Filter records matching a subset, e.g. user name or instance key
+  # Optionally return the whole record or values for a given key
+  # e.g. findRecords
+  #  'message.name': 'joe'
+  #  'instance.key': 'favourite-colour'
+  # ], 'match'
+  findRecords: (subsetMatch, returnPath) ->
+    found = _.filter @records, subsetMatch
+    return found unless returnPath?
+    return _.map found, (record) -> _.at record, returnPath
 
 module.exports = Transcript

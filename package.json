@@ -12,7 +12,8 @@
     "lint": "coffeelint ./src ./test",
     "lint:dev": "coffeelint ./src ./test -q",
     "unit": "mocha",
-    "unit:dev": "mocha --reporter progress --debug --bail",
+    "unit:debug": "mocha --debug --bail --watch",
+    "unit:dev": "mocha --reporter progress --bail",
     "unit:docs": "mocha --reporter mochawesome",
     "coverage": "istanbul report",
     "coverage:summary": "istanbul report text-summary",
@@ -21,6 +22,7 @@
     "coverage:publish": "cat coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js",
     "test": "run-s -s clean:coverage lint unit coverage",
     "dev": "run-s -s lint:dev unit:dev coverage:summary",
+    "debug": "npm run unit:debug",
     "watch": "onchange 'src/**/*.coffee' 'test/**/*.coffee' -i -- npm run dev",
     "docs": "run-s -s clean:docs unit:docs coverage:docs"
   },
@@ -69,6 +71,7 @@
     "mocha": "^3.3.0",
     "mocha-clean": "^1.0.0",
     "npm-run-all": "^4.0.2",
+    "onchange": "^3.2.1",
     "sinon": "^1.17.7",
     "sinon-chai": "^2.8.0"
   }

@@ -15,7 +15,7 @@ describe 'Transcript', ->
 
   beforeEach ->
     pretend.startup()
-    @tester = pretend.user 'tester', id:'tester', room: 'testing'
+    @tester = pretend.user 'tester', room: 'testing'
     @clock = sinon.useFakeTimers()
     @now = _.now()
 
@@ -82,21 +82,32 @@ describe 'Transcript', ->
 
       context 'with default config', ->
 
-        beforeEach ->
+        beforeEach (done) ->
+          @record = record = sinon.spy()
+          @transcript.on 'record', @record
+          @transcript.on 'record', -> done()
           @module.emit 'mockEvent', @res
 
         it 'records default instance attributes', ->
           @transcript.records[0].should.containSubset instance:
             name: @module.name
-            key: @module.config.key
+            config: key: @module.config.key
             id: @module.id
 
         it 'records default response attributes', ->
           @transcript.records[0].should.containSubset response:
-            id: @res.message.user.id
-            name: @res.message.user.name
+            match: @res.match
+
+        it 'records default message attributes', ->
+          @transcript.records[0].should.containSubset message:
+            user:
+              id: @res.message.user.id
+              name: @res.message.user.name
             room: @res.message.room
             text: @res.message.text
+
+        it 'emits new record once created', ->
+          @record.should.have.calledWith @transcript, @transcript.records.pop()
 
       context 'with transcript key', ->
 
@@ -117,7 +128,7 @@ describe 'Transcript', ->
         it 'records custom instance attributes', ->
           @transcript.records[0].should.containSubset instance:
             name: @module.name
-            scope: @module.config.scope
+            config: scope: @module.config.scope
 
       context 'with custom response atts', ->
 
@@ -127,6 +138,16 @@ describe 'Transcript', ->
 
         it 'records custom response attributes', ->
           @transcript.records[0].should.containSubset response:
+            message: room: 'testing'
+
+      context 'with custom message atts', ->
+
+        beforeEach ->
+          @transcript.config.messageAtts = ['room']
+          @module.emit 'mockEvent', @res
+
+        it 'records custom message attributes', ->
+          @transcript.records[0].should.containSubset message:
             room: 'testing'
 
       context 'without res argument', ->
@@ -140,7 +161,7 @@ describe 'Transcript', ->
             event: 'mockEvent'
             instance:
               name: @module.name
-              key: @module.config.key
+              config: key: @module.config.key
               id: @module.id
           ]
 
@@ -156,7 +177,7 @@ describe 'Transcript', ->
             event: 'mockEvent'
             instance:
               name: @module.name
-              key: @module.config.key
+              config: key: @module.config.key
               id: @module.id
           ]
 
@@ -287,13 +308,54 @@ describe 'Transcript', ->
         [ 'allow', @director, @res ]
       ]
 
-### copied from old Dialogue tests...
+  describe '.findRecords', ->
 
-  @dialogue.addPath '', [
-    [ /left/, 'Ok, going left!' ]
-    [ /right/, 'Ok, going right!' ]
-  ],
-    key: 'which-way'
-    catchMessage: 'Bzz. Left or right only!'
+    beforeEach ->
+      @transcript = new Transcript pretend.robot, save: false
+      @transcript.records = [
+        time: 0
+        event: 'match'
+        instance: config: key: 'time'
+        message: user: name: 'jon', text: 'now'
+      ,
+        time: 0
+        event: 'match'
+        instance: config: key: 'direction'
+        message: user: name: 'jon', text: 'left'
+      ,
+        time: 0
+        event: 'match'
+        instance: config: key: 'time'
+        message: user: name: 'luc', text: 'later'
+      ,
+        time: 0
+        event: 'match'
+        instance: config: key: 'direction'
+        message: user: name: 'luc', text: 'right'
+      ]
 
-###
+    context 'with record subset matcher', ->
+
+      beforeEach ->
+        @transcript.findRecords message: user: name: 'jon'
+
+      it 'returns records matching given attributes', ->
+        @transcript.findRecords.returnValues[0].should.eql [
+          time: 0
+          event: 'match'
+          instance: config: key: 'time'
+          message: user: name: 'jon', text: 'now'
+        ,
+          time: 0
+          event: 'match'
+          instance: config: key: 'direction'
+          message: user: name: 'jon', text: 'left'
+        ]
+
+    context 'with record subset and path matcher', ->
+
+      beforeEach ->
+        @transcript.findRecords message: user: name: 'jon', 'message.user.text'
+
+      it 'returns only the values at path', ->
+        @transcript.findRecords.returnValues[0].should.eql [ 'now', 'left' ]

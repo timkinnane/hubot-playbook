@@ -19,13 +19,17 @@ class Playbook
     @Scene = Scene
     @Transcript = Transcript
 
-  ###*
-   * Create new Transcript to record dialogue events
-   * (optionally) filter records by matching key, e.g. scene or path IDs
-   * @param  {[type]} args... [description]
-   * @return {[type]}         [description]
-  ###
+  transcript: (args...) ->
+    transcript = new @Transcript @robot, args...
+    @transcripts.push transcript
+    return transcript
 
+  transcribe: (instance, args...) ->
+    transcript = @transcript args...
+    transcript.recordDialogue instance if instance instanceof @Dialogue
+    transcript.recordScene instance if instance instanceof @Scene
+    transcript.recordDirector instance if instance instanceof @Director
+    return transcript
 
   ###*
    * Create new Director
