@@ -1,0 +1,30 @@
+{
+  "name": "playbook-dmeo",
+  "version": "0.0.0",
+  "private": true,
+  "author": "timkinnane <tim@nestedcode.com>",
+  "description": "Integration tests for Hubot-Playbok",
+  "scripts": {
+    "test": "mocha"
+  },
+  "dependencies": {
+    "hubot": "^2.19.0",
+    "hubot-diagnostics": "0.0.1",
+    "hubot-help": "^0.2.0",
+    "hubot-rules": "^0.1.1",
+    "hubot-shell": "^1.0.2"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "co": "^4.6.0",
+    "hubot-pretend": "^0.5.1",
+    "mocha": "^3.3.0",
+    "mocha-clean": "^1.0.0",
+    "mochawesome": "^2.2.0",
+    "sinon": "^1.17.7",
+    "sinon-chai": "^2.8.0"
+  },
+  "engines": {
+    "node": "0.10.x"
+  }
+}

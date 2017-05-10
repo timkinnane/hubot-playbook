@@ -61,24 +61,28 @@ Look at [examples] and [docs] for how to use Playbook and it's modules to add co
 
 ### Pre-release
 
-- Create integration test, to replace diagnostics
+- Transcript methods for Playbook and usage tests
 - Fix any gaps in test coverage
 - Implement semantic-release
 
 ### Beta Features
 
-- Add context key/value collection methods from callbacks, store with user key
-- Parse Playbook messages with context for template tags e.g. ok {{ username }}
-- Add outline module, to define behavior models in YML and load from S3 etc
+- Add Adlib module, parse messages with template tags using brain data context
+- Add Outline module, to define behavior models in YML and load from S3 etc
+- Replace hoooker usage with Hubot middleware, for scene enter etc
+- Update Dialogue to return promise on send and receive for handler resolution
+- Update demo bot tests to be unique so all can be loaded at once
+- Add demo bot integration tests with external-scripts and adapters (e.g. shell)
+- Add `npm run shell` to test demo bot interactios manually
 
 ### Release Roadmap
 
-- Fix generated docs!
+- Contributor docs first, with npm script examples and commitizen ettiquite
+- Generated docs with docco and jsDoc templates
 - Example setup steps for a Playbook bot without development requirements
 - Save/restore director config in hubot brain against key if provided
-- Allow directing dialogues
 - Queue dialogue.receive calls to ensure messages process synchronously
 - Optional config for send middleware to throttle hearing consecutive res
 - Display "thinking" ellipses (emit event for use by adapters)
-- Migrate to pure ES6 and node task build and test, no coffee or gulp
+- Migrate to pure ES6 and node task build and test, no coffee
 - Make interactive demo bots, illustrating features

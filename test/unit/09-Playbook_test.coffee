@@ -7,7 +7,7 @@ _ = require 'lodash'
 
 Pretend = require 'hubot-pretend'
 pretend = new Pretend '../scripts/shh.coffee'
-Playbook = require '../../src/Playbook'
+Playbook = require '../../src'
 
 describe 'Playbook', ->
 
