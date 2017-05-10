@@ -28,61 +28,37 @@ Add Playbook to your bot: `npm install --save hubot-playbook`
 
 Look at [examples] and [docs] for how to use Playbook and it's modules to add conversational logic to your bots.
 
-## Required reading
-
-*Framework*
-
-- [Hubot Scripting](https://github.com/github/hubot/blob/master/docs/scripting.md)
-- [Coffeescript](http://coffeescript.org/)
-- [Underscore](http://underscorejs.org/)
-
-*Testing*
-
-- [Mochajs](https://mochajs.org/)
-- [Chaijs (should)](http://chaijs.com/api/bdd/)
-- [Sinon Spies](http://sinonjs.org/releases/v1.17.7/spies/)
-- [Hubot Test Helper](https://github.com/mtsmfm/hubot-test-helper)
-
-## Development
-
-### CLI tasks
-
-- `gulp test` to run tests once for debugging known issues
-- `gulp watch` while developing, to see tests in console
-- `gulp watch --modules {name}` for quicker tests of single module
-- `gulp watch --reporter {name}`
-- `gulp watch --modules Scene --reporter spec` example of above combined
-- `gulp docs` to review generated docs (skips running tests)
-- `gulp watch:docs` while documenting code, to auto-refresh docs on edit
-- `gulp watch:docs` before publishing,
-- `gulp publish` to publish a completed version or patch -- TODO: this
-
 ## TODO
 
-### Pre-release
+### Beta in development
 
-- Implement semantic-release
-
-### Beta Features
-
-- Add Adlib module, parse messages with template tags using brain data context
+- Add Adlib module, parse messages with template tags using brain data
 - Add Outline module, to define behavior models in YML and load from S3 etc
-- Replace hoooker usage with Hubot middleware, for scene enter etc
-- Update Dialogue to return promise on send and receive for handler resolution
-- Update demo bot tests to be unique so all can be loaded at once
+- Integrate enter/path/branch listeners with Conditioner for semantic matchers
+- Load outlines from yaml (including external stores like S3)
+
+### Slated refactors
+
+- Update Dialogue to return promise on send and receive
+- Replace hoooker package with Hubot middleware, for scene enter etc
+- Update demo bot tests to with unique listeners so all can be loaded at once
 - Add demo bot integration tests with external-scripts and adapters (e.g. shell)
 - Add `npm run shell` to test demo bot interactions directly (without pretend)
-- Chain Playbook modules and methods, e.g. create/direct/transcribe
+- Allow chaining constructors and methods, e.g. scene().direct().transcribe()
+
+### Documentation
+
+- Contributor docs with npm script examples and commitizen ettiquite
+- Generated docs and demo usage code with docco and jsDoc templates
+- Example setup steps for a Playbook bot without development requirements
 
 ### Release Roadmap
 
-- Contributor docs first, with npm script examples and commitizen ettiquite
-- Generated docs with docco and jsDoc templates
-- Example setup steps for a Playbook bot without development requirements
-- Save/restore director config in hubot brain against key if provided
+- Translate strings matching and sending with i18n-node
+- NLP for dialogue handlers with rasa.ai
 - Queue dialogue.receive calls to ensure messages process synchronously
 - Optional config for send middleware to throttle hearing consecutive res
 - Display "thinking" ellipses (emit event for use by adapters)
-- Migrate to pure ES6 and node task build and test, no coffee
-- Make Playbook run as binary, read in scritps in place of and wrapping Hubot
-- Make interactive demo bots, illustrating features
+- Migrate to pure ES6 and node task build and test, no coffee?
+- Make Playbook run as stand alone bin, read scripts directly, wrapping Hubot
+- Make interactive demo bots, illustrating features and data inspection
