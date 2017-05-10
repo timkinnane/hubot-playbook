@@ -108,7 +108,6 @@ class Director extends Base
    * @return {Director}     - Self, for chaining methods
   ###
   directMatch: (regex) ->
-    @error "Invalid regex" if not _.isRegExp regex
     @log.info "#{ @id } now controlling access to listeners matching #{ regex }"
     @robot.listenerMiddleware (context, next, done) =>
       res = context.response
