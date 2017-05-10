@@ -1,8 +1,19 @@
 language: node_js
+cache:
+  directories:
+    - node_modules
+notifications:
+  email: false
 node_js:
-  - "node"
-  - "4"
-  - "5"
-  - "6"
+  - '7'
+  - '6'
+  - '4'
+before_script:
+  - npm prune
 after_script:
   - npm run coverage:publish
+after_success:
+  - npm run semantic-release
+branches:
+  except:
+    - /^v\d+\.\d+\.\d+$/

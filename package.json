@@ -1,6 +1,6 @@
 {
   "name": "hubot-playbook",
-  "version": "0.0.0",
+  "version": "0.0.0-development",
   "description": "Conversation branching library for Hubots.",
   "main": "lib/Playbook.js",
   "engines": {
@@ -27,11 +27,15 @@
     "compile": "npm run clean:compile && coffee --compile --output lib/ src/",
     "demo": "coffeelint ./demo/scripts && cd demo && npm i && npm test",
     "test": "run-s -s lint unit coverage compile demo",
-    "publish": "run-s -s lint unit:docs coverage coverage:docs compile demo"
+    "precommit": "npm test",
+    "prepush": "npm test",
+    "publish": "run-s -s lint unit:docs coverage coverage:docs compile demo",
+    "commit": "git-cz",
+    "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/timkinnane/hubot-playbook.git"
+    "url": "https://github.com/timkinnane/hubot-playbook.git"
   },
   "keywords": [
     "hubot",
@@ -69,7 +73,7 @@
     "mochawesome": "^2.2.0",
     "npm-run-all": "^4.0.2",
     "onchange": "^3.2.1",
-    "semantic-release": "^6.3.2",
+    "semantic-release": "^6.3.6",
     "sinon": "^2.2.0",
     "sinon-chai": "^2.10.0",
     "validate-commit-msg": "^2.12.0"
