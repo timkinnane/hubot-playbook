@@ -13,6 +13,9 @@ describe 'Playbook', ->
 
   beforeEach ->
     pretend.startup()
+    @clock = sinon.useFakeTimers()
+    @now = _.now()
+
     pretend.user('tester').in('testing').send 'test'
     .then => @res = pretend.responses.incoming[0]
 
@@ -24,20 +27,6 @@ describe 'Playbook', ->
 
     _.forIn Playbook.prototype, (val, key) ->
       Playbook.prototype[key].restore() if _.isFunction val
-
-  describe 'constructor', ->
-
-    beforeEach ->
-      @playbook = new Playbook pretend.robot
-
-    it 'has an empty array of dialogues', ->
-      @playbook.dialogues.should.eql []
-
-    it 'has an empty array of scenes', ->
-      @playbook.scenes.should.eql []
-
-    it 'has an empty array of directors', ->
-      @playbook.dialogues.should.eql []
 
   describe '.director', ->
 
@@ -180,6 +169,55 @@ describe 'Playbook', ->
 
     it 'does not throw any errors', ->
       @playbook.dialogue.should.not.have.threw
+
+  describe '.transcript', ->
+
+    beforeEach ->
+      @playbook = new Playbook pretend.robot
+      @transcript = @playbook.transcript()
+
+    it 'creates and returns transcript', ->
+      @transcript.should.be.instanceof @playbook.Transcript
+
+    it 'stores it in the transcripts array', ->
+      @playbook.transcripts[0].should.eql @transcript
+
+  describe '.transcribe', ->
+
+    beforeEach ->
+      @playbook = new Playbook pretend.robot
+      @director = @playbook.director()
+      @scene = @playbook.scene()
+      @dialogue = @playbook.dialogue @res
+      config =
+        instanceAtts: 'name'
+        responseAtts: null
+        messageAtts: null
+      @playbook.transcribe @director, config
+      @playbook.transcribe @scene, config
+      @playbook.transcribe @dialogue, config
+
+      @director.process @res
+      @scene.enter @res
+      @dialogue.send 'test'
+
+    it 'creates transcripts', ->
+      @playbook.transcript.should.have.calledThrice
+
+    it 'records events from given instances in brain', ->
+      pretend.robot.brain.get('transcripts').should.eql [
+        time: @now
+        event: 'deny'
+        instance: name: 'director'
+      ,
+        time: @now
+        event: 'enter'
+        instance: name: 'scene'
+      ,
+        time: @now
+        event: 'send'
+        instance: name: 'dialogue'
+      ]
 
   describe '.shutdown', ->
 

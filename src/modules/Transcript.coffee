@@ -4,9 +4,6 @@ Base = require './Base'
 _.mixin 'hasKeys': (obj, keys) ->
   return false unless _.isObject obj
   return 0 is _.size _.difference keys, _.keys obj
-_.mixin 'hasPaths': (obj, paths) ->
-  return false unless _.isObject obj
-  return _.every paths, (path) -> _.hasIn obj, path
 
 ###*
  * Keep a record of events and Playbook conversation attributes
@@ -32,9 +29,13 @@ class Transcript extends Base
       messageAtts: ['user.id', 'user.name', 'room', 'text']
 
     super 'transcript', robot, opts
-    if 'record' in @config.events
-      @error 'cannot record record event - infinite loop'
-    @records = @robot.brain.get 'transcripts' if @config.save
+    _.castArray @config.instanceAtts if @config.instanceAtts?
+    _.castArray @config.responseAtts if @config.responseAtts?
+    _.castArray @config.messageAtts if @config.messageAtts?
+
+    if @config.save
+      @robot.brain.set 'transcripts', [] unless @robot.brain.get 'transcripts'
+      @records = @robot.brain.get 'transcripts'
     @records ?= []
 
   ###*
@@ -56,14 +57,18 @@ class Transcript extends Base
 
     record = time: _.now(), event: event
     record.key = @config.key if @config.key?
-    record.instance = _.pick instance, @config.instanceAtts if instance?
-    record.response = _.pick response, @config.responseAtts if response?
-    record.message = _.pick response.message, @config.messageAtts if response?
+
+    if instance? and @config.instanceAtts?
+      record.instance = _.pick instance, @config.instanceAtts
+    if response? and @config.responseAtts?
+      record.response = _.pick response, @config.responseAtts
+    if response? and @config.messageAtts?
+      record.message = _.pick response.message, @config.messageAtts
+
     record.other = args unless _.isEmpty args
 
     @records.push record
     @emit 'record', record
-    @robot.brain.save()
     return
 
   ###*
@@ -77,7 +82,7 @@ class Transcript extends Base
 
   ###*
    * Record events emitted by a given dialogue
-   * @param  {Dialogue} dialogue The Dialogue instance
+   * @param  {Dialogue} dialogue - The Dialogue instance
   ###
   recordDialogue: (dialogue) ->
     _.each _.castArray(@config.events), (event) =>
@@ -87,7 +92,7 @@ class Transcript extends Base
   ###*
    * Record events emitted by a given scene and any dialogue it enters
    * Records all events fromn the scene but only configured events from dialogue
-   * @param  {Scene} scene The Scnee instance
+   * @param  {Scene} scene - The Scnee instance
   ###
   recordScene: (scene) ->
     scene.on 'enter', (scene, res, dialogue) =>
@@ -100,7 +105,7 @@ class Transcript extends Base
   ###*
    * Record denial events emitted by a given director
    * Ignores configured events because director has distinct events
-   * @param  {Director} scene The Director instance
+   * @param  {Director} scene - The Director instance
   ###
   recordDirector: (director) ->
     director.on 'allow', (args...) =>
@@ -109,12 +114,13 @@ class Transcript extends Base
       @recordEvent 'deny', args...
     return
 
-  # Filter records matching a subset, e.g. user name or instance key
-  # Optionally return the whole record or values for a given key
-  # e.g. findRecords
-  #  'message.name': 'joe'
-  #  'instance.key': 'favourite-colour'
-  # ], 'match'
+  ###*
+   * Filter records matching a subset, e.g. user name or instance key
+   # Optionally return the whole record or values for a given key
+   * @param  {Object} subsetMatch  - Key/s:value/s to match (accepts path key)
+   * @param  {String} [returnPath] - Key or path within record to return
+   * @return {Array}               - Whole records or selected values found
+  ###
   findRecords: (subsetMatch, returnPath) ->
     found = _.filter @records, subsetMatch
     return found unless returnPath?

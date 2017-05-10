@@ -143,7 +143,7 @@ describe 'Transcript', ->
       context 'with custom message atts', ->
 
         beforeEach ->
-          @transcript.config.messageAtts = ['room']
+          @transcript.config.messageAtts = 'room'
           @module.emit 'mockEvent', @res
 
         it 'records custom message attributes', ->
@@ -157,7 +157,7 @@ describe 'Transcript', ->
           @moduleB = new Module key: 'B'
           @moduleC = new Module key: 'C'
           @transcript.config.instanceKeys = ['B', 'C']
-          @transcript.config.instanceAtts = ['id']
+          @transcript.config.instanceAtts = 'id'
           pretend.robot.on 'mockEvent', (args...) =>
             @transcript.recordEvent 'mockEvent', args...
           pretend.robot.emit 'mockEvent'

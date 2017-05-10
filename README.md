@@ -61,8 +61,6 @@ Look at [examples] and [docs] for how to use Playbook and it's modules to add co
 
 ### Pre-release
 
-- Transcript methods for Playbook and usage tests
-- Fix any gaps in test coverage
 - Implement semantic-release
 
 ### Beta Features
@@ -73,7 +71,8 @@ Look at [examples] and [docs] for how to use Playbook and it's modules to add co
 - Update Dialogue to return promise on send and receive for handler resolution
 - Update demo bot tests to be unique so all can be loaded at once
 - Add demo bot integration tests with external-scripts and adapters (e.g. shell)
-- Add `npm run shell` to test demo bot interactios manually
+- Add `npm run shell` to test demo bot interactions directly (without pretend)
+- Chain Playbook modules and methods, e.g. create/direct/transcribe
 
 ### Release Roadmap
 
@@ -85,4 +84,5 @@ Look at [examples] and [docs] for how to use Playbook and it's modules to add co
 - Optional config for send middleware to throttle hearing consecutive res
 - Display "thinking" ellipses (emit event for use by adapters)
 - Migrate to pure ES6 and node task build and test, no coffee
+- Make Playbook run as binary, read in scritps in place of and wrapping Hubot
 - Make interactive demo bots, illustrating features

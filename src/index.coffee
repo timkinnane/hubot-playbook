@@ -11,19 +11,31 @@ class Playbook
   constructor: (@robot) ->
     @log = @robot.logger
     @log.info 'Playbook starting up'
+    @transcripts = []
     @directors = []
     @scenes = []
     @dialogues = []
+    @Transcript = Transcript
     @Director = Director
     @Dialogue = Dialogue
     @Scene = Scene
-    @Transcript = Transcript
 
+  ###*
+   * Create a transcript with optional config to record events from modules
+   * @param  {Mixed}      args - Constructor args ./modules/Transcript.coffee
+   * @return {Transcript}      - The new transcript
+  ###
   transcript: (args...) ->
     transcript = new @Transcript @robot, args...
     @transcripts.push transcript
     return transcript
 
+  ###*
+   * Create transcript and record a given module in one step
+   * @param  {Mixed}  instance - A Playbook module (dialogue, scene, director)
+   * @param  {Mixed}      args - Constructor args ./modules/Transcript.coffee
+   * @return {Transcript}      - The new transcript
+  ###
   transcribe: (instance, args...) ->
     transcript = @transcript args...
     transcript.recordDialogue instance if instance instanceof @Dialogue
