@@ -11,6 +11,9 @@ Pretend = require 'hubot-pretend'
 pretend = new Pretend '../scripts/shh.coffee'
 {Transcript, Director, Scene, Dialogue, Base} = require '../../src/modules'
 
+class Module extends Base
+  constructor: (opts) -> super 'module', pretend.robot, opts
+
 describe 'Transcript', ->
 
   beforeEach ->
@@ -72,9 +75,6 @@ describe 'Transcript', ->
     context 'emitted from Playbook module', ->
 
       beforeEach ->
-        class Module extends Base
-          constructor: (opts) -> super 'module', pretend.robot, opts
-
         @transcript = new Transcript pretend.robot, save: false
         @module = new Module key: 'foo'
         @module.on 'mockEvent', (args...) =>
@@ -150,7 +150,33 @@ describe 'Transcript', ->
           @transcript.records[0].should.containSubset message:
             room: 'testing'
 
-      context 'without res argument', ->
+      context 'with instance key', ->
+
+        beforeEach ->
+          @moduleA = new Module key: 'A'
+          @moduleB = new Module key: 'B'
+          @moduleC = new Module key: 'C'
+          @transcript.config.instanceKeys = ['B', 'C']
+          @transcript.config.instanceAtts = ['id']
+          pretend.robot.on 'mockEvent', (args...) =>
+            @transcript.recordEvent 'mockEvent', args...
+          pretend.robot.emit 'mockEvent'
+          @moduleA.emit 'mockEvent'
+          @moduleB.emit 'mockEvent'
+          @moduleC.emit 'mockEvent'
+
+        it 'records instances matching key', ->
+          @transcript.records.should.eql [
+            time: @now
+            event: 'mockEvent'
+            instance: id: @moduleB.id
+          ,
+            time: @now
+            event: 'mockEvent'
+            instance: id: @moduleC.id
+          ]
+
+      context 'on event without res argument', ->
 
         beforeEach ->
           @module.emit 'mockEvent'

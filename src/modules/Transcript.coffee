@@ -38,7 +38,6 @@ class Transcript extends Base
     @records ?= []
 
   ###*
-   * TODO: TEST instanceKeys
    * Record given event in records array, save to hubot brain if configured
    * Events emitted by Playbook always include module instance as first param
    * @param  {String} event   - The event name
@@ -119,6 +118,6 @@ class Transcript extends Base
   findRecords: (subsetMatch, returnPath) ->
     found = _.filter @records, subsetMatch
     return found unless returnPath?
-    return _.map found, (record) -> _.at record, returnPath
+    return _.map found, (record) -> _.head _.at record, returnPath
 
 module.exports = Transcript
