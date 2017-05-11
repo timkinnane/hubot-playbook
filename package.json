@@ -8,7 +8,7 @@
   },
   "scripts": {
     "clean:coverage": "rm -r ./coverage/ && mkdir coverage",
-    "clean:docs": "rm -r ./docs/ && mkdir docs",
+    "clean:docs": "rm -r ./docs/coverage & rm -r ./docs/test",
     "clean:compile": "rm -r ./lib/ && mkdir lib",
     "lint": "coffeelint ./src ./test",
     "lint:dev": "coffeelint ./src ./test -q",

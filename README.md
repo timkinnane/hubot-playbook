@@ -11,22 +11,16 @@ Conversation branching library for Hubots. Development ongoing, docs to come...
 [![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg)](http://commitizen.github.io/cz-cli/)
 [![Join the chat at https://gitter.im/hubot-playbook/Lobby](https://img.shields.io/gitter/room/nwjs/nw.js.svg)](https://gitter.im/hubot-playbook/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-# Setup
+## Usage & Development
 
-## Prerequisites
+Playbook is a conversation branching library for Hubots, with many utilities.
 
-Getting started with Playbook depends on setting up a new [Hubot](https://hubot.github.com/), then just add the Playbook library...
+It's still in pre-release state and docs are on the way, but if you'd like to
+start using stable builds, please look at the demo used for integration testing.
 
-You will need [node.js and npm](https://docs.npmjs.com/getting-started/installing-node).
-Once those are installed, we can install the hubot generator and dev tools used by Playbook:
+[Demo scripts](demo/scripts) illustrating conversation processing, and are [tested](demo/test/Usage_test.coffee) by [Hubot Pretend](https://github.com/timkinnane/hubot-pretend)
 
-Globals: `npm install -g coffee-script gulp-cli nodemon yo generator-hubot`
-
-Follow the rest of the [getting started with hubot steps](https://github.com/github/hubot/blob/master/docs/index.md#getting-started-with-hubot).
-
-Add Playbook to your bot: `npm install --save hubot-playbook`
-
-Look at [examples] and [docs] for how to use Playbook and it's modules to add conversational logic to your bots.
+[See the first draft doc regarding modules and provided features here](docs/modules.md).
 
 ## TODO
 
@@ -36,6 +30,7 @@ Look at [examples] and [docs] for how to use Playbook and it's modules to add co
 - Add Outline module, to define behavior models in YML and load from S3 etc
 - Integrate enter/path/branch listeners with Conditioner for semantic matchers
 - Load outlines from yaml (including external stores like S3)
+- Helpers for adapter UI payloads, for buttons and cards in messenger etc
 
 ### Slated refactors
 
