@@ -7,9 +7,9 @@
     "node": "^4.4.x"
   },
   "scripts": {
-    "clean:coverage": "rm -r ./coverage/ && mkdir coverage",
-    "clean:docs": "rm -r ./docs/coverage & rm -r ./docs/test",
-    "clean:compile": "rm -r ./lib/ && mkdir lib",
+    "clean:coverage": "rimraf coverage",
+    "clean:docs": "rimraf docs/coverage docs/test",
+    "clean:compile": "rimraf lib",
     "lint": "coffeelint ./src ./test",
     "lint:dev": "coffeelint ./src ./test -q",
     "unit": "npm run clean:coverage && mocha",
@@ -73,6 +73,7 @@
     "mochawesome": "^2.2.0",
     "npm-run-all": "^4.0.2",
     "onchange": "^3.2.1",
+    "rimraf": "^2.6.1",
     "semantic-release": "^6.3.6",
     "sinon": "^2.2.0",
     "sinon-chai": "^2.10.0",
