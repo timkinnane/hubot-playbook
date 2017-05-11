@@ -1,6 +1,5 @@
 {
   "name": "hubot-playbook",
-  "version": "0.0.0-development",
   "description": "Conversation branching library for Hubots.",
   "main": "lib/index.js",
   "engines": {
