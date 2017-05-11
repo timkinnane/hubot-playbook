@@ -2,7 +2,7 @@
   "name": "hubot-playbook",
   "version": "0.0.0-development",
   "description": "Conversation branching library for Hubots.",
-  "main": "lib/Playbook.js",
+  "main": "lib/index.js",
   "engines": {
     "node": "^4.4.x"
   },
