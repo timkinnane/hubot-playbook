@@ -3,8 +3,8 @@ _ = require 'lodash'
 {Dialogue, Scene, Director, Transcript} = require './modules'
 
 ###*
- * Playbook is a conversation branching library for Hubots, with many utilities.
- * Modules are available as properties and their instances as collection items.
+ * Playbook is a conversation branching library for Hubots, with many utilities
+ * Modules are available as properties and their instances as collection items
  * @param  {Robot}     robot - Hubot Robot instance
 ###
 class Playbook
@@ -66,7 +66,7 @@ class Playbook
   ###*
    * Create and enter Scene
    * @param  {String} [type]    - Scene type
-   * @param  {Mixed} args...    - Scene.enter args ./modules/Scene.coffee
+   * @param  {Mixed} args       - Scene.enter args ./modules/Scene.coffee
    * @return {Dialogue|Boolean} - Enter result, Dialogue or false if failed
   ###
   sceneEnter: (args...) ->
@@ -80,7 +80,7 @@ class Playbook
    * Create scene and setup listener to enter
    * @param  {String}   listenType - Robot listener type: hear|respond
    * @param  {RegExp}   regex      - Match pattern
-   * @param  {Mixed}    args...    - Scene constructor args
+   * @param  {Mixed}    args       - Scene constructor args
    * @param  {Function} callback   - Callback to fire after entered
    * @return {Scene}               - New Scene instance
   ###

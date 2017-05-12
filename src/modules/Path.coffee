@@ -10,11 +10,12 @@ Base = require './Base'
  *                               - regex for listener
  *                               - string for sending on match OR
  *                               - callback to fire on match
- * @param  {Object} [opts]     - Config key/vals
+ * @param {Object} [options] - Key/val options for config
+ * @param {String} [key]     - Key name for this instance
 ###
 class Path extends Base
-  constructor: (robot, branches, opts) ->
-    super 'path', robot, opts
+  constructor: (robot, branches, args...) ->
+    super 'path', robot, args...
     @branches = []
     @closed = true # no branches yet, default to closed
     if branches?

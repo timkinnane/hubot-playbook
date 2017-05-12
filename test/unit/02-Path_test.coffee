@@ -31,16 +31,13 @@ describe 'Path', ->
       @namespace = Path: require '../../src/modules/Path'
       @constructor = sinon.spy @namespace, 'Path'
 
-    context 'with branches and options (key)', ->
+    context 'with branches', ->
 
       beforeEach ->
         @path = new @namespace.Path pretend.robot, [
           [ /left/, 'Ok, going left!' ]
           [ /right/, 'Ok, going right!' ]
-        ], key: 'which-way'
-
-      it 'stores the key', ->
-        @path.config.key.should.equal 'which-way'
+        ]
 
       it 'creates branches', ->
         @path.addBranch.args.should.eql [

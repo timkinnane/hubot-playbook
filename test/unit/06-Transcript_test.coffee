@@ -11,8 +11,8 @@ Pretend = require 'hubot-pretend'
 pretend = new Pretend '../scripts/shh.coffee'
 {Transcript, Director, Scene, Dialogue, Base} = require '../../src/modules'
 
-class Module extends Base
-  constructor: (opts) -> super 'module', pretend.robot, opts
+class MockModule extends Base
+  constructor: (args...) -> super 'module', pretend.robot, args...
 
 describe 'Transcript', ->
 
@@ -76,7 +76,7 @@ describe 'Transcript', ->
 
       beforeEach ->
         @transcript = new Transcript pretend.robot, save: false
-        @module = new Module key: 'foo'
+        @module = new MockModule 'foo'
         @module.on 'mockEvent', (args...) =>
           @transcript.recordEvent 'mockEvent', args...
 
@@ -91,7 +91,7 @@ describe 'Transcript', ->
         it 'records default instance attributes', ->
           @transcript.records[0].should.containSubset instance:
             name: @module.name
-            config: key: @module.config.key
+            key: @module.key
             id: @module.id
 
         it 'records default response attributes', ->
@@ -112,7 +112,7 @@ describe 'Transcript', ->
       context 'with transcript key', ->
 
         beforeEach ->
-          @transcript.config.key = 'test-key'
+          @transcript.key = 'test-key'
           @module.emit 'mockEvent', @res
 
         it 'records event with key property', ->
@@ -150,32 +150,6 @@ describe 'Transcript', ->
           @transcript.records[0].should.containSubset message:
             room: 'testing'
 
-      context 'with instance key', ->
-
-        beforeEach ->
-          @moduleA = new Module key: 'A'
-          @moduleB = new Module key: 'B'
-          @moduleC = new Module key: 'C'
-          @transcript.config.instanceKeys = ['B', 'C']
-          @transcript.config.instanceAtts = 'id'
-          pretend.robot.on 'mockEvent', (args...) =>
-            @transcript.recordEvent 'mockEvent', args...
-          pretend.robot.emit 'mockEvent'
-          @moduleA.emit 'mockEvent'
-          @moduleB.emit 'mockEvent'
-          @moduleC.emit 'mockEvent'
-
-        it 'records instances matching key', ->
-          @transcript.records.should.eql [
-            time: @now
-            event: 'mockEvent'
-            instance: id: @moduleB.id
-          ,
-            time: @now
-            event: 'mockEvent'
-            instance: id: @moduleC.id
-          ]
-
       context 'on event without res argument', ->
 
         beforeEach ->
@@ -187,7 +161,7 @@ describe 'Transcript', ->
             event: 'mockEvent'
             instance:
               name: @module.name
-              config: key: @module.config.key
+              key: @module.key
               id: @module.id
           ]
 
@@ -203,7 +177,7 @@ describe 'Transcript', ->
             event: 'mockEvent'
             instance:
               name: @module.name
-              config: key: @module.config.key
+              key: @module.key
               id: @module.id
           ]
 
@@ -341,47 +315,43 @@ describe 'Transcript', ->
       @transcript.records = [
         time: 0
         event: 'match'
-        instance: config: key: 'time'
+        instance: key: 'time'
         message: user: name: 'jon', text: 'now'
       ,
         time: 0
         event: 'match'
-        instance: config: key: 'direction'
+        instance: key: 'direction'
         message: user: name: 'jon', text: 'left'
       ,
         time: 0
         event: 'match'
-        instance: config: key: 'time'
+        instance: key: 'time'
         message: user: name: 'luc', text: 'later'
       ,
         time: 0
         event: 'match'
-        instance: config: key: 'direction'
+        instance: key: 'direction'
         message: user: name: 'luc', text: 'right'
       ]
 
     context 'with record subset matcher', ->
 
-      beforeEach ->
-        @transcript.findRecords message: user: name: 'jon'
-
       it 'returns records matching given attributes', ->
-        @transcript.findRecords.returnValues[0].should.eql [
+        @transcript.findRecords message: user: name: 'jon'
+        .should.eql [
           time: 0
           event: 'match'
-          instance: config: key: 'time'
+          instance: key: 'time'
           message: user: name: 'jon', text: 'now'
         ,
           time: 0
           event: 'match'
-          instance: config: key: 'direction'
+          instance: key: 'direction'
           message: user: name: 'jon', text: 'left'
         ]
 
     context 'with record subset and path matcher', ->
 
-      beforeEach ->
-        @transcript.findRecords message: user: name: 'jon', 'message.user.text'
-
       it 'returns only the values at path', ->
-        @transcript.findRecords.returnValues[0].should.eql [ 'now', 'left' ]
+        @transcript.findRecords message: user: name: 'jon', 'message.user.text'
+        .should.eql [ 'now', 'left' ]

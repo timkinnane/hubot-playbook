@@ -258,19 +258,19 @@ describe 'Dialogue', ->
     beforeEach ->
       @dialogue = new Dialogue @res
 
-    context 'with a prompt, branches and options', ->
+    context 'with a prompt, branches and key', ->
 
       beforeEach ->
         @path = @dialogue.addPath 'Turn left or right?', [
           [ /left/, 'Ok, going left!' ]
           [ /right/, 'Ok, going right!' ]
-        ], key: 'which-way'
+        ], 'which-way'
 
       it 'returns new Path instance', ->
         @path.should.be.instanceof @dialogue.Path
 
       it 'passes options to path', ->
-        @path.config.key.should.eql 'which-way'
+        @path.key.should.eql 'which-way'
 
       it 'sends the prompt', ->
         @dialogue.send.should.have.calledWith 'Turn left or right?'

@@ -2,33 +2,31 @@ _ = require 'lodash'
 Base = require './Base'
 
 _.mixin 'hasKeys': (obj, keys) ->
-  return false unless _.isObject obj
-  return 0 is _.size _.difference keys, _.keys obj
+  0 is _.size _.difference keys, _.keys obj
+
+_.mixin 'pickHas': (obj, pickKeys) ->
+  _.omitBy _.pick(obj, pickKeys), _.isUndefined
 
 ###*
- * Keep a record of events and Playbook conversation attributes
- * Transcript can record all events on the Robot or a specified module instance
- * @param {Robot}  robot  - Hubot Robot instance
- * @param {Object} [opts] - Config options:
- *                          key: for grouping records
- *                          events: array of event names to record
- *                          responseAtts: Hubot Response attribute paths (array)
- *                          to record from each event containing a response;
- *                          defaults keep message and match subpaths
- *                          instanceAtts: as above, for Playbook module atts
- *                          defaults keep name, key and id
+ * Keep a record of configured events and emmitted data. Can record any events
+ * emitted by the robot or just those originating from a given instance
+ * Config keys:
+ * - events: array of event names to record
+ * - responseAtts: Hubot Response attribute keys to add to record
+ * - instanceAtts: as above, for Playbook module instance attributes
+ * @param {Object} [options] - Key/val options for config
+ * @param {String} [key]     - Key name for this instance
 ###
 class Transcript extends Base
-  constructor: (robot, opts) ->
+  constructor: (args...) ->
     @defaults =
       save: true
       events: ['match', 'mismatch', 'catch', 'send']
-      instanceKeys: []
-      instanceAtts: ['name', 'config.key', 'id' ]
+      instanceAtts: ['name', 'key', 'id' ]
       responseAtts: ['match']
       messageAtts: ['user.id', 'user.name', 'room', 'text']
 
-    super 'transcript', robot, opts
+    super 'transcript', args...
     _.castArray @config.instanceAtts if @config.instanceAtts?
     _.castArray @config.responseAtts if @config.responseAtts?
     _.castArray @config.messageAtts if @config.messageAtts?
@@ -50,20 +48,15 @@ class Transcript extends Base
   recordEvent: (event, args...) ->
     instance = args.shift() if _.hasKeys args[0], ['name', 'id', 'config']
     response = args.shift() if _.hasKeys args[0], ['robot', 'message']
-
-    if _.size @config.instanceKeys
-      return unless instance?
-      return unless instance.config.key in @config.instanceKeys
-
     record = time: _.now(), event: event
-    record.key = @config.key if @config.key?
+    record.key = @key if @key?
 
     if instance? and @config.instanceAtts?
-      record.instance = _.pick instance, @config.instanceAtts
+      record.instance = _.pickHas instance, @config.instanceAtts
     if response? and @config.responseAtts?
-      record.response = _.pick response, @config.responseAtts
+      record.response = _.pickHas response, @config.responseAtts
     if response? and @config.messageAtts?
-      record.message = _.pick response.message, @config.messageAtts
+      record.message = _.pickHas response.message, @config.messageAtts
 
     record.other = args unless _.isEmpty args
 

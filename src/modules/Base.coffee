@@ -1,15 +1,21 @@
 _ = require 'lodash'
 
 ###*
- * Base class inherited by modules for consistent structure and common behaviour
- * Inherits EventEmitter so all modules can emit events.
- * @param  {String} name  - The module/class name
- * @param  {Robot} robot  - Robot instance
+ * Common structure and behaviour inherited by all Playbook modules
+ * Provides a unique ID, error handling, robot event routing and accepts
+ * options and named key as final arguments
+ * If defaults exist, they merge with passed options to provide config object
+ * @param {String} name      - The module/class name
+ * @param {Robot}  robot     - Robot instance
+ * @param {Object} [options] - Key/val options for config
+ * @param {String} [key]     - Key name for this instance
 ###
 class Base
-  constructor: (@name, @robot, options={}) ->
+  constructor: (@name, @robot, args...) ->
     @error 'Module requires a name' unless _.isString @name
     @error 'Module requires a robot object' unless _.isObject @robot
+    options = args.shift() if _.isObject args[0]
+    @key = args.shift() if _.isString args[0]
     @log = @robot.logger
     @config = _.defaults options, @defaults
     @id = _.uniqueId()

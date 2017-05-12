@@ -9,9 +9,10 @@ Dialogue = require './Dialogue'
  * - entering a user scene will engage the user
  * - entering a room scene will engage the whole room
  * - entering a direct scene will engage the user in that room only
- * @param  {Robot}  robot  - Hubot Robot instance
- * @param  {String} [type] - Type of scene: user(default)|room|direct
- * @param  {Object} [opts] - For dialogue config, e.g set reply method
+ * @param {Robot}  robot     - Hubot Robot instance
+ * @param {String} [type]    - Type of scene: user(default)|room|direct
+ * @param {Object} [options] - Key/val options for config
+ * @param {String} [key]     - Key name for this instance
 ###
 class Scene extends Base
   constructor: (robot, args...) ->

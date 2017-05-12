@@ -5,17 +5,18 @@ Path = require './Path'
 ###*
  * Controller for multiple-choice dialogue interactions
  * Credit to lmarkus/hubot-conversation for the original concept
- * @param  {Response} res   - Hubot Response object
- * @param  {Object} [opts]  - Key/val options for config
+ * @param {Response} res     - Hubot Response object
+ * @param {Object} [options] - Key/val options for config
+ * @param {String} [key]     - Key name for this instance
 ###
 class Dialogue extends Base
-  constructor: (@res, opts) ->
+  constructor: (@res, args...) ->
     @defaults =
       sendReplies: false # will send without addressing reply to sender
       timeout: parseInt process.env.DIALOGUE_TIMEOUT or 30000
       timeoutText: process.env.DIALOGUE_TIMEOUT_TEXT or
         'Timed out! Please start again.'
-    super 'dialogue', @res.robot, opts
+    super 'dialogue', @res.robot, args...
     @Path = Path
     @path = null
     @ended = false
@@ -82,23 +83,21 @@ class Dialogue extends Base
 
   ###*
    * Add a dialogue path, with branches to follow and a prompt (optional)
-   * @param  {String} [prompt]  - To send on path setup
-   * @param  {Array} [branches] - Arguments for each brancch, each containing:
-   *                              - regex for listener
-   *                              - string for sending on match
-   *                              AND/OR
-   *                              - callback to fire on match
-   * @param  {Object} [opts]    - Config key/vals
-   * @return {Path}             - New path instance
+   * Any new path added overwrites the previous
+   * @param  {String} [prompt]   - To send on path setup
+   * @param  {Array}  [branches] - Arguments for each brancch containing:
+   *                               - regex for listener
+   *                               - string for sending on match AND/OR
+   *                               - callback to fire on match
+   * @param {Object} [options]   - Key/val options for path
+   * @param {String} [key]       - Key name for this path
+   * @return {Path}              - New path instance
    * TODO: when .send uses promise, return promise that resolves with @path
   ###
   addPath: (args...) ->
-    prompt = args.shift() if _.isString args[0]
-    branches = args.shift() if _.isArray args[0]
-    opts = if _.isObject args[0] then opts = args.shift() else {}
-    @path = new @Path @robot, branches, opts # current path overwrites previous
-    @send prompt if prompt? # kick-off dialogue exchange
-    @startTimeout() if branches?
+    @send args.shift() if _.isString args[0]
+    @path = new @Path @robot, args...
+    @startTimeout() if @path.branches.length
     return @path
 
   ###*
