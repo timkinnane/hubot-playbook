@@ -14,11 +14,11 @@
 # Author:
 #   Tim Kinnane
 #
-Playbook = require '../../lib'
+{playbook} = require '../../lib'
 
 module.exports = (robot) ->
 
-  new Playbook robot
+  playbook.use robot
   .sceneHear /knock/, 'user', (res, dlg) ->
     dlg.addPath "Who's there?", [
       /.*/, (res, dlg) ->

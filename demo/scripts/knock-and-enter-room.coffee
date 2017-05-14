@@ -19,10 +19,10 @@
 # Author:
 #   Tim Kinnane
 #
-Playbook = require '../../lib'
 
 module.exports = (robot) ->
-  pb = new Playbook robot
+  pb = require '../../lib'
+  .use robot
 
   # knock to enter
   enterScene = pb.sceneHear /knock/, 'direct', sendReplies: true, (res, dlg) ->

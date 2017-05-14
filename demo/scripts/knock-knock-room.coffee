@@ -14,7 +14,7 @@
 # Author:
 #   Tim Kinnane
 #
-Playbook = require '../../lib'
+{playbook} = require '../../lib'
 
 module.exports = (robot) ->
 
@@ -23,5 +23,4 @@ module.exports = (robot) ->
     who2: (res, dlg) -> dlg.addPath "#{ res.match[0] } who?", [/.*/, steps.lol]
     lol: (res, dlg) -> dlg.send "lol"
 
-  new Playbook robot
-  .sceneHear /knock/, 'room', steps.who1
+  playbook.use(robot).sceneHear /knock/, 'room', steps.who1
