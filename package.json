@@ -13,6 +13,7 @@
     "lint:dev": "coffeelint ./src ./test -q",
     "unit": "npm run clean:coverage && mocha",
     "unit:dev": "npm run unit -- --reporter progress --bail",
+    "debug" : "mocha --reporter list --no-colors --watch --inspect --debug-brk",
     "unit:docs": "npm run unit -- --reporter mocha-simple-html-reporter",
     "coverage": "istanbul report lcovonly text",
     "coveralls": "cat coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js",
