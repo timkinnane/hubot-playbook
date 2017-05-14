@@ -49,8 +49,11 @@
   },
   "homepage": "https://github.com/timkinnane/hubot-playbook#readme",
   "dependencies": {
+    "handlebars": "^4.0.8",
+    "handlebars-intl": "^1.1.2",
     "hooker": "^0.2.3",
-    "lodash": "^4.17.4"
+    "lodash": "^4.17.4",
+    "yamljs": "^0.2.10"
   },
   "devDependencies": {
     "chai": "^3.5.0",

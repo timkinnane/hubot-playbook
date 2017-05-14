@@ -26,8 +26,7 @@ start using stable builds, please look at the demo used for integration testing.
 
 ### Beta in development
 
-- Add Adlib module, parse messages with template tags using brain data
-- Add Outline module, to define behavior models in YML and load from S3 etc
+- Add methods for users to populate data for template tag context with Improv
 - Integrate enter/path/branch listeners with Conditioner for semantic matchers
 - Load outlines from yaml (including external stores like S3)
 - Helpers for adapter UI payloads, for buttons and cards in messenger etc
