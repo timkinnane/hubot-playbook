@@ -47,7 +47,7 @@ describe 'Playbook - singleton', ->
       .get()
       playbook.foo = 'bar'
       playbook = require '../../src'
-      .recreate()
+      .create()
       should.not.exist playbook.foo
 
 describe 'Playbook', ->
@@ -55,7 +55,7 @@ describe 'Playbook', ->
   beforeEach ->
     pretend.startup()
     playbook = require '../../src'
-    .recreate().use pretend.robot
+    .create().use pretend.robot
     @clock = sinon.useFakeTimers()
     @now = _.now()
 

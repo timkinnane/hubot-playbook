@@ -168,5 +168,5 @@ class PlaybookSingleton
 module.exports =
   playbook: PlaybookSingleton.get()
   get: -> PlaybookSingleton.get()
-  recreate: -> PlaybookSingleton.new()
+  create: -> PlaybookSingleton.new()
   use: (robot) -> PlaybookSingleton.get().use robot

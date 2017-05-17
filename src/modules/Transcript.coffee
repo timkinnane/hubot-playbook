@@ -11,6 +11,7 @@ _.mixin 'pickHas': (obj, pickKeys) ->
  * Keep a record of configured events and emmitted data. Can record any events
  * emitted by the robot or just those originating from a given instance
  * Config keys:
+ * - save: store records in hubot brain
  * - events: array of event names to record
  * - responseAtts: Hubot Response attribute keys to add to record
  * - instanceAtts: as above, for Playbook module instance attributes

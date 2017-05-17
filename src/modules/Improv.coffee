@@ -7,29 +7,76 @@ HandlebarsIntl.registerWith Handlebars
 ###*
  * Merge template tags with contextual content (using handlebars), from app
  * environment, user attributes or manually populated keys.
- * Config:
- * fallback: Fallback content replace any unknowns
- * replacement: Replaces entire messages containing unknowns, overrides fallback
- * locale: Locale for format localisation - yahoo/handlebars-intl
- * formats: Additional named date/time formats
- * @param {Robot}        robot   - Hubot Robot instance
- * @param {Array|String} @admins - Usernames authorised to populate context data
+ * TODO: support fallback/replacement and locale/formats
+ * Config keys:
+ * - save: keep app context in hubot brain
+ * - fallback: Fallback content replace any unknowns within messages
+ * - replacement: Replaces all messages containing unknowns, overrides fallback
+ * - locale: Locale for format internationalization - yahoo/handlebars-intl
+ * - formats: Additional named date/time formats
+ * @param {Robot}  robot     - Hubot Robot instance
+ * @param {Array}  [admins]  - Usernames authorised to populate context data
  * @param {Object} [options] - Key/val options for config
  * @param {String} [key]     - Key name for this instance
 ###
 class Improv extends Base
-  constructor: (robot, @admins, args...) ->
+  constructor: (robot, args...) ->
     @defaults =
+      save: true
       fallback: process.env.IMRPOV_FALLBACK or 'unknown'
       replace: process.env.IMRPOV_REPLACE or null
-      locale: process.env.IMRPOV_LOCALE or null
-      formats: null
-      appData: null
+      locale: process.env.IMRPOV_LOCALE or 'en'
+      formats: {}
+      app: {}
+    @admins = if _.isArray args[0] then args.shift() else []
+    @extensions = []
 
     super 'improv', robot, args...
-    @intl.locale = @config.locale if @config.locale?
-    @intl.formats = @config.formats if @config.formats?
+    if @config.save
+      @robot.brain.set 'app', {} unless @robot.brain.get 'app'
+      @appData = _.defaultsDeep @config.app, @robot.brain.get 'app'
+    else
+      @appData = @config.app
+
     robot.responseMiddleware (c, n, d) => @middleware.call @, c, n, d
+
+  ###*
+   * Allows adding extra functions to provide further context
+   * e.g. extend merge data with user transcript history...
+   * improv.extend (data) ->
+   *  transcript.findRecords message: user: id: data.user.id
+   * @param  {Function} dataFunc - Receives merge data, to more return data
+  ###
+  extendData: (dataFunc) ->
+    return @extensions.push dataFunc if _.isFunction dataFunc
+
+  ###*
+   * Provdies current known user and app data for merging with tempalte
+   * TODO: allow tagging another users data by merge with robot.brain.userForId
+   * @param  {Object} user - User (usually from middleware context)
+   * @return {Object}      - App and user (from brain) data, with any extras
+  ###
+  mergeData: (user) ->
+    data =
+      user: name: user.name, id: user.id
+      app: @appData
+    return _.reduce @extensions, (merge, dataFunc) ->
+      _.defaultsDeep merge, dataFunc merge
+    , data
+
+  ###*
+   * Merge templated messages with data (replace unknowns as configured)
+   * @param  {Array}  string  - One or more strings being posted
+   * @param  {Object} context - Key/vals for template tags (app and/or user)
+   * @return {Array}          - Strings populated with context values
+   * TODO: use fallback/replace for unknowns
+  ###
+  parse: (strings, context) ->
+    return _.map strings, (string) =>
+      template = Handlebars.compile string
+      return template context, data: intl:
+        locales: @config.locale
+        formats: @config.formats
 
   ###*
    * Middleware checks for template tags and parses if required
@@ -38,33 +85,11 @@ class Improv extends Base
    * @param  {Function} done    - Initial (final) completion callback
   ###
   middleware: (context, next, done) ->
-    if _.anyMatch context.strings, /{{.*}}/
-      context.strings = @parse strings, @mergeData context.response.message.user
+    hasTag = _.some context.strings, (str) -> str.match /{{.*}}/
+    if hasTag
+      data = @mergeData context.response.message.user
+      context.strings = @parse context.strings, data
     next done
-
-  ###*
-   * Provdies currnet known user and app data for merging with tempalte
-   * @param  {[type]} user [description]
-   * @return {[type]}      [description]
-  ###
-  mergeData: (user) ->
-    data = {}
-    data.app = _.extend @config.appData, robot.brain.get 'appData'
-    data.user = robot.brain.userForId user.id if user?
-    return data
-
-  ###*
-   * Merge templated messages with data
-   * TODO: use fallback/replace for unknowns
-   * @param  {Array}  string  - One or more strings being posted
-   * @param  {Object} data    - Key/vals for template tags (app and/or user)
-   * @return {Array}          - Strings populated with context values
-  ###
-  parse: (strings, data) ->
-    return _.map strings (string) ->
-      template = Handlebars.compile string
-      return template data, data: intl: @intl if @intl?
-      return template data
 
   # TODO: look through array of messages for unknowns
   prepare: (strings) ->
@@ -77,3 +102,5 @@ class Improv extends Base
 
   # TODO: remove data from context
   forget: (key) ->
+
+module.exports = Improv
