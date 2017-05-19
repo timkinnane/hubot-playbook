@@ -10,6 +10,7 @@ Conversation branching library for Hubots. Development ongoing, docs to come...
 [![devDependencies Status](https://david-dm.org/timkinnane/hubot-playbook/dev-status.svg)](https://david-dm.org/timkinnane/hubot-playbook?type=dev)
 [![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg)](http://commitizen.github.io/cz-cli/)
 [![Join the chat at https://gitter.im/hubot-playbook/Lobby](https://img.shields.io/gitter/room/nwjs/nw.js.svg)](https://gitter.im/hubot-playbook/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![License](http://img.shields.io/badge/license-MIT-yellow.svg?style=flat)](https://github.com/timkinnane/hubot-playbook/blob/master/LICENSE.md)
 
 ## Usage & Development
 
@@ -27,12 +28,12 @@ start using stable builds, please look at the demo used for integration testing.
 ### Beta in development
 
 - Add methods for users to populate data for template tag context with Improv
-- Integrate enter/path/branch listeners with Conditioner for semantic matchers
 - Load outlines from yaml (including external stores like S3)
-- Helpers for adapter UI payloads, for buttons and cards in messenger etc
+- Integrate enter/path/branch listeners with Conditioner for semantic matchers
 
 ### Slated refactors
 
+- Improve Improv to parse with internationalization
 - Update Dialogue to return promise on send and receive
 - Replace hoooker package with Hubot middleware, for scene enter etc
 - Update demo bot tests to with unique listeners so all can be loaded at once
@@ -48,7 +49,8 @@ start using stable builds, please look at the demo used for integration testing.
 
 ### Release Roadmap
 
-- Translate strings matching and sending with i18n-node
+- Helpers for adapter UI payloads, for buttons and cards in messenger etc
+- Translate sent strings and match terms with i18n-node
 - NLP for dialogue handlers with rasa.ai
 - Queue dialogue.receive calls to ensure messages process synchronously
 - Optional config for send middleware to throttle hearing consecutive res
