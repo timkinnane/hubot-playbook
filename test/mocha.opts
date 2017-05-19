@@ -1,3 +1,4 @@
+--icu-data-dir=node_modules/icu4c-data
 --compilers coffee:coffee-script/register
 --require ./test/cover.js
 --require mocha-clean
