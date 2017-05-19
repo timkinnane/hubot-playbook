@@ -10,9 +10,9 @@ pretend = new Pretend "../scripts/shh.coffee"
 {Base} = require '../../src/modules'
 
 class Module extends Base
-  constructor: (robot, opts) ->
-    @defaults = test: true
-    super 'module', robot, opts
+  constructor: (robot, args...) ->
+    @config = test: true
+    super 'module', robot, args...
 
 describe 'Base', ->
 
@@ -28,10 +28,10 @@ describe 'Base', ->
 
   describe '.constructor', ->
 
-    context 'with name, robot and options', ->
+    context 'with name, robot and options and key', ->
 
       beforeEach ->
-        @base = new Base 'test', pretend.robot, test: 'testing'
+        @base = new Base 'test', pretend.robot, test: 'testing', 'basey-mcbase'
 
       it 'stores the robot', ->
         @base.robot.should.eql pretend.robot
@@ -39,8 +39,11 @@ describe 'Base', ->
       it 'inherits the robot logger', ->
         @base.log.should.eql pretend.robot.logger
 
-      it 'setup config with passed options', ->
-        @base.config.test.should.equal 'testing'
+      it 'calls configure with options', ->
+        @base.configure.should.have.calledWith test: 'testing'
+
+      it 'sets key attribute', ->
+        @base.key.should.equal 'basey-mcbase'
 
     context 'without robot', ->
 
@@ -105,3 +108,65 @@ describe 'Base', ->
 
       it 'threw', ->
         @module.error.should.have.threw
+
+  describe '.configure', ->
+
+    beforeEach ->
+      @base = new Base 'module', pretend.robot,
+        setting: true
+        deep:
+          foo: 'bar'
+          baz: false
+
+    it 'saves new options', ->
+      @base.configure foo: true
+      @base.config.foo.should.be.true
+
+    it 'overrides existing config', ->
+      @base.configure setting: false
+      @base.config.setting.should.be.false
+
+    it 'overrides deep attributes', ->
+      @base.configure deep: baz: true
+      @base.config.should.eql
+        setting: true
+        deep:
+          foo: 'bar'
+          baz: true
+
+    it 'throws when not given options', ->
+      try @base.configure 'not an object'
+      @base.configure.should.have.threw
+
+    context 'with config inherited from module', ->
+
+      beforeEach ->
+        @module = new Module pretend.robot
+
+      it 'used inherited config', ->
+        @module.config.test.should.be.true
+
+      it 'overwrites inherited when options conflict', ->
+        @module.configure test: false
+        @module.config.test.should.be.false
+
+  describe '.emit', ->
+
+    it 'emits event via the robot with instance as first arg', ->
+      @mockEvent = sinon.spy()
+      pretend.robot.on 'mockEvent', @mockEvent
+      @base = new Base 'module', pretend.robot
+      @base.emit 'mockEvent', foo: 'bar'
+      @mockEvent.should.have.calledWith @base, foo: 'bar'
+
+  describe '.on', ->
+
+    beforeEach ->
+      @mockEvent = sinon.spy()
+
+    it 'relays events from robot with instance as first arg', ->
+      @base = new Base 'module', pretend.robot
+      @mockEvent = sinon.spy()
+      @base.on 'mockEvent', @mockEvent
+      pretend.robot.emit 'mockEvent', @base, foo: 'bar'
+      @mockEvent.should.have.calledWith @base, foo: 'bar'

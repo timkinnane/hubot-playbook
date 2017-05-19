@@ -126,14 +126,6 @@ describe 'Director', ->
         it 'stores the blacklisted rooms from env', ->
           @director.names.should.eql ['Labour']
 
-    context 'with options arg for reply', ->
-
-      beforeEach ->
-        @director = new Director pretend.robot, deniedReply: "DENIED!"
-
-      it 'stores passed options in config (overriding defaults)', ->
-        @director.config.deniedReply.should.equal "DENIED!"
-
     context 'with invalid option for type', ->
 
       beforeEach ->

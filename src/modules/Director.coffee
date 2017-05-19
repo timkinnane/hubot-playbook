@@ -20,7 +20,7 @@ hooker = require 'hooker'
 ###
 class Director extends Base
   constructor: (robot, args...) ->
-    @defaults =
+    @config =
       type: 'whitelist'
       scope: 'username'
       deniedReply: process.env.DENIED_REPLY or "Sorry, I can't do that."

@@ -14,10 +14,12 @@ Base = require './Base'
  * @param {String} [key]     - Key name for this instance
 ###
 class Path extends Base
-  constructor: (robot, branches, args...) ->
+  constructor: (robot, args...) ->
+    branches = args.shift() if _.isArray args[0]
     super 'path', robot, args...
+
     @branches = []
-    @closed = true # no branches yet, default to closed
+    @closed = true
     if branches?
       @error "Branches must be Array" unless _.isArray branches
       branches = [branches] unless _.isArray branches[0] # cast 2D array
@@ -48,7 +50,7 @@ class Path extends Base
    * @return {Object}     Contains .handler (function) or null if not configured
   ###
   catch: ->
-    return unless @config.catchMessage or @config.catchCallback
+    return unless @config.catchMessage? or @config.catchCallback?
     return handler: (res, dialogue) =>
       dialogue.send @config.catchMessage if @config.catchMessage?
       @config.catchCallback res, dialogue if @config.catchCallback?

@@ -139,7 +139,7 @@ describe 'Path', ->
     context 'with message and callback in config', ->
 
       beforeEach ->
-        @path = new Path pretend.robot, null,
+        @path = new Path pretend.robot,
           catchMessage: 'always be catching'
           catchCallback: @callback
         @path.catch()
@@ -160,12 +160,9 @@ describe 'Path', ->
 
     context 'with no catch configured', ->
 
-      beforeEach ->
-        @path = new Path pretend.robot
-        @path.catch()
-
       it 'returns undefined', ->
-        should.not.exist @path.catch.returnValues[0]
+        path = new Path pretend.robot
+        should.not.exist path.catch()
 
   describe '.match', ->
 

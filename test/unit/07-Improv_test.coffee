@@ -14,186 +14,218 @@ pretend = new Pretend '../scripts/shh.coffee'
 
 describe 'Improv', ->
 
-  beforeEach ->
-    pretend.startup()
-    @tester = pretend.user 'tester', room: 'testing'
+  context 'singleton', ->
 
-    _.forIn Improv.prototype, (val, key) ->
-      sinon.spy Improv.prototype, key if _.isFunction val
+    before ->
+      pretend.startup()
+      @improv = Improv.get pretend.robot
 
-    # generate first response for mock events
-    @tester.send('test').then =>
-      @res = pretend.responses.incoming[0]
-      @dialogue = new Dialogue @res
+    after ->
+      pretend.shutdown()
+      @improv.reset()
 
-  afterEach ->
-    pretend.shutdown()
+    context 'without args', ->
 
-    _.forIn Improv.prototype, (val, key) ->
-      Improv.prototype[key].restore() if _.isFunction val
+      it 'returns existing instance', ->
+        Improv.get pretend.robot
+        .should.eql @improv
 
-  describe 'constructor', ->
+      it 'still have the same robot', ->
+        Improv.get pretend.robot
+        .robot.should.eql pretend.robot
 
-    context 'with defaults', ->
+    context 'with args', ->
 
-      it 'has no localisation data', ->
-        @improv = new Improv pretend.robot
-        should.not.exist @improv.intl
+      it 'returns existing instance with new configuration', ->
+        Improv.get pretend.robot, foo: 'bar'
+        .should.eql @improv
+        .and.have.deep.property 'config.foo'
 
-      it 'has no admins', ->
-        @improv = new Improv pretend.robot
-        @improv.admins.should.eql []
-
-    context 'when given names of admins', ->
-
-      it 'keeps array for later', ->
-        @improv = new Improv pretend.robot, ['Marius', 'Sulla', 'Radius']
-        @improv.admins.should.eql ['Marius', 'Sulla', 'Radius']
-
-    it 'attaches response middleware to robot', ->
-      @improv = new Improv pretend.robot
-      pretend.robot.responseMiddleware.should.have.calledOnce
-
-  describe '.extendData', ->
-
-    it 'stores a function in extensions array', ->
-      dataFunc = sinon.spy()
-      @improv = new Improv pretend.robot
-      @improv.extendData dataFunc
-      @improv.extensions.should.eql [dataFunc]
-
-  describe '.mergeData', ->
-
-    context 'with app data passed as option', ->
-
-      it 'merges app data with user data', ->
-        @improv = new Improv pretend.robot,
-          save: false
-          app: instance: name: 'The Hub'
-        @improv.mergeData @res.message.user
-        .should.eql
-          user: name: @tester.name, id: @tester.id
-          app: instance: name: 'The Hub'
-
-    context 'with app data loaded from brain', ->
-
-      it 'merges app data with user data', ->
-        pretend.robot.brain.set 'app', instance: owner: 'Hubot'
-        @improv = new Improv pretend.robot,
-          app: instance: name: 'The Hub'
-        @improv.mergeData @res.message.user
-        .should.eql
-          user: name: @tester.name, id: @tester.id
-          app: instance:
-            owner: 'Hubot'
-            name: 'The Hub'
-
-    context 'with extension functions added', ->
-
-      it 'merges data with results of functions', ->
-        @improv = new Improv pretend.robot
-        @improv.extendData -> custom1: 'foo'
-        @improv.extendData -> custom2: 'bar'
-        @improv.mergeData @res.message.user
-        .should.eql
-          user: name: @tester.name, id: @tester.id
-          app: {}
-          custom1: 'foo'
-          custom2: 'bar'
-
-      it 'deep merges existing data with extensions', ->
-        @improv = new Improv pretend.robot
-        @improv.extendData -> user: type: 'human'
-        @improv.mergeData @res.message.user
-        .should.eql
-          user:
-            name: @tester.name,
-            id: @tester.id
-            type: 'human'
-          app: {}
-
-  describe '.parse', ->
+  context 'instance', ->
 
     beforeEach ->
-      @improv = new Improv pretend.robot
+      pretend.startup()
+      @tester = pretend.user 'tester', room: 'testing'
+      @improv = Improv.get pretend.robot
 
-    # context 'with empty data', ->
-    #
-    #   it 'uses fallback value', ->
-    #     @improv.parse ['hey {{ user.name }}, pay {{ product.price }}'], {}
-    #     .should.eql ['hey unknown, pay unknown']
+      _.forIn @improv, (val, key) =>
+        sinon.spy @improv, key if _.isFunction val
 
-    context 'with deep context object', ->
+      # generate first response for mock events
+      @tester.send('test').then =>
+        @res = pretend.responses.incoming.pop()
 
-      it 'populates message template with data at path', ->
-        context = instance: name: 'The Hub'
-        @improv.parse ['welcome to {{ instance.name }}'], context
-        .should.eql ['welcome to The Hub']
+    afterEach ->
+      pretend.shutdown()
+      @improv.reset()
 
-    context 'without locale configured', ->
+      _.forIn @improv, (val, key) =>
+        @improv[key].restore() if _.isFunction val
 
-      it 'returns default values', ->
-        @improv.parse ['{{ formatDate date }}']
-        , date: new Date '2001-01-31'
-        .should.eql ['1/31/2001']
+    describe 'constructor', ->
 
-    context 'with locales and formats configured', ->
+      it 'attaches response middleware to robot', ->
+        pretend.robot.responseMiddleware.should.have.calledOnce
+
+    describe '.reset', ->
+
+      it 'restarts with defaults', ->
+        @improv.config = null
+        @improv.extensions = null
+        @improv.reset()
+        @improv.config.should.not.be.null
+        @improv.extensions.should.not.be.null
+
+    describe '.configure', ->
+
+      it 'configures and returns singleton', ->
+        result = @improv.configure admins: ['Marius', 'Sulla']
+        result.should.eql @improv
+        .and.have.deep.property 'config.admins'
+
+    describe '.extend', ->
+
+      it 'stores a function in extensions array', ->
+        func = sinon.spy()
+        @improv.extend func
+        @improv.extensions.should.eql [func]
+
+    describe '.mergeData', ->
+
+      context 'with data passed as option', ->
+
+        it 'merges data with user data', ->
+          @improv.configure
+            save: false
+            data: instance: name: 'Hub'
+          .mergeData @res.message.user
+          .should.eql
+            user: @res.message.user
+            instance: name: 'Hub'
+
+      context 'with data loaded from brain', ->
+
+        it 'merges data with user data', ->
+          pretend.robot.brain.set 'improv', instance: owner: 'Hubot'
+          @improv.configure
+            data: instance: name: 'The Hub'
+          .mergeData @res.message.user
+          .should.eql
+            user: @res.message.user
+            instance:
+              owner: 'Hubot'
+              name: 'The Hub'
+
+      context 'with extension functions added', ->
+
+        it 'merges data with results of functions', ->
+          @improv
+          .extend -> custom1: 'foo'
+          .extend -> custom2: 'bar'
+          .mergeData @res.message.user
+          .should.eql
+            user: @res.message.user
+            custom1: 'foo'
+            custom2: 'bar'
+
+        it 'deep merges existing data with extensions', ->
+          @improv.reset()
+          @improv
+          .extend -> user: type: 'human'
+          .mergeData @res.message.user
+          .should.eql
+            user: _.assignIn @res.message.user, type: 'human'
+
+    describe '.parse', ->
+
+      # context 'with empty data', ->
+      #
+      #   it 'uses fallback value', ->
+      #     @improv.parse ['hey {{ user.name }}, pay {{ product.price }}'], {}
+      #     .should.eql ['hey unknown, pay unknown']
+
+      context 'with deep context object', ->
+
+        it 'populates message template with data at path', ->
+          @improv.parse ['welcome to {{ instance }}'], instance: 'The Hub'
+          .should.eql ['welcome to The Hub']
+
+      context 'with intl disabled', ->
+
+        it 'returns default values', ->
+          @improv.parse ['{{ formatDate date }}'],
+            date: new Date '2001-01-31'
+          .should.eql ['31/01/2001']
+
+      context 'with formats configured', ->
+
+        it 'renders using configured formats', ->
+          @improv.configure
+            formats: date: short:
+              day: 'numeric'
+              month: 'long'
+              year: 'numeric'
+          .parse ['{{formatDate date "short"}}'], date: new Date '2001-01-31'
+          .should.eql ['31 January 2001']
+
+      context 'with locales and (possibly) ICU data', ->
+
+        it 'renders relative values if ICU data loaded', ->
+          @improv.configure
+            locales: 'fr-FR'
+            formats: date: short:
+              day: 'numeric'
+              month: 'long'
+              year: 'numeric'
+          localDate = @improv.parse ['{{formatDate date "short"}}'],
+            date: new Date '2001-01-31'
+          console.log "\tICU #{ @improv.icuInfo } (e.g. #{ localDate })"
+          unless @improv.icu.icu_small
+            localDate.should.eql ['31 janvier 2001']
+          else
+            localDate.should.eql ['31 January 2001']
+
+    describe '.middleware', ->
 
       beforeEach ->
-        @improv.config.locales = 'fr-FR'
-        @improv.config.formats.date = short:
-          day: 'numeric'
-          month: 'long'
-          year: 'numeric'
-        @dateContext = date: new Date()
-        @dateStrings = ['{{ formatDate date "short"}}']
+        @improv.configure data: instance: name: 'The Hub'
 
-      # it 'renders relative values', ->
-      #   @improv.parse @dateStrings, @dateContext
-      #   .should.eql ['17 mai 2007']
+      context 'with series of hubot sends', ->
 
-  describe '.middleware', ->
+        beforeEach ->
+          @res.reply 'hello you'
+          @res.reply 'hi {{ user.name }}'
+          pretend.observer.next()
 
-    beforeEach ->
-      @improv = new Improv pretend.robot,
-        app: instance: name: 'The Hub'
+        it 'gets called whenever robot sends', ->
+          @improv.middleware.should.have.calledTwice
 
-    context 'with series of hubot sends', ->
+      context 'when message has no tempalte tags', ->
 
-      beforeEach ->
-        @res.reply 'hello you'
-        @res.reply 'hi {{ user.name }}'
-        pretend.observer.next()
+        beforeEach ->
+          @res.reply 'hello you'
+          pretend.observer.next()
 
-      it 'gets called whenever robot sends', ->
-        @improv.middleware.should.have.calledTwice
+        it 'does not parse strings', ->
+          @improv.parse.should.not.have.called
 
-    context 'when message has no tempalte tags', ->
+      context 'when message has template tags', ->
 
-      beforeEach ->
-        @res.reply 'hello you'
-        pretend.observer.next()
+        beforeEach ->
+          @res.send 'testing'
+          , 'hi {{ user.name }}'
+          , 'welcome to {{ instance.name }}'
+          pretend.observer.next()
 
-      it 'does not parse strings', ->
-        @improv.parse.should.not.have.called
+        it 'parses strings', ->
+          @improv.parse.should.have.calledOnce
 
-    context 'when message has template tags', ->
+        it 'merges data with user object', ->
+          @improv.mergeData.should.have.calledWith @res.message.user
 
-      beforeEach ->
-        @res.send 'testing'
-        , 'hi {{ user.name }}'
-        , 'welcome to {{ app.instance.name }}'
-        pretend.observer.next()
-
-      it 'parses strings', ->
-        @improv.parse.should.have.calledOnce
-
-      it 'merges data with user object', ->
-        @improv.mergeData.should.have.calledWith @res.message.user
-
-      it 'sends the merged strings to room', ->
-        pretend.messages.slice 2
-        .should.eql [
-          [ 'testing', 'hubot', 'hi tester' ]
-          [ 'testing', 'hubot', 'welcome to The Hub' ]
-        ]
+        it 'sends the merged strings to room', ->
+          pretend.messages.slice 2
+          .should.eql [
+            [ 'testing', 'hubot', 'hi tester' ]
+            [ 'testing', 'hubot', 'welcome to The Hub' ]
+          ]

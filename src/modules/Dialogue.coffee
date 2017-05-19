@@ -11,7 +11,7 @@ Path = require './Path'
 ###
 class Dialogue extends Base
   constructor: (@res, args...) ->
-    @defaults =
+    @config =
       sendReplies: false # will send without addressing reply to sender
       timeout: parseInt process.env.DIALOGUE_TIMEOUT or 30000
       timeoutText: process.env.DIALOGUE_TIMEOUT_TEXT or

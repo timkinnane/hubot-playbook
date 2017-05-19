@@ -1,5 +1,5 @@
 {
-  "name": "playbook-dmeo",
+  "name": "playbook-demo",
   "version": "0.0.0",
   "private": true,
   "author": "timkinnane <tim@nestedcode.com>",
@@ -17,14 +17,13 @@
   "devDependencies": {
     "chai": "^3.5.0",
     "co": "^4.6.0",
-    "hubot-pretend": "^0.5.1",
+    "hubot-pretend": "^0.6.0",
     "mocha": "^3.3.0",
     "mocha-clean": "^1.0.0",
-    "mochawesome": "^2.2.0",
     "sinon": "^1.17.7",
     "sinon-chai": "^2.8.0"
   },
   "engines": {
-    "node": "0.10.x"
+    "node": "^4.4.x"
   }
 }

@@ -15,7 +15,6 @@ YAML = require 'yamljs'
 ###
 class Outline extends Base
   constructor: (robot, @bits, args...) ->
-    @defaults = {}
     super 'outline', robot, args...
     @bits = YAML.load @bits if _.isString @bits and fs.existsSync @bits
     _.forEach _.filter(@bits, 'listen'), (bit) => @setup bit
@@ -35,6 +34,5 @@ class Outline extends Base
     if bit.next?
       _.forEach _.castArray(bit.next), (key) =>
         next = @bits[bit.next]
-        console.log next
         # dlg.addPath config: catchMessage: bit.catch if bit.catch?
         # dlg.addBranch next.condition, (res, dlg) => @do next, res, dlg

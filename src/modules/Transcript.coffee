@@ -21,7 +21,7 @@ _.mixin 'pickHas': (obj, pickKeys) ->
 ###
 class Transcript extends Base
   constructor: (args...) ->
-    @defaults =
+    @config =
       save: true
       events: ['match', 'mismatch', 'catch', 'send']
       instanceAtts: ['name', 'key', 'id' ]
