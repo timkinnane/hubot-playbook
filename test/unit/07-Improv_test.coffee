@@ -3,7 +3,6 @@ chai = require 'chai'
 should = chai.should()
 chai.use require 'sinon-chai'
 chai.use require 'chai-subset'
-Promise = require 'bluebird'
 
 _ = require 'lodash'
 co = require 'co'
