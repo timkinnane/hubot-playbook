@@ -19,7 +19,7 @@
 module.exports = (robot) ->
   require '../../lib'
   .use robot
-  .sceneHear /knock/, 'direct', (res, dlg) ->
+  .sceneHear /knock/, scope: 'direct', (res, dlg) ->
     dlg.addPath "Who's there?", [ /.*/, (res, dlg) ->
       dlg.addPath "#{ res.match[0] } who?", [ /.*/, "lol" ]
     ]

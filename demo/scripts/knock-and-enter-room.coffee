@@ -25,13 +25,14 @@ module.exports = (robot) ->
   .use robot
 
   # knock to enter
-  enterScene = pb.sceneHear /knock/, 'direct', sendReplies: true, (res, dlg) ->
-    dlg.send "You may enter!"
+  enterScene = pb.sceneHear /knock/,
+    scope: 'direct',
+    sendReplies: true
+  , (res, dlg) -> dlg.send "You may enter!"
 
   # scene resposne adds a whitelist director to another scene
   whitelistScene = pb.sceneHear /allow (.*)/, (res) ->
     room = res.match[1]
-    # @send "OK, allowing #{room}"
     roomDirector = pb.director
       deniedReply: "Sorry, #{room} users only."
       scope: 'room'
@@ -41,7 +42,6 @@ module.exports = (robot) ->
   # scene resposne adds a blacklist director to another scene
   blacklistScene = pb.sceneHear /deny (.*)/, (res) ->
     room = res.match[1]
-    # @send "OK, denying #{room}"
     roomDirector = pb.director
       deniedReply: "Sorry, no #{room} users."
       type: 'blacklist'

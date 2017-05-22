@@ -23,4 +23,5 @@ module.exports = (robot) ->
     who2: (res, dlg) -> dlg.addPath "#{ res.match[0] } who?", [/.*/, steps.lol]
     lol: (res, dlg) -> dlg.send "lol"
 
-  playbook.use(robot).sceneHear /knock/, 'room', steps.who1
+  playbook.use robot
+  .sceneHear /knock/, scope: 'room', steps.who1

@@ -5,28 +5,28 @@ Dialogue = require './Dialogue'
 ###*
  * Handle array of participants engaged in dialogue with bot
  * Credit to lmarkus/hubot-conversation for the original concept
+ * Config keys:
+ * - scope: How to address participants; user(default)|room|direct
+ * - sendReplies: Toggle replying/sending (prefix message with "@user")
  * Engaged bot will ignore global listeners, only respond to dialogue choices
  * - entering a user scene will engage the user
  * - entering a room scene will engage the whole room
  * - entering a direct scene will engage the user in that room only
  * @param {Robot}  robot     - Hubot Robot instance
- * @param {String} [type]    - Type of scene: user(default)|room|direct
  * @param {Object} [options] - Key/val options for config
  * @param {String} [key]     - Key name for this instance
 ###
 class Scene extends Base
   constructor: (robot, args...) ->
-    @type = if _.isString args[0] then args.shift() else 'user'
-    @error "invalid scene type" if @type not in [ 'room', 'user', 'direct' ]
-
+    @config = scope: 'user'
     super 'scene', robot, args...
+    @config.sendReplies ?= true if @config.scope is 'room'
+
+    validTypes = [ 'room', 'user', 'direct' ]
+    @error "invalid scene scope" if @config.scope not in validTypes
+
     @Dialogue = Dialogue
     @engaged = {}
-
-    # override default for room type only if not explicitly set
-    @config.sendReplies ?= true if @type is 'room'
-
-    # attach middleware
     @robot.receiveMiddleware (c, n, d) => @middleware.call @, c, n, d
 
   ###*
@@ -78,33 +78,36 @@ class Scene extends Base
   respond: (args...) -> return @listen 'respond', args...
 
   ###*
-   * Identify the source of a message relative to the scene type
+   * Identify the source of a message relative to the scene scope
    * @param  {Response} res - Hubot Response object
    * @return {String}       - ID of room, user or composite
   ###
   whoSpeaks: (res) ->
-    return switch @type
+    return switch @config.scope
       when 'room' then return res.message.room.toString()
       when 'user' then return res.message.user.id.toString()
       when 'direct' then return "#{ res.message.user.id }_#{ res.message.room }"
 
   ###*
    * Engage the participants in dialogue
-   * @param  {Response} res  - Hubot Response object
-   * @param  {Object} [opts] - Options for dialogue, merged with scene config
-   * @return {Dialogue}      - The started dialogue
+   * @param  {Response} res       - Hubot Response object
+   * @param  {Object}   [options] - Dialogue options merged with scene config
+   * @param  {Mixed}    args      - Any additional args for Dialogue constructor
+   * @return {Dialogue}           - The started dialogue
   ###
-  enter: (res, opts={}) ->
+  enter: (res, args...) ->
     participants = @whoSpeaks res
     return if @inDialogue participants
-    dialogue = new @Dialogue res, _.defaults @config, opts
+    options = if _.isObject args[0] then args.shift() else {}
+    options = _.defaults {}, @config, options
+    dialogue = new @Dialogue res, options, args...
     dialogue.on 'timeout', (dlg, res) =>
       @exit res, 'timeout'
     dialogue.on 'end', (dlg, res) =>
       @exit res, "#{ if dlg.path?.closed then '' else 'in' }complete"
     @engaged[participants] = dialogue
     @emit 'enter', res, dialogue
-    @log.info "Engaging #{ @type } #{ participants } in dialogue"
+    @log.info "Engaging #{ @config.scope } #{ participants } in dialogue"
     return dialogue
 
   ###*
@@ -120,22 +123,22 @@ class Scene extends Base
       @engaged[participants].clearTimeout()
       delete @engaged[participants]
       @emit 'exit', res, status
-      @log.info "Disengaged #{ @type } #{ participants } (#{ status })"
+      @log.info "Disengaged #{ @config.scope } #{ participants } (#{ status })"
       return true
-    @log.debug "Cannot disengage #{ participants }, not in #{ @type } scene"
+    @log.debug "Cannot disengage #{ participants }, not in scene"
     return false
 
   ###*
    * End all engaged dialogues
   ###
   exitAll: ->
-    @log.info "Disengaging all in #{ @type } scene"
+    @log.info "Disengaging all in #{ @config.scope } scene"
     _.invokeMap @engaged, 'clearTimeout'
     @engaged = []
     return
 
   ###*
-   * Get the dialogue for engaged participants (relative to scene type)
+   * Get the dialogue for engaged participants (relative to scene scope)
    * @param  {String} participants - ID of user, room or composite
    * @return {Dialogue}            - Engaged dialogue instance
   ###

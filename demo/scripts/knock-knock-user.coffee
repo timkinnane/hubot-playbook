@@ -19,7 +19,7 @@
 module.exports = (robot) ->
 
   playbook.use robot
-  .sceneHear /knock/, 'user', (res, dlg) ->
+  .sceneHear /knock/, scope: 'user', (res, dlg) ->
     dlg.addPath "Who's there?", [
       /.*/, (res, dlg) ->
         dlg.addPath "#{ res.match[0] } who?", [

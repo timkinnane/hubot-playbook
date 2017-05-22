@@ -34,54 +34,48 @@ describe 'Scene', ->
 
   describe 'constructor', ->
 
-    context 'without type or options', ->
+    context 'without options', ->
 
       beforeEach ->
         @scene = new Scene pretend.robot
 
-      it 'defaults to `user` type', ->
-        @scene.type.should.equal 'user'
-
-      it 'does not have any configured options', ->
-        @scene.config.should.eql {}
+      it 'defaults to `user` scope', ->
+        @scene.config.scope.should.equal 'user'
 
       it 'attaches the receive middleware to robot', ->
         pretend.robot.receiveMiddleware.should.have.calledOnce
 
-    context 'without type, with options', ->
+    context 'with options', ->
 
       beforeEach ->
         @scene = new Scene pretend.robot, sendReplies: true
 
-      it 'defaults to user type', ->
-        @scene.type.should.equal 'user'
-
       it 'stored options in config object', ->
         @scene.config.sendReplies.should.be.true
 
-    context 'with type (room), without options', ->
+    context 'with room scope option', ->
 
       beforeEach ->
-        @scene = new Scene pretend.robot, 'room'
+        @scene = new Scene pretend.robot, scope: 'room'
 
-      it 'accepts given room type', ->
-        @scene.type.should.equal 'room'
+      it 'accepts given room scope', ->
+        @scene.config.scope.should.equal 'room'
 
-      it 'stores config with default options for type', ->
+      it 'stores config with default options for scope', ->
         @scene.config.sendReplies.should.be.true
 
-    context 'with invalid type', ->
+    context 'with invalid scope', ->
 
       beforeEach ->
-        try @scene = new Scene pretend.robot, 'monkey'
+        try @scene = new Scene pretend.robot, scope: 'monkey'
 
-      it 'throws error when given invalid type', ->
+      it 'throws error when given invalid scope', ->
         Scene.prototype.constructor.should.have.threw
 
   describe '.listen', ->
 
     beforeEach ->
-      @scene = new Scene pretend.robot, 'user'
+      @scene = new Scene pretend.robot, scope: 'user'
 
     context 'with hear type and message matching regex', ->
 
@@ -146,7 +140,7 @@ describe 'Scene', ->
   describe '.hear', ->
 
     beforeEach ->
-      @scene = new Scene pretend.robot, 'user'
+      @scene = new Scene pretend.robot
       @scene.hear /test/, -> null
 
     it 'calls .listen with hear listen type and arguments', ->
@@ -156,7 +150,7 @@ describe 'Scene', ->
   describe '.respond', ->
 
     beforeEach ->
-      @scene = new Scene pretend.robot, 'user'
+      @scene = new Scene pretend.robot
       @scene.respond /test/, -> null
 
     it 'calls .listen with respond listen type and arguments', ->
@@ -168,7 +162,7 @@ describe 'Scene', ->
     context 'user scene', ->
 
       beforeEach ->
-        @scene = new Scene pretend.robot, 'user'
+        @scene = new Scene pretend.robot, scope: 'user'
         @scene.whoSpeaks @res
 
       it 'returns the ID of engaged user', ->
@@ -177,7 +171,7 @@ describe 'Scene', ->
     context 'room sceene', ->
 
       beforeEach ->
-        @scene = new Scene pretend.robot, 'room'
+        @scene = new Scene pretend.robot, scope: 'room'
         @scene.whoSpeaks @res
 
       it 'returns the room ID', ->
@@ -186,7 +180,7 @@ describe 'Scene', ->
     context 'direct scene', ->
 
       beforeEach ->
-        @scene = new Scene pretend.robot, 'direct'
+        @scene = new Scene pretend.robot, scope: 'direct'
         @scene.whoSpeaks @res
 
       it 'returns the concatenated user ID and room ID', ->
@@ -197,7 +191,7 @@ describe 'Scene', ->
     context 'user scene', ->
 
       beforeEach ->
-        @scene = new Scene pretend.robot, 'user'
+        @scene = new Scene pretend.robot, scope: 'user'
         @dialogue = @scene.enter @res
 
       it 'saves engaged Dialogue instance with user ID', ->
@@ -206,7 +200,7 @@ describe 'Scene', ->
     context 'room scene', ->
 
       beforeEach ->
-        @scene = new Scene pretend.robot, 'room'
+        @scene = new Scene pretend.robot, scope: 'room'
         @dialogue = @scene.enter @res
 
       it 'saves engaged Dialogue instance with room key', ->
@@ -215,7 +209,7 @@ describe 'Scene', ->
     context 'direct scene', ->
 
       beforeEach ->
-        @scene = new Scene pretend.robot, 'direct'
+        @scene = new Scene pretend.robot, scope: 'direct'
         @dialogue = @scene.enter @res
 
       it 'saves engaged Dialogue instance with composite key', ->
@@ -417,7 +411,7 @@ describe 'Scene', ->
     context 'room scene, in scene', ->
 
       beforeEach ->
-        @scene = new Scene pretend.robot, 'room'
+        @scene = new Scene pretend.robot, scope: 'room'
         @scene.enter @res
         @roomEngaged = @scene.inDialogue 'testing'
         @userEngaged = @scene.inDialogue 'tester'
@@ -431,7 +425,7 @@ describe 'Scene', ->
     context 'direct scene, in scene', ->
 
       beforeEach ->
-        @scene = new Scene pretend.robot, 'direct'
+        @scene = new Scene pretend.robot, scope: 'direct'
         @scene.enter @res
         @roomEngaged = @scene.inDialogue 'testing'
         @userEngaged = @scene.inDialogue 'tester'
