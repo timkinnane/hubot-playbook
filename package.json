@@ -25,7 +25,6 @@
     "test": "run-s -s lint unit coverage compile demo",
     "precommit": "npm test",
     "prepush": "npm test",
-    "prepublish": "run-s -s lint unit:docs coverage compile demo",
     "commit": "git-cz",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
     "which-icu": "node -e 'console.dir(\"npm install icu4c-data@\"+process.config.variables.icu_ver_major+process.config.variables.icu_endianness)'",
