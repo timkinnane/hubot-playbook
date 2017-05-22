@@ -69,7 +69,7 @@
     "coveralls": "^2.13.1",
     "cz-conventional-changelog": "^2.0.0",
     "handlebars-intl": "^1.1.2",
-    "hubot-pretend": "^0.6.0",
+    "hubot-pretend": "^0.7.1",
     "husky": "^0.13.3",
     "istanbul": "^0.4.5",
     "mocha": "^3.2.0",

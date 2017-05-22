@@ -90,7 +90,7 @@ class ImprovSingleton
     mergeData: (user) ->
       dataSources = [@config.data, user: user]
       dataSources.push @robot.brain.get 'improv' if @config.save
-      data = _.defaultsDeep dataSources...
+      data = _.defaultsDeep {}, dataSources...
       return _.reduce @extensions, (merge, func) ->
         _.defaultsDeep merge, func merge
       , data
@@ -145,9 +145,14 @@ class ImprovSingleton
   ###*
    * Static method either updates existing or creates new Improv
    * Only attaches robot first time, but uses extra args to reconfigure if given
-   * @return {Improv} - New or existing instance
+   * If given no arguments, it will just fetch and return the existing instance
+   * @param  {Robot}  [robot]   - The hubot instance to use
+   * @param  {Object} [options] - Key/val options for config
+   * @param  {String} [key]     - Key name for this instance
+   * @return {Improv}           - New or existing instance
   ###
   @get: (robot, args...) ->
+    return instance unless robot?
     unless instance?
       instance = new ImprovPrivate robot, args...
     else

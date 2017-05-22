@@ -2,7 +2,6 @@ sinon = require 'sinon'
 chai = require 'chai'
 should = chai.should()
 chai.use require 'sinon-chai'
-
 _ = require 'lodash'
 
 Pretend = require 'hubot-pretend'
@@ -56,14 +55,15 @@ describe 'Playbook', ->
     pretend.startup()
     playbook = require '../../src'
     .create().use pretend.robot
+    @tester = pretend.user 'tester', room: 'testing', id: 'user_111'
     @clock = sinon.useFakeTimers()
     @now = _.now()
 
-    pretend.user('tester').in('testing').send 'test'
-    .then => @res = pretend.responses.incoming[0]
-
     _.forIn playbook, (val, key) ->
       sinon.spy playbook, key if _.isFunction val
+
+    @tester.send 'test'
+    .then => @res = pretend.responses.incoming[0]
 
   afterEach ->
     pretend.shutdown()
@@ -109,34 +109,6 @@ describe 'Playbook', ->
 
   describe '.sceneEnter', ->
 
-    context 'with type, without options args', ->
-
-      beforeEach ->
-        @dialogue = playbook.sceneEnter 'room', @res
-
-      it 'makes a Scene (stored, not returned)', ->
-        playbook.scenes[0].should.be.instanceof playbook.Scene
-
-      it 'used the given room type', ->
-        playbook.scenes[0].type.should.equal 'room'
-
-      it 'returns a dialogue', ->
-        @dialogue.should.be.instanceof playbook.Dialogue
-
-      it 'enters scene, engaging room', ->
-        playbook.scenes[0].engaged['testing'].should.eql @dialogue
-
-    context 'with type and options args', ->
-
-      beforeEach ->
-        @dialogue = playbook.sceneEnter 'room', @res, reply: false
-
-      it 'used the given room type', ->
-        playbook.scenes[0].type.should.equal 'room'
-
-      it 'used the options argument', ->
-        @dialogue.config.sendReplies = false
-
     context 'without type or args (other than response)', ->
 
       beforeEach ->
@@ -144,7 +116,23 @@ describe 'Playbook', ->
 
       it 'makes scene with default user type', ->
         playbook.scenes[0].should.be.instanceof playbook.Scene
-        playbook.scenes[0].type.should.equal 'user'
+
+      it 'returns a dialogue', ->
+        @dialogue.should.be.instanceof playbook.Dialogue
+
+      it 'enters scene, engaging user (stores against id)', ->
+        playbook.scenes[0].engaged['user_111'].should.eql @dialogue
+
+    context 'with type and options args', ->
+
+      beforeEach ->
+        @dialogue = playbook.sceneEnter @res, scope: 'room', sendReplies: false
+
+      it 'used the given room type', ->
+        playbook.scenes[0].config.scope.should.equal 'room'
+
+      it 'passed the scene options to dialogue', ->
+        @dialogue.config.sendReplies = false
 
   describe '.sceneListen', ->
 
@@ -152,9 +140,9 @@ describe 'Playbook', ->
 
       beforeEach ->
         pretend.robot.hear /.*/, (@res) => null # hear all responses
-        opts = sendReplies: false
+        opts = sendReplies: false, scope: 'room'
         @listen = sinon.spy playbook.Scene.prototype, 'listen'
-        @scene = playbook.sceneListen 'hear', /test/, 'room', opts, (res) ->
+        @scene = playbook.sceneListen 'hear', /test/, opts, (res) ->
 
       afterEach ->
         @listen.restore()
@@ -163,11 +151,10 @@ describe 'Playbook', ->
         @scene.should.be.instanceof playbook.Scene
 
       it 'passed args to the scene', ->
-        playbook.scene.should.have.calledWith 'room', sendReplies: false
+        playbook.scene.should.have.calledWith sendReplies: false, scope: 'room'
 
       it 'calls .listen on the scene with type, regex and callback', ->
-        args = ['hear', /test/, sinon.match.func]
-        @listen.getCall(0).should.have.calledWith args...
+        @listen.should.have.calledWith 'hear', /test/, sinon.match.func
 
     context 'without scene args', ->
 
@@ -185,26 +172,27 @@ describe 'Playbook', ->
         playbook.scene.getCall(0).should.have.calledWith()
 
       it 'calls .listen on the scene with type, regex and callback', ->
-        args = ['hear', /test/, sinon.match.func]
-        @listen.getCall(0).should.have.calledWith args...
+        @listen.should.have.calledWith 'hear', /test/, sinon.match.func
 
   describe '.sceneHear', ->
 
     beforeEach ->
-      playbook.sceneHear /test/, 'room', (res) ->
+      playbook.sceneHear /test/, scope: 'room', (res) ->
 
     it 'calls .sceneListen with hear type and any other args', ->
-      args = ['hear', /test/, 'room', sinon.match.func]
-      playbook.sceneListen.getCall(0).should.have.calledWith args...
+      args = ['hear', /test/, scope: 'room', sinon.match.func]
+      playbook.sceneListen.lastCall
+      .should.have.calledWith args...
 
   describe '.sceneRespond', ->
 
     beforeEach ->
-      playbook.sceneRespond /test/, 'room', (res) ->
+      playbook.sceneRespond /test/, scope: 'room', (res) ->
 
     it 'calls .sceneListen with respond type and any other args', ->
-      args = ['respond', /test/, 'room', sinon.match.func]
-      playbook.sceneListen.getCall(0).should.have.calledWith args...
+      args = ['respond', /test/, scope: 'room', sinon.match.func]
+      playbook.sceneListen.getCall 0
+      .should.have.calledWith args...
 
   describe '.director', ->
 
@@ -262,7 +250,71 @@ describe 'Playbook', ->
         time: @now
         event: 'send'
         instance: name: 'dialogue'
+        strings: [ 'test' ]
       ]
+
+  describe '.improvise', ->
+
+    beforeEach ->
+      @improv_A = playbook.improvise()
+      @improv_B = playbook.improvise()
+
+    it 'returned an Improv singleton', ->
+      @improv_A.should.eql playbook.Improv.get()
+
+    it 'kept the singleton as property', ->
+      playbook.improv.should.eql playbook.Improv.get()
+
+    it 'subsequent calls return same instance', ->
+      @improv_A.should.eql @improv_B
+
+    context 'messages after called', ->
+
+      beforeEach ->
+        @res.send 'hello {{ user.name }}'
+        pretend.observer.next()
+
+      it 'parses messages with default context', ->
+        pretend.messages.pop().should.eql [ 'testing', 'hubot', 'hello tester' ]
+
+    context 'using custom data transforms', ->
+
+      beforeEach ->
+        playbook.improv.extend (data) ->
+          data.user.name = data.user.name.toUpperCase()
+          return data
+        @res.send 'hello {{ user.name }}'
+        pretend.observer.next()
+
+      it 'parses messages with extended context', ->
+        pretend.messages.pop().should.eql [ 'testing', 'hubot', 'hello TESTER' ]
+
+    context 'extended using transcript reocrds', ->
+
+      beforeEach ->
+        @scene = playbook.sceneEnter @res, scope: 'user', 'fav-color'
+        @transcript = playbook.transcribe @scene, events: 'match'
+        @scene.addPath 'what is your favourite colour?', [
+          [ /.*/, 'nice!' ]
+        ]
+        pretend.observer.next()
+        .then =>
+          @tester.send 'orange'
+        .then =>
+          playbook.improv.extend =>
+            user: favColor: _.head @transcript.findKeyMatches 'fav-color', 0
+        .then =>
+          @res.send 'mine is {{ user.favColor }} too!'
+          pretend.observer.next()
+
+      it 'merge the recorded answers with attribute tags', ->
+        pretend.messages.should.eql [
+          [ 'testing', 'tester', 'test' ],
+          [ 'testing', 'hubot', 'what is your favourite colour?' ],
+          [ 'testing', 'tester', 'orange' ],
+          [ 'testing', 'hubot', 'nice!' ],
+          [ 'testing', 'hubot', 'mine is orange too!' ]
+        ]
 
   describe '.shutdown', ->
 

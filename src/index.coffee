@@ -1,6 +1,6 @@
 _ = require 'lodash'
 
-{Dialogue, Scene, Director, Transcript} = require './modules'
+{Dialogue, Scene, Director, Transcript, Improv} = require './modules'
 
 ###*
  * Playbook is a conversation branching library for Hubots, with many utilities
@@ -22,14 +22,16 @@ class PlaybookSingleton
      * Init module collections and prototypes
     ###
     init: ->
-      @transcripts = []
-      @directors = []
-      @scenes = []
       @dialogues = []
-      @Transcript = Transcript
-      @Director = Director
-      @Dialogue = Dialogue
+      @scenes = []
+      @directors = []
+      @transcripts = []
+      @improv = null
       @Scene = Scene
+      @Dialogue = Dialogue
+      @Director = Director
+      @Transcript = Transcript
+      @Improv = Improv
 
     ###*
      * Attach Playbook to Hubot unless already done
@@ -65,28 +67,27 @@ class PlaybookSingleton
 
     ###*
      * Create and enter Scene
-     * @param  {String} [type]    - Scene type
-     * @param  {Mixed} args       - Scene.enter args
+     * @param  {Response} res     - Response object from entering participant
+     * @param  {Mixed}   [args]   - Both Scene and Dialogue constructor options
      * @return {Dialogue|Boolean} - Enter result, Dialogue or false if failed
     ###
-    sceneEnter: (args...) ->
-      type = args.shift() if typeof args[0] is 'string'
-      scene = new @Scene @robot, type
-      dialogue = scene.enter args...
+    sceneEnter: (res, args...) ->
+      scene = new @Scene @robot, args...
+      dialogue = scene.enter res, args...
       @scenes.push scene
       return dialogue
 
     ###*
      * Create scene and setup listener to enter
-     * @param  {String}   listenType - Robot listener type: hear|respond
-     * @param  {RegExp}   regex      - Match pattern
-     * @param  {Mixed}    args       - Scene constructor args
-     * @param  {Function} callback   - Callback to fire after entered
-     * @return {Scene}               - New Scene instance
+     * @param  {String}   type     - Robot listener type: hear|respond
+     * @param  {RegExp}   regex    - Match pattern
+     * @param  {Mixed}    args     - Scene constructor args
+     * @param  {Function} callback - Callback to fire after entered
+     * @return {Scene}             - New Scene instance
     ###
-    sceneListen: (listenType, regex, args..., callback) ->
+    sceneListen: (type, regex, args..., callback) ->
       scene = @scene args...
-      scene.listen listenType, regex, callback
+      scene.listen type, regex, callback
       return scene
 
     ###*
@@ -123,6 +124,7 @@ class PlaybookSingleton
 
     ###*
      * Create transcript and record a given module in one step
+     * TODO: allow passing instance key instead of object, to find from arrays
      * @param  {Mixed}  instance - A Playbook module (dialogue, scene, director)
      * @param  {Mixed}      args - Constructor args
      * @return {Transcript}      - The new transcript
@@ -135,8 +137,19 @@ class PlaybookSingleton
       return transcript
 
     ###*
+     * Initialise Improv singleton module, or update configuration if exists
+     * Access methods via `Playbook.improv` property
+     * @param {Object} [options] - Key/val options for config
+     * @param {String} [key]     - Key name for this instance
+     * @return {Improv} - Improv instance
+    ###
+    improvise: (args...) ->
+      @improv = @Improv.get @robot, args...
+      return @improv
+
+    ###*
      * Exit all scenes, end all dialogues
-     * TODO: detach listeners for scenes, directors and transcripts
+     * TODO: detach listeners for scenes, directors, transcripts and improv
     ###
     shutdown: ->
       @log.info 'Playbook shutting down'
