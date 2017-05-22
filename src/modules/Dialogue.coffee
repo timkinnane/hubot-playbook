@@ -5,6 +5,10 @@ Path = require './Path'
 ###*
  * Controller for multiple-choice dialogue interactions
  * Credit to lmarkus/hubot-conversation for the original concept
+ * Config keys:
+ * - sendReplies: Toggle replying/sending (prefix message with "@user")
+ * - timeout: Allowed time to reply (in miliseconds) before cancelling listeners
+ * - timeoutText: What to send when timeout reached, set null to not send
  * @param {Response} res     - Hubot Response object
  * @param {Object} [options] - Key/val options for config
  * @param {String} [key]     - Key name for this instance
@@ -12,7 +16,7 @@ Path = require './Path'
 class Dialogue extends Base
   constructor: (@res, args...) ->
     @config =
-      sendReplies: false # will send without addressing reply to sender
+      sendReplies: false
       timeout: parseInt process.env.DIALOGUE_TIMEOUT or 30000
       timeoutText: process.env.DIALOGUE_TIMEOUT_TEXT or
         'Timed out! Please start again.'
@@ -38,13 +42,16 @@ class Dialogue extends Base
 
   ###*
    * Send or reply with message as configured (@user reply or send to room)
-   * @param  {String} text Message text
+   * @param {String} strings Message strings
    * TODO: return promise that resolves when robot reply/send completes process
    * TODO: update tests that wait for observer to use promise instead
   ###
-  send: (text) ->
-    if @config.sendReplies then @res.reply text else @res.send text
-    @emit 'send', @res
+  send: (strings...) ->
+    if @config.sendReplies
+      sent = @res.reply strings...
+    else
+      sent = @res.send strings...
+    @emit 'send', @res, strings...
     return
 
   ###*

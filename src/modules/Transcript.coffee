@@ -39,7 +39,7 @@ class Transcript extends Base
     @records ?= []
 
   ###*
-   * Record given event in records array, save to hubot brain if configured
+   * Record given event details in array, save to hubot brain if configured to
    * Events emitted by Playbook always include module instance as first param
    * @param  {String} event   - The event name
    * @param  {Mixed} args...  - Args passed with the event, usually consists of:
@@ -60,7 +60,16 @@ class Transcript extends Base
     if response? and @config.messageAtts?
       record.message = _.pickHas response.message, @config.messageAtts
 
-    record.other = args unless _.isEmpty args
+    # strings are sent as additional args for sends, because dialogues can't get
+    # access to the generated response object without adding middleware, they
+    # only have the user's response being replied to, otherwise the robot's text
+    # is lost.
+    # TODO: once middleware returns a promise, it should resolve with the new
+    # response object sent by the robot, then send should be emitted with that
+    # so keeping the strings as an additional property won't be required and the
+    # records will be more consistently structured for querying an interaction
+    unless _.isEmpty args
+      if event is 'send' then record.strings = args else record.other = args
 
     @records.push record
     @emit 'record', record
@@ -111,7 +120,7 @@ class Transcript extends Base
 
   ###*
    * Filter records matching a subset, e.g. user name or instance key
-   # Optionally return the whole record or values for a given key
+   * Optionally return the whole record or values for a given key
    * @param  {Object} subsetMatch  - Key/s:value/s to match (accepts path key)
    * @param  {String} [returnPath] - Key or path within record to return
    * @return {Array}               - Whole records or selected values found
@@ -120,5 +129,19 @@ class Transcript extends Base
     found = _.filter @records, subsetMatch
     return found unless returnPath?
     return _.map found, (record) -> _.head _.at record, returnPath
+
+  # TODO: option filter by ID - e.g. only searching current module interactions
+  # TODO: option filter by User
+  ###*
+   * Shortcut for findRecords with a given key, useful for simple lookups
+   * @param  {String}  instanceKey - From the recorded instance to lookup
+   * @param  {Integer} [capture]   - Filter match by regex capture group subset
+   * @return {Array}               - Contains full match or just capture group
+  ###
+  findKeyMatches: (instanceKey, captureGroup) ->
+    subset = instance: key: instanceKey
+    path = 'response.match'
+    path+= "[#{ captureGroup }]" if captureGroup?
+    return @findRecords subset, path
 
 module.exports = Transcript

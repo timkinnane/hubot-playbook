@@ -149,8 +149,8 @@ describe 'Dialogue', ->
       it 'sends to the room from original res', ->
         pretend.messages.pop().should.eql [ 'hubot', 'test' ]
 
-      it 'emits send event', ->
-        @send.should.have.calledOnce
+      it 'emits send event with original response and sent strings', ->
+        @send.should.have.calledWith @dialogue, @res, 'test'
 
     context 'with config.sendReplies set to true', ->
 

@@ -38,7 +38,7 @@ class Base
   ###
   configure: (options) ->
     @error "Non-object received for config" unless _.isObject options
-    @config = _.defaultsDeep options, @config
+    @config = _.defaultsDeep {}, options, @config
     return @
 
   ###*
