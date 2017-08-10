@@ -44,3 +44,4 @@ compile
 .hubot_history
 .env
 .DS_Store
+/md-temp

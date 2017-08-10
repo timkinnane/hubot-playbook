@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="300px" height="300px" viewBox="0 0 300 300" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <defs></defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="playbook-logo">
+            <circle id="Oval" fill="#ADAAFF" cx="150" cy="150" r="150"></circle>
+            <path d="M54,188 L54,79 L75.8105469,69 L198,69 L198,188 L292,188 L292,191 L198,191 L198,217.535156 L176,231 L54,231 L54,191 L9,191 L9,188 L54,188 Z M57,81 L57,228 L175,228 L175,81 L57,81 Z M150.16347,159 L150.387246,159 L150.387246,175.676122 L139.360353,165.02786 L88.9946793,165.02786 C87.8930483,165.02786 87,164.129712 87,163.029901 L87,113.997959 C87,112.894517 87.8928987,112 88.9946793,112 L148.168791,112 C149.270422,112 150.16347,112.898148 150.16347,113.997959 L150.16347,159 Z" id="Combined-Shape-Copy" fill="#FFFFFF"></path>
+        </g>
+    </g>
+</svg>

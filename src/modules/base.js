@@ -1,9 +1,11 @@
 import _ from 'lodash'
 
 /**
- * Common structure and behaviour inherited by all Playbook modules
+ * Common structure and behaviour inherited by all Playbook modules.
+ *
  * Provides unique ID, error handling, event routing and accepts options and
- * named key as final arguments (inherited config is merged with options)
+ * named key as final arguments (inherited config is merged with options).
+ *
  * @param {string} name      The module/class name
  * @param {Robot}  robot     Robot instance
  * @param {Object} [options] Key/val options for config
@@ -24,9 +26,9 @@ class Base {
   }
 
   /**
-   * Generic error handling, logs and emits event before throwing
-   * @param {string} [err] Description of error (optional)
-   * @param {Error} [err]  Error instance (optional)
+   * Generic error handling, logs and emits event before throwing.
+   *
+   * @param {Error/string} err Error object or description of error
   */
   error (err) {
     if (_.isString(err)) {
@@ -38,7 +40,8 @@ class Base {
   }
 
   /**
-   * Merge options with defaults to produce configuration
+   * Merge options with defaults to produce configuration.
+   *
    * @param  {Object} options Key/vals to merge with defaults, existing config
    * @return {Base}           Self for chaining
   */
@@ -49,8 +52,9 @@ class Base {
   }
 
   /**
-   * Emit events using robot's event emmitter, allows listening from any module
-   * Prepends instance's unique ID, so event listens can be implicitly targeted
+   * Emit events using robot's event emmitter, allows listening from any module.
+   * Prepends instance's unique ID, so event listens can be implicitly targeted.
+   *
    * @param {string} event Name of event
    * @param {...*} [args]  Arguments passed to event
   */
@@ -59,7 +63,8 @@ class Base {
   }
 
   /**
-   * Fire callback on robot events if event's ID arguement matches this instance
+   * Fire callback on robot events if event ID arguement matches this instance.
+   *
    * @param {string}   event    Name of event
    * @param {Function} callback Function to call
   */
