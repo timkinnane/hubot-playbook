@@ -1,6 +1,6 @@
 ![Playbook Logo](https://cloud.githubusercontent.com/assets/1774379/21598936/27e49d9c-d1b9-11e6-9850-e210ddaf7fc9.png)
 
-Conversation branching library for Hubots. Development ongoing, docs to come...
+Playbook brings conversational context and branching to Hubot.
 
 [![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
 [![npm version](https://img.shields.io/npm/v/hubot-playbook.svg?style=flat)](https://www.npmjs.com/package/hubot-playbook)
@@ -12,12 +12,17 @@ Conversation branching library for Hubots. Development ongoing, docs to come...
 [![Join the chat at https://gitter.im/hubot-playbook/Lobby](https://img.shields.io/gitter/room/nwjs/nw.js.svg)](https://gitter.im/hubot-playbook/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![License](http://img.shields.io/badge/license-MIT-yellow.svg?style=flat)](https://github.com/timkinnane/hubot-playbook/blob/master/LICENSE.md)
 
+## Important
+
+Currently, Playbook requires a custom fork of hubot that adds promises to
+middleware - [hubot async](https://github.com/timkinnane/hubot-async) - to allow
+async features. Hopefully in later versions of hubot, async will be supported
+and Playbook can be used with any version from then on.
+
+It might be possible to use a limited feature set, but modular use is untested
+currently.
+
 ## Usage & Development
-
-Playbook is a conversation branching library for Hubots, with many utilities.
-
-It's still in pre-release state and docs are on the way, but if you'd like to
-start using stable builds, please look at the demo used for integration testing.
 
 [Demo scripts](demo/scripts) illustrating conversation processing, and are [tested](demo/test/Usage_test.coffee) by [Hubot Pretend](https://github.com/timkinnane/hubot-pretend)
 
@@ -27,13 +32,13 @@ start using stable builds, please look at the demo used for integration testing.
 
 ### Beta in development
 
+- es6 refactor
 - Add methods for users to populate data for template tag context with Improv
 - Load outlines from yaml (including external stores like S3)
 - Integrate enter/path/branch listeners with Conditioner for semantic matchers
 
 ### Slated refactors
 
-- Improve Improv to parse with internationalization
 - Update Dialogue to return promise on send and receive
 - Replace hoooker package with Hubot middleware, for scene enter etc
 - Update demo bot tests to with unique listeners so all can be loaded at once

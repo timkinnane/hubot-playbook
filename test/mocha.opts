@@ -1,6 +1,6 @@
---icu-data-dir=node_modules/icu4c-data
 --compilers coffee:coffee-script/register
---require ./test/cover.js
+--require source-map-support
 --require mocha-clean
+--require ./test/cover.js
 --recursive
 --reporter-options output=./docs/test/index.html
