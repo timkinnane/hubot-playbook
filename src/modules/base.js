@@ -10,6 +10,16 @@ import _ from 'lodash'
  * @param {Robot}  robot     Robot instance
  * @param {Object} [options] Key/val options for config
  * @param {string} [key]     Key name for this instance
+ *
+ * @example
+ *  class RadModule extends Base {
+ *    constructor (robot, args...) {
+ *      super('rad', robot, args...)
+ *    }
+ *  }
+ *  radInstance = new RadModule(robot, { radness: 'high' })
+ *  radInstance.id // == 'rad_1'
+ *  radInstance.configure({ radness: 'overload' }) // overwrites initial config
 */
 class Base {
   constructor (name, robot, ...args) {
@@ -22,7 +32,7 @@ class Base {
     if (_.isObject(args[0])) this.configure(args.shift())
     if (_.isString(args[0])) this.key = args.shift()
     this.log = this.robot.logger
-    this.id = _.uniqueId()
+    this.id = _.uniqueId(this.name)
   }
 
   /**
