@@ -2,7 +2,7 @@
 
 <html>
 <head>
-  <title>path.js.md</title>
+  <title>director.js.md</title>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
   <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
   <link rel="stylesheet" media="all" href="public/stylesheets/normalize.css" />
@@ -91,35 +91,43 @@
         
           
           
-          <h1>Path</h1>
+          <h1>Director</h1>
         
       </div>
 
       
         
-        <p><a name="Path"></a></p>
-<h2 id="path">Path</h2>
-<p>Paths and their child branches are the smallest and most essential node for
-conversations. Instead of listening for all triggers at all times, paths
-allow matching multiple choices in a tightly scoped context.</p>
-<p>A path usually contains one or more <em>branches</em> to follow when matched.</p>
-<p>A path is <em>opened</em> when branches added and <em>closed</em> when a branch is
-matched (unless more are added). Using brnach callbacks, the path can keep
-laying new branches to remain open, until finally a branch is matched
-without any new ones added.</p>
+        <p><a name="Director"></a></p>
+<h2 id="director">Director</h2>
+<p>Controls listeners and access to a scene (via audience blacklist/whitelist).</p>
+<p>Can use an <code>authorise</code> property (function) to allow or deny, as fallback for
+anyone not on the list. Authorise callback is given the user or room name and
+response object. Must return boolean to determine access.</p>
 <p><strong>Kind</strong>: global class  </p>
 <ul>
-<li><a href="#Path">Path</a><ul>
-<li><a href="#new_Path_new">new Path(robot, [branches], [options], [key])</a></li>
-<li><a href="#Path+addBranch">.addBranch(regex, [message], [callback])</a></li>
-<li><a href="#Path+_catch">._catch()</a> ⇒ <code>Object</code></li>
-<li><a href="#Path+match">.match(res)</a> ⇒ <code>Object</code> | <code>undefined</code></li>
+<li><a href="#Director">Director</a><ul>
+<li><a href="#new_Director_new">new Director(robot, [authorise], [options], [key])</a></li>
+<li><a href="#Director+add">.add(names)</a> ⇒ <a href="#Director"><code>Director</code></a></li>
+<li><a href="#Director+remove">.remove(names)</a> ⇒ <a href="#Director"><code>Director</code></a></li>
+<li><a href="#Director+isAllowed">.isAllowed(res)</a> ⇒ <code>boolean</code></li>
+<li><a href="#Director+_process">._process(res)</a> ⇒ <code>boolean</code></li>
+<li><a href="#Director+directMatch">.directMatch(regex)</a> ⇒ <a href="#Director"><code>Director</code></a></li>
+<li><a href="#Director+directListener">.directListener(id)</a> ⇒ <a href="#Director"><code>Director</code></a></li>
+<li><a href="#Director+directScene">.directScene(scene)</a> ⇒ <a href="#Director"><code>Director</code></a></li>
 </ul>
 </li>
 </ul>
 <hr>
-<p><a name="new_Path_new"></a></p>
-<h3 id="new-path-robot-branches-options-key-">new Path(robot, [branches], [options], [key])</h3>
+<p><a name="new_Director_new"></a></p>
+<h3 id="new-director-robot-authorise-options-key-">new Director(robot, [authorise], [options], [key])</h3>
+<p><code>config.deniedReply</code> can be set globally with environment var <code>DENIED_REPLY</code></p>
+<p>Environment vars can also provide global default lists:</p>
+<ul>
+<li><code>WHITELIST_USERNAMES</code> for whitelist type and username scope directors</li>
+<li><code>WHITELIST_ROOMS</code> for whitelist type and room scope directors</li>
+<li><code>BLACKLIST_USERNAMES</code> for blacklist type and username scope directors</li>
+<li><code>BLACKLIST_ROOMS</code> for blacklist type and room scope directors</li>
+</ul>
 <table>
 <thead>
 <tr>
@@ -135,14 +143,24 @@ without any new ones added.</p>
 <td>Hubot Robot instance</td>
 </tr>
 <tr>
-<td>[branches]</td>
-<td><code>array</code></td>
-<td>Array of args for each branch, each containing:<br>                            - RegExp for listener<br>                            - String to send and/or<br>                            - Function to call on match</td>
+<td>[authorise]</td>
+<td><code>function</code></td>
+<td>Function to determine access (as fallback)</td>
 </tr>
 <tr>
 <td>[options]</td>
 <td><code>Object</code></td>
 <td>Key/val options for config</td>
+</tr>
+<tr>
+<td>[options.type]</td>
+<td><code>string</code></td>
+<td><code>&#39;whitelist&#39;</code> (default) or <code>&#39;blacklist&#39;</code></td>
+</tr>
+<tr>
+<td>[options.deniedReply]</td>
+<td><code>string</code></td>
+<td>Sent when denied access</td>
 </tr>
 <tr>
 <td>[key]</td>
@@ -151,25 +169,17 @@ without any new ones added.</p>
 </tr>
 </tbody>
 </table>
-<p><strong>Example</strong> <em>(with an array of text responses)</em>  </p>
-<pre><code class="lang-js"><span class="hljs-keyword">let</span> choice = <span class="hljs-keyword">new</span> Path(robot, [
-  [ <span class="hljs-regexp">/door 1/</span>, <span class="hljs-string">'foo'</span> ]
-  [ <span class="hljs-regexp">/door 2/</span>, <span class="hljs-string">'bar'</span>, () =&gt; bar() ]
-  [ <span class="hljs-regexp">/door 3/</span>, () =&gt; baz() ]
-])
-</code></pre>
-<p><strong>Example</strong> <em>(with message and callback options)</em>  </p>
-<pre><code class="lang-js"><span class="hljs-keyword">let</span> choice = <span class="hljs-keyword">new</span> Path(robot, {
-  <span class="hljs-attr">catchMessage</span>: <span class="hljs-string">'sorry, nothing matched'</span>
-  catchCallback: <span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> noMatch()
+<p><strong>Example</strong> <em>(check if user has a particular role in platform)</em>  </p>
+<pre><code class="lang-js"><span class="hljs-keyword">let</span> adminsOnly = <span class="hljs-keyword">new</span> Director(robot, (username) =&gt; {
+  <span class="hljs-keyword">return</span> chatPlatform.userHasPermission(username, <span class="hljs-string">'admin'</span>)
 })
+<span class="hljs-comment">// ...when directing a scene, will only allow platform admins to enter.</span>
 </code></pre>
 <hr>
-<p><a name="Path+addBranch"></a></p>
-<h3 id="path-addbranch-regex-message-callback-">path.addBranch(regex, [message], [callback])</h3>
-<p>Add a branch (matching expression and handler) for optional dialogue input.</p>
-<p>On match, handler either fires callback, sends a message or both.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Path"><code>Path</code></a>  </p>
+<p><a name="Director+add"></a></p>
+<h3 id="director-add-names-code-director-code-director-">director.add(names) ⇒ <a href="#Director"><code>Director</code></a></h3>
+<p>Add new usernames/rooms to list.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Director"><code>Director</code></a><br><strong>Returns</strong>: <a href="#Director"><code>Director</code></a> - Self, for chaining methods  </p>
 <table>
 <thead>
 <tr>
@@ -180,43 +190,40 @@ without any new ones added.</p>
 </thead>
 <tbody>
 <tr>
-<td>regex</td>
-<td><code>RegExp</code></td>
-<td>Matching pattern</td>
-</tr>
-<tr>
-<td>[message]</td>
-<td><code>string</code></td>
-<td>Message text for response on match</td>
-</tr>
-<tr>
-<td>[callback]</td>
-<td><code>function</code></td>
-<td>Function called when matched</td>
+<td>names</td>
+<td><code>string/array</code></td>
+<td>Usernames or Room names (depending on scope)</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Example</strong> <em>(with regex, message and callback)</em>  </p>
-<pre><code class="lang-js">path.addBranch(<span class="hljs-regexp">/hello/i</span>, <span class="hljs-string">'hello there'</span>, helloCallback)
-</code></pre>
 <hr>
-<p><a name="Path+_catch"></a></p>
-<h3 id="path-_catch-code-object-code-">path._catch() ⇒ <code>Object</code></h3>
-<p>Called when nothing matches, behaviour depends on config:</p>
-<ul>
-<li>catchMessage: Message to send via handler</li>
-<li>catchCallback: Function to call within handler</li>
-</ul>
-<p>If neither is set, nothing happens.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Path"><code>Path</code></a><br><strong>Returns</strong>: <code>Object</code> - Contains .handler (function) or null if not configured  </p>
+<p><a name="Director+remove"></a></p>
+<h3 id="director-remove-names-code-director-code-director-">director.remove(names) ⇒ <a href="#Director"><code>Director</code></a></h3>
+<p>Remove new usernames/rooms from list.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Director"><code>Director</code></a><br><strong>Returns</strong>: <a href="#Director"><code>Director</code></a> - Self, for chaining methods  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>names</td>
+<td><code>string/array</code></td>
+<td>Usernames or Room names (depending on scope)</td>
+</tr>
+</tbody>
+</table>
 <hr>
-<p><a name="Path+match"></a></p>
-<h3 id="path-match-res-code-object-code-code-undefined-code-">path.match(res) ⇒ <code>Object</code> | <code>undefined</code></h3>
-<p>Attempt to match an incoming response object.</p>
-<p>Overrides the response match (from dialogue listener) even if null match.</p>
-<p>Matching closes the path, but the handler may add branches, re-opening it.</p>
-<p>Without match, will attempt catch (which may also return null).</p>
-<p><strong>Kind</strong>: instance method of <a href="#Path"><code>Path</code></a><br><strong>Returns</strong>: <code>Object</code> | <code>undefined</code> - Matched branch with regex and handler  </p>
+<p><a name="Director+isAllowed"></a></p>
+<h3 id="director-isallowed-res-code-boolean-code-">director.isAllowed(res) ⇒ <code>boolean</code></h3>
+<p>Determine if user has access, checking usernames/rooms against lists.</p>
+<p><em>Blacklist</em> blocks names on list, let anyone else through. <em>Whitelist</em> lets
+names on list through, block anyone else. Whitelist is default behaviour.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Director"><code>Director</code></a><br><strong>Returns</strong>: <code>boolean</code> - Access allowed  </p>
 <table>
 <thead>
 <tr>
@@ -233,14 +240,103 @@ without any new ones added.</p>
 </tr>
 </tbody>
 </table>
-<p><strong>Example</strong>  </p>
-<pre><code class="lang-js"><span class="hljs-keyword">let</span> choice = <span class="hljs-keyword">new</span> Path(robot, [
-  [ <span class="hljs-regexp">/door 1/</span>, <span class="hljs-string">'foo'</span> ]
-  [ <span class="hljs-regexp">/door 2/</span>, <span class="hljs-string">'bar'</span>, () =&gt; bar() ]
-  [ <span class="hljs-regexp">/door 3/</span>, () =&gt; baz() ]
-])
-robot.hear(<span class="hljs-regexp">/door/</span>, (res) =&gt; choice.match(res))
+<p><strong>Example</strong> <em>(assumes res1, res2 are valid Response objects)</em>  </p>
+<pre><code class="lang-js"><span class="hljs-keyword">let</span> noHomers = <span class="hljs-keyword">new</span> Director(robot, { <span class="hljs-attr">type</span>: <span class="hljs-string">'blacklist'</span> }).add(<span class="hljs-string">'homer'</span>)
+res1.message.user.name = <span class="hljs-string">'homer'</span>
+res2.message.user.name = <span class="hljs-string">'marge'</span>
+noHomers.isAllowed(res1) <span class="hljs-comment">// false</span>
+noHomers.isAllowed(res2) <span class="hljs-comment">// true</span>
 </code></pre>
+<hr>
+<p><a name="Director+_process"></a></p>
+<h3 id="director-_process-res-code-boolean-code-">director._process(res) ⇒ <code>boolean</code></h3>
+<p>Process access or denial (either silently or with reply, as configured).</p>
+<p><strong>Kind</strong>: instance method of <a href="#Director"><code>Director</code></a><br><strong>Returns</strong>: <code>boolean</code> - Access allowed  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>res</td>
+<td><code>Response</code></td>
+<td>Hubot Response object</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><a name="Director+directMatch"></a></p>
+<h3 id="director-directmatch-regex-code-director-code-director-">director.directMatch(regex) ⇒ <a href="#Director"><code>Director</code></a></h3>
+<p>Let this director control access to any listener matching regex.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Director"><code>Director</code></a><br><strong>Returns</strong>: <a href="#Director"><code>Director</code></a> - - Self, for chaining methods  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>regex</td>
+<td><code>Regex</code></td>
+<td>Listener match pattern</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><a name="Director+directListener"></a></p>
+<h3 id="director-directlistener-id-code-director-code-director-">director.directListener(id) ⇒ <a href="#Director"><code>Director</code></a></h3>
+<p>Let this director control access to a listener by listener or scene ID.</p>
+<p>If multiple listeners use the same ID, it’s assumed to deny all of them.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Director"><code>Director</code></a><br><strong>Returns</strong>: <a href="#Director"><code>Director</code></a> - Self, for chaining methods  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td><code>string</code></td>
+<td>Listener ID (may be multiple for scene)</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><a name="Director+directScene"></a></p>
+<h3 id="director-directscene-scene-code-director-code-director-">director.directScene(scene) ⇒ <a href="#Director"><code>Director</code></a></h3>
+<p>Let this director control access to a given scene’s listener.</p>
+<p>Also hooks into <code>Scene.enter</code> to control access to manually entered scenes.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Director"><code>Director</code></a><br><strong>Returns</strong>: <a href="#Director"><code>Director</code></a> - Self, for chaining methods<br><strong>Todo</strong></p>
+<ul>
+<li>[ ] Replace hooker usage with custom middleware on scene enter.<pre><code>e.g. https:<span class="hljs-comment">//gist.github.com/darrenscerri/5c3b3dcbe4d370435cfa</span>
+</code></pre></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>scene</td>
+<td><code>Scene</code></td>
+<td>The Scene instance</td>
+</tr>
+</tbody>
+</table>
 <hr>
 
         
