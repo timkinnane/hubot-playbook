@@ -14,10 +14,10 @@ Playbook brings conversational context and branching to Hubot.
 
 ## Important
 
-Currently, Playbook requires a custom fork of hubot that adds promises to
-middleware - [hubot async](https://github.com/timkinnane/hubot-async) - to allow
-async features. Hopefully in later versions of hubot, async will be supported
-and Playbook can be used with any version from then on.
+Playbook works best with a custom fork of hubot that adds promises to middleware
+- [hubot async](https://github.com/timkinnane/hubot-async) - which allows async
+features. Hopefully in later versions of hubot, async will be supported and
+Playbook can be used with any version from then on.
 
 It might be possible to use a limited feature set, but modular use is untested
 currently.

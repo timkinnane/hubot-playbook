@@ -133,17 +133,17 @@ describe 'Base', ->
       try @base.configure 'not an object'
       @base.configure.should.have.threw
 
-    context 'with config inherited from module', ->
+  describe '.defaults', ->
 
-      beforeEach ->
-        @module = new Module pretend.robot
+    it 'sets config if not set', ->
+      @base = new Base 'module', pretend.robot
+      @base.defaults setting: true
+      @base.config.should.eql setting: true
 
-      it 'used inherited config', ->
-        @module.config.test.should.be.true
-
-      it 'overwrites inherited when options conflict', ->
-        @module.configure test: false
-        @module.config.test.should.be.false
+    it 'does not change config if already set', ->
+      @base = new Base 'module', pretend.robot, setting: true
+      @base.defaults setting: false
+      @base.config.should.eql setting: true
 
   describe '.emit', ->
 

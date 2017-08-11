@@ -16,7 +16,7 @@
     "pretemp": "npm run lint:source && npm run compile",
     "docs:jsDocs": "rimraf md-temp && node docs-assets/jsdoc2md.js",
     "docs:api": "docco ./md-temp/*/*/*.md --template docs-assets/docco.jst --css docs-assets/docco.css --output docs/api",
-    "temp": "mocha test/modules --bail --watch & npm run compile:watch",
+    "temp": "mocha test/modules --bail --watch",
     "unit": "npm run clean:coverage && mocha",
     "unit:dev": "npm run unit -- --reporter progress --bail",
     "debug": "mocha --reporter list --no-colors --watch --inspect --debug-brk",

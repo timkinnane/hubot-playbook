@@ -84,7 +84,16 @@ pre, tt, code {
   padding: 0 5px;
   line-height: 20px;
 }
+  .page > pre {
+    border-left: 4px solid #A473FF;
+    padding: 25px 30px;
+  }
+  .page > pre code {
+    line-height: 1.6em;
+    font-size: 0.9rem;
+  }
   .page pre {
+    font-size: 1rem;
     margin: 0;
     width: 608px;
     padding: 10px 15px;

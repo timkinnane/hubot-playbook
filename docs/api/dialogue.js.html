@@ -2,7 +2,7 @@
 
 <html>
 <head>
-  <title>base.js.md</title>
+  <title>dialogue.js.md</title>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
   <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
   <link rel="stylesheet" media="all" href="public/stylesheets/normalize.css" />
@@ -73,35 +73,35 @@
         
           
           
-          <h1>Base</h1>
+          <h1>Dialogue</h1>
         
       </div>
 
       
         
-        <p><a name="Base"></a></p>
-<h2 id="base">Base</h2>
-<p>Provides common structure and behaviour inherited by all Playbook modules.</p>
-<p>Includes unique ID, error handling, event routing and accepts options and
-named key as final arguments (inherited config is merged with options).</p>
-<p>The named key allows modules to be identified outside of functional logic,
-for instance if they create listeners or logs or DB entries, they will attach
-their key as a signature to ID which specific instance it was.</p>
+        <p><a name="Dialogue"></a></p>
+<h2 id="dialogue">Dialogue</h2>
+<p>Dialogues control which paths are available to which users in context.</p>
+<p>They route messages to the right paths, manage timeouts, send replies and
+fire callbacks for the branches that match user messages.</p>
 <p><strong>Kind</strong>: global class  </p>
 <ul>
-<li><a href="#Base">Base</a><ul>
-<li><a href="#new_Base_new">new Base(name, robot, [options], [key])</a></li>
-<li><a href="#Base+error">.error(err)</a></li>
-<li><a href="#Base+configure">.configure(options)</a> ⇒ <a href="#Base"><code>Base</code></a></li>
-<li><a href="#Base+defaults">.defaults(settings)</a> ⇒ <a href="#Base"><code>Base</code></a></li>
-<li><a href="#Base+emit">.emit(event, […args])</a></li>
-<li><a href="#Base+on">.on(event, callback)</a></li>
+<li><a href="#Dialogue">Dialogue</a><ul>
+<li><a href="#new_Dialogue_new">new Dialogue(res, [options], [key])</a></li>
+<li><a href="#Dialogue+end">.end()</a> ⇒ <code>Boolean</code></li>
+<li><a href="#Dialogue+send">.send(…strings)</a> ⇒ <code>Promise</code></li>
+<li><a href="#Dialogue+onTimeout">.onTimeout([override])</a></li>
+<li><a href="#Dialogue+clearTimeout">.clearTimeout()</a></li>
+<li><a href="#Dialogue+startTimeout">.startTimeout()</a></li>
+<li><a href="#Dialogue+addPath">.addPath([prompt], [branches], [options], [key])</a> ⇒ <code>Path</code></li>
+<li><a href="#Dialogue+addBranch">.addBranch(regex, [message], [callback])</a></li>
+<li><a href="#Dialogue+receive">.receive(res)</a></li>
 </ul>
 </li>
 </ul>
 <hr>
-<p><a name="new_Base_new"></a></p>
-<h3 id="new-base-name-robot-options-key-">new Base(name, robot, [options], [key])</h3>
+<p><a name="new_Dialogue_new"></a></p>
+<h3 id="new-dialogue-res-options-key-">new Dialogue(res, [options], [key])</h3>
 <table>
 <thead>
 <tr>
@@ -112,14 +112,9 @@ their key as a signature to ID which specific instance it was.</p>
 </thead>
 <tbody>
 <tr>
-<td>name</td>
-<td><code>string</code></td>
-<td>The module/class name</td>
-</tr>
-<tr>
-<td>robot</td>
-<td><code>Robot</code></td>
-<td>Robot instance</td>
+<td>res</td>
+<td><code>Response</code></td>
+<td>Hubot Response object</td>
 </tr>
 <tr>
 <td>[options]</td>
@@ -127,26 +122,46 @@ their key as a signature to ID which specific instance it was.</p>
 <td>Key/val options for config</td>
 </tr>
 <tr>
+<td>[options.sendReplies]</td>
+<td><code>Object</code></td>
+<td>Toggle replying/sending (prefix with “@user”)</td>
+</tr>
+<tr>
+<td>[options.timeout]</td>
+<td><code>Object</code></td>
+<td>Allowed time to reply (in miliseconds) before cancelling listeners</td>
+</tr>
+<tr>
+<td>[options.timeoutText]</td>
+<td><code>Object</code></td>
+<td>What to send when timeout reached, set null to not send</td>
+</tr>
+<tr>
 <td>[key]</td>
-<td><code>string</code></td>
-<td>Key name for instance</td>
+<td><code>String</code></td>
+<td>Key name for this instance</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Example</strong>  </p>
-<pre><code class="lang-js"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">RadModule</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Base</span> </span>{
-  <span class="hljs-keyword">constructor</span> (robot, args...) {
-    <span class="hljs-keyword">super</span>(<span class="hljs-string">'rad'</span>, robot, args...)
-  }
-}
-radOne = <span class="hljs-keyword">new</span> RadModule(robot, { <span class="hljs-attr">radness</span>: <span class="hljs-string">'high'</span> })
-radOne.id <span class="hljs-comment">// == 'rad_1'</span>
+<p><strong>Example</strong> <em>(listener sets up dialogue with user, with 10 second timeout)</em>  </p>
+<pre><code class="lang-js">robot.hear(<span class="hljs-regexp">/hello/</span>, (res) =&gt; {
+  <span class="hljs-keyword">let</span> dlg = <span class="hljs-keyword">new</span> Dialogue(res, { <span class="hljs-attr">timeout</span>: <span class="hljs-number">10000</span> })
+  <span class="hljs-comment">// ...proceed to add paths</span>
+})
 </code></pre>
 <hr>
-<p><a name="Base+error"></a></p>
-<h3 id="base-error-err-">base.error(err)</h3>
-<p>Generic error handling, logs and emits event before throwing.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Base"><code>Base</code></a>  </p>
+<p><a name="Dialogue+end"></a></p>
+<h3 id="dialogue-end-code-boolean-code-">dialogue.end() ⇒ <code>Boolean</code></h3>
+<p>Shutdown and emit status (for scene to disengage participants).</p>
+<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a><br><strong>Returns</strong>: <code>Boolean</code> - Shutdown status, false if was already ended  </p>
+<hr>
+<p><a name="Dialogue+send"></a></p>
+<h3 id="dialogue-send-strings-code-promise-code-">dialogue.send(…strings) ⇒ <code>Promise</code></h3>
+<p>Send or reply with message as configured (@user reply or send to room).</p>
+<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a><br><strong>Returns</strong>: <code>Promise</code> - From hubot async middleware (if supported)<br><strong>Todo</strong></p>
+<ul>
+<li>[ ] update tests that wait for observer to use promise instead</li>
+</ul>
 <table>
 <thead>
 <tr>
@@ -157,17 +172,18 @@ radOne.id <span class="hljs-comment">// == 'rad_1'</span>
 </thead>
 <tbody>
 <tr>
-<td>err</td>
-<td><code>Error/string</code></td>
-<td>Error object or description of error</td>
+<td>…strings</td>
+<td><code>String</code></td>
+<td>Message strings</td>
 </tr>
 </tbody>
 </table>
 <hr>
-<p><a name="Base+configure"></a></p>
-<h3 id="base-configure-options-code-base-code-base-">base.configure(options) ⇒ <a href="#Base"><code>Base</code></a></h3>
-<p>Merge-in passed options, override any that exist in config.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Base"><code>Base</code></a><br><strong>Returns</strong>: <a href="#Base"><code>Base</code></a> - Self for chaining  </p>
+<p><a name="Dialogue+onTimeout"></a></p>
+<h3 id="dialogue-ontimeout-override-">dialogue.onTimeout([override])</h3>
+<p>Default timeout method sends message, unless null or method overriden.</p>
+<p>If given a method it will call that or can be reassigned as a new function.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a>  </p>
 <table>
 <thead>
 <tr>
@@ -178,89 +194,127 @@ radOne.id <span class="hljs-comment">// == 'rad_1'</span>
 </thead>
 <tbody>
 <tr>
-<td>options</td>
-<td><code>Object</code></td>
-<td>Key/vals to merge with existing config</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Example</strong>  </p>
-<pre><code class="lang-js">radOne.configure({ <span class="hljs-attr">radness</span>: <span class="hljs-string">'overload'</span> }) <span class="hljs-comment">// overwrites initial config</span>
-</code></pre>
-<hr>
-<p><a name="Base+defaults"></a></p>
-<h3 id="base-defaults-settings-code-base-code-base-">base.defaults(settings) ⇒ <a href="#Base"><code>Base</code></a></h3>
-<p>Fill any missing settings without overriding any existing in config.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Base"><code>Base</code></a><br><strong>Returns</strong>: <a href="#Base"><code>Base</code></a> - Self for chaining  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>settings</td>
-<td><code>Object</code></td>
-<td>Key/vals to use as config fallbacks</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Example</strong>  </p>
-<pre><code class="lang-js">radOne.defaults({ <span class="hljs-attr">radness</span>: <span class="hljs-string">'meh'</span> }) <span class="hljs-comment">// applies unless configured otherwise</span>
-</code></pre>
-<hr>
-<p><a name="Base+emit"></a></p>
-<h3 id="base-emit-event-args-">base.emit(event, […args])</h3>
-<p>Emit events using robot’s event emmitter, allows listening from any module.</p>
-<p>Prepends instance’s unique ID, so event listens can be implicitly targeted.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Base"><code>Base</code></a>  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>event</td>
-<td><code>string</code></td>
-<td>Name of event</td>
-</tr>
-<tr>
-<td>[…args]</td>
-<td><code>*</code></td>
-<td>Arguments passed to event</td>
-</tr>
-</tbody>
-</table>
-<hr>
-<p><a name="Base+on"></a></p>
-<h3 id="base-on-event-callback-">base.on(event, callback)</h3>
-<p>Fire callback on robot events if event ID arguement matches this instance.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Base"><code>Base</code></a>  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>event</td>
-<td><code>string</code></td>
-<td>Name of event</td>
-</tr>
-<tr>
-<td>callback</td>
+<td>[override]</td>
 <td><code>function</code></td>
-<td>Function to call</td>
+<td>New function to call (optional)</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><a name="Dialogue+clearTimeout"></a></p>
+<h3 id="dialogue-cleartimeout-">dialogue.clearTimeout()</h3>
+<p>Stop countdown for matching dialogue branches.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a>  </p>
+<hr>
+<p><a name="Dialogue+startTimeout"></a></p>
+<h3 id="dialogue-starttimeout-">dialogue.startTimeout()</h3>
+<p>Start (or restart) countdown for matching dialogue branches.</p>
+<p>Catches the onTimeout method because it can be overriden and may throw.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a>  </p>
+<hr>
+<p><a name="Dialogue+addPath"></a></p>
+<h3 id="dialogue-addpath-prompt-branches-options-key-code-path-code-">dialogue.addPath([prompt], [branches], [options], [key]) ⇒ <code>Path</code></h3>
+<p>Add a dialogue path, with branches to follow and a prompt (optional).</p>
+<p>Any new path added overwrites the previous.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a><br><strong>Returns</strong>: <code>Path</code> - New path instance<br><strong>Todo</strong></p>
+<ul>
+<li>[ ] when .send uses promise, return promise that resolves with @path</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>[prompt]</td>
+<td><code>String</code></td>
+<td>To send on path setup (e.g. presenting options)</td>
+</tr>
+<tr>
+<td>[branches]</td>
+<td><code>array</code></td>
+<td>Array of args for each branch, each containing:<br>                            - RegExp for listener<br>                            - String to send and/or<br>                            - Function to call on match</td>
+</tr>
+<tr>
+<td>[options]</td>
+<td><code>Object</code></td>
+<td>Key/val options for path</td>
+</tr>
+<tr>
+<td>[key]</td>
+<td><code>String</code></td>
+<td>Key name for this path</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example</strong>  </p>
+<pre><code class="lang-js"><span class="hljs-keyword">let</span> dlg = <span class="hljs-keyword">new</span> Dialogue(res)
+<span class="hljs-keyword">let</span> path = dlg.addPath(<span class="hljs-string">'Turn left or right?'</span>, [
+  [ <span class="hljs-regexp">/left/</span>, <span class="hljs-string">'Ok, going left!'</span> ]
+  [ <span class="hljs-regexp">/right/</span>, <span class="hljs-string">'Ok, going right!'</span> ]
+], <span class="hljs-string">'which-way'</span>)
+</code></pre>
+<hr>
+<p><a name="Dialogue+addBranch"></a></p>
+<h3 id="dialogue-addbranch-regex-message-callback-">dialogue.addBranch(regex, [message], [callback])</h3>
+<p>Add a branch to dialogue path, which is usually added first, but will be
+created if not.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a>  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>regex</td>
+<td><code>RegExp</code></td>
+<td>Matching pattern</td>
+</tr>
+<tr>
+<td>[message]</td>
+<td><code>String</code></td>
+<td>Message text for response on match</td>
+</tr>
+<tr>
+<td>[callback]</td>
+<td><code>function</code></td>
+<td>Function called when matched</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><a name="Dialogue+receive"></a></p>
+<h3 id="dialogue-receive-res-">dialogue.receive(res)</h3>
+<p>Process incoming message for match against path branches.</p>
+<p>If matched, fire handler, restart timeout.</p>
+<p>if no additional paths or branches added (by handler), end dialogue.</p>
+<p>Overrides the original response with current one.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a><br><strong>Todo</strong></p>
+<ul>
+<li>[ ] Wrap handler in promise, don’t end() until it resolves</li>
+<li>[ ] Test with handler using res.http/get to populate new path</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>res</td>
+<td><code>Response</code></td>
+<td>Hubot Response object</td>
 </tr>
 </tbody>
 </table>

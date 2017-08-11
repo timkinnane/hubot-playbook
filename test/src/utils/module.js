@@ -5,7 +5,6 @@ import Base from '../../lib/modules/base'
 class Module extends Base {
   constructor (robot, ...args) {
     super('module', robot, ...args)
-    this.config.test = true
   }
 }
 

@@ -2,7 +2,7 @@
 
 <html>
 <head>
-  <title>base.js.md</title>
+  <title>path.js.md</title>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
   <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
   <link rel="stylesheet" media="all" href="public/stylesheets/normalize.css" />
@@ -73,35 +73,35 @@
         
           
           
-          <h1>Base</h1>
+          <h1>Path</h1>
         
       </div>
 
       
         
-        <p><a name="Base"></a></p>
-<h2 id="base">Base</h2>
-<p>Provides common structure and behaviour inherited by all Playbook modules.</p>
-<p>Includes unique ID, error handling, event routing and accepts options and
-named key as final arguments (inherited config is merged with options).</p>
-<p>The named key allows modules to be identified outside of functional logic,
-for instance if they create listeners or logs or DB entries, they will attach
-their key as a signature to ID which specific instance it was.</p>
+        <p><a name="Path"></a></p>
+<h2 id="path">Path</h2>
+<p>Paths and their child branches are the smallest and most essential node for
+conversations. Instead of listening for all triggers at all times, paths
+allow matching multiple choices in a tightly scoped context.</p>
+<p>A path usually contains one or more <em>branches</em> to follow when matched.</p>
+<p>A path is <em>opened</em> when branches added and <em>closed</em> when a branch is
+matched (unless more are added). Using brnach callbacks, the path can keep
+laying new branches to remain open, until finally a branch is matched
+without any new ones added.</p>
 <p><strong>Kind</strong>: global class  </p>
 <ul>
-<li><a href="#Base">Base</a><ul>
-<li><a href="#new_Base_new">new Base(name, robot, [options], [key])</a></li>
-<li><a href="#Base+error">.error(err)</a></li>
-<li><a href="#Base+configure">.configure(options)</a> ⇒ <a href="#Base"><code>Base</code></a></li>
-<li><a href="#Base+defaults">.defaults(settings)</a> ⇒ <a href="#Base"><code>Base</code></a></li>
-<li><a href="#Base+emit">.emit(event, […args])</a></li>
-<li><a href="#Base+on">.on(event, callback)</a></li>
+<li><a href="#Path">Path</a><ul>
+<li><a href="#new_Path_new">new Path(robot, [branches], [options], [key])</a></li>
+<li><a href="#Path+addBranch">.addBranch(regex, [message], [callback])</a></li>
+<li><a href="#Path+_catch">._catch()</a> ⇒ <code>Object</code></li>
+<li><a href="#Path+match">.match(res)</a> ⇒ <code>Object</code> | <code>undefined</code></li>
 </ul>
 </li>
 </ul>
 <hr>
-<p><a name="new_Base_new"></a></p>
-<h3 id="new-base-name-robot-options-key-">new Base(name, robot, [options], [key])</h3>
+<p><a name="new_Path_new"></a></p>
+<h3 id="new-path-robot-branches-options-key-">new Path(robot, [branches], [options], [key])</h3>
 <table>
 <thead>
 <tr>
@@ -112,14 +112,14 @@ their key as a signature to ID which specific instance it was.</p>
 </thead>
 <tbody>
 <tr>
-<td>name</td>
-<td><code>string</code></td>
-<td>The module/class name</td>
-</tr>
-<tr>
 <td>robot</td>
 <td><code>Robot</code></td>
-<td>Robot instance</td>
+<td>Hubot Robot instance</td>
+</tr>
+<tr>
+<td>[branches]</td>
+<td><code>array</code></td>
+<td>Array of args for each branch, each containing:<br>                            - RegExp for listener<br>                            - String to send and/or<br>                            - Function to call on match</td>
 </tr>
 <tr>
 <td>[options]</td>
@@ -129,24 +129,29 @@ their key as a signature to ID which specific instance it was.</p>
 <tr>
 <td>[key]</td>
 <td><code>string</code></td>
-<td>Key name for instance</td>
+<td>Key name for this instance</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Example</strong>  </p>
-<pre><code class="lang-js"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">RadModule</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Base</span> </span>{
-  <span class="hljs-keyword">constructor</span> (robot, args...) {
-    <span class="hljs-keyword">super</span>(<span class="hljs-string">'rad'</span>, robot, args...)
-  }
-}
-radOne = <span class="hljs-keyword">new</span> RadModule(robot, { <span class="hljs-attr">radness</span>: <span class="hljs-string">'high'</span> })
-radOne.id <span class="hljs-comment">// == 'rad_1'</span>
+<p><strong>Example</strong> <em>(with an array of text responses)</em>  </p>
+<pre><code class="lang-js"><span class="hljs-keyword">let</span> choice = <span class="hljs-keyword">new</span> Path(robot, [
+  [ <span class="hljs-regexp">/door 1/</span>, <span class="hljs-string">'foo'</span> ]
+  [ <span class="hljs-regexp">/door 2/</span>, <span class="hljs-string">'bar'</span>, () =&gt; bar() ]
+  [ <span class="hljs-regexp">/door 3/</span>, () =&gt; baz() ]
+])
+</code></pre>
+<p><strong>Example</strong> <em>(with message and callback options)</em>  </p>
+<pre><code class="lang-js"><span class="hljs-keyword">let</span> choice = <span class="hljs-keyword">new</span> Path(robot, {
+  <span class="hljs-attr">catchMessage</span>: <span class="hljs-string">'sorry, nothing matched'</span>
+  catchCallback: <span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> noMatch()
+})
 </code></pre>
 <hr>
-<p><a name="Base+error"></a></p>
-<h3 id="base-error-err-">base.error(err)</h3>
-<p>Generic error handling, logs and emits event before throwing.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Base"><code>Base</code></a>  </p>
+<p><a name="Path+addBranch"></a></p>
+<h3 id="path-addbranch-regex-message-callback-">path.addBranch(regex, [message], [callback])</h3>
+<p>Add a branch (matching expression and handler) for optional dialogue input.</p>
+<p>On match, handler either fires callback, sends a message or both.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Path"><code>Path</code></a>  </p>
 <table>
 <thead>
 <tr>
@@ -157,113 +162,67 @@ radOne.id <span class="hljs-comment">// == 'rad_1'</span>
 </thead>
 <tbody>
 <tr>
-<td>err</td>
-<td><code>Error/string</code></td>
-<td>Error object or description of error</td>
+<td>regex</td>
+<td><code>RegExp</code></td>
+<td>Matching pattern</td>
 </tr>
-</tbody>
-</table>
-<hr>
-<p><a name="Base+configure"></a></p>
-<h3 id="base-configure-options-code-base-code-base-">base.configure(options) ⇒ <a href="#Base"><code>Base</code></a></h3>
-<p>Merge-in passed options, override any that exist in config.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Base"><code>Base</code></a><br><strong>Returns</strong>: <a href="#Base"><code>Base</code></a> - Self for chaining  </p>
-<table>
-<thead>
 <tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>options</td>
-<td><code>Object</code></td>
-<td>Key/vals to merge with existing config</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Example</strong>  </p>
-<pre><code class="lang-js">radOne.configure({ <span class="hljs-attr">radness</span>: <span class="hljs-string">'overload'</span> }) <span class="hljs-comment">// overwrites initial config</span>
-</code></pre>
-<hr>
-<p><a name="Base+defaults"></a></p>
-<h3 id="base-defaults-settings-code-base-code-base-">base.defaults(settings) ⇒ <a href="#Base"><code>Base</code></a></h3>
-<p>Fill any missing settings without overriding any existing in config.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Base"><code>Base</code></a><br><strong>Returns</strong>: <a href="#Base"><code>Base</code></a> - Self for chaining  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>settings</td>
-<td><code>Object</code></td>
-<td>Key/vals to use as config fallbacks</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Example</strong>  </p>
-<pre><code class="lang-js">radOne.defaults({ <span class="hljs-attr">radness</span>: <span class="hljs-string">'meh'</span> }) <span class="hljs-comment">// applies unless configured otherwise</span>
-</code></pre>
-<hr>
-<p><a name="Base+emit"></a></p>
-<h3 id="base-emit-event-args-">base.emit(event, […args])</h3>
-<p>Emit events using robot’s event emmitter, allows listening from any module.</p>
-<p>Prepends instance’s unique ID, so event listens can be implicitly targeted.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Base"><code>Base</code></a>  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>event</td>
+<td>[message]</td>
 <td><code>string</code></td>
-<td>Name of event</td>
+<td>Message text for response on match</td>
 </tr>
 <tr>
-<td>[…args]</td>
-<td><code>*</code></td>
-<td>Arguments passed to event</td>
-</tr>
-</tbody>
-</table>
-<hr>
-<p><a name="Base+on"></a></p>
-<h3 id="base-on-event-callback-">base.on(event, callback)</h3>
-<p>Fire callback on robot events if event ID arguement matches this instance.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Base"><code>Base</code></a>  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>event</td>
-<td><code>string</code></td>
-<td>Name of event</td>
-</tr>
-<tr>
-<td>callback</td>
+<td>[callback]</td>
 <td><code>function</code></td>
-<td>Function to call</td>
+<td>Function called when matched</td>
 </tr>
 </tbody>
 </table>
+<p><strong>Example</strong> <em>(with regex, message and callback)</em>  </p>
+<pre><code class="lang-js">path.addBranch(<span class="hljs-regexp">/hello/i</span>, <span class="hljs-string">'hello there'</span>, helloCallback)
+</code></pre>
+<hr>
+<p><a name="Path+_catch"></a></p>
+<h3 id="path-_catch-code-object-code-">path._catch() ⇒ <code>Object</code></h3>
+<p>Called when nothing matches, behaviour depends on config:</p>
+<ul>
+<li>catchMessage: Message to send via handler</li>
+<li>catchCallback: Function to call within handler</li>
+</ul>
+<p>If neither is set, nothing happens.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Path"><code>Path</code></a><br><strong>Returns</strong>: <code>Object</code> - Contains .handler (function) or null if not configured  </p>
+<hr>
+<p><a name="Path+match"></a></p>
+<h3 id="path-match-res-code-object-code-code-undefined-code-">path.match(res) ⇒ <code>Object</code> | <code>undefined</code></h3>
+<p>Attempt to match an incoming response object.</p>
+<p>Overrides the response match (from dialogue listener) even if null match.</p>
+<p>Matching closes the path, but the handler may add branches, re-opening it.</p>
+<p>Without match, will attempt catch (which may also return null).</p>
+<p><strong>Kind</strong>: instance method of <a href="#Path"><code>Path</code></a><br><strong>Returns</strong>: <code>Object</code> | <code>undefined</code> - Matched branch with regex and handler  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>res</td>
+<td><code>Response</code></td>
+<td>Hubot Response object</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example</strong>  </p>
+<pre><code class="lang-js"><span class="hljs-keyword">let</span> choice = <span class="hljs-keyword">new</span> Path(robot, [
+  [ <span class="hljs-regexp">/door 1/</span>, <span class="hljs-string">'foo'</span> ]
+  [ <span class="hljs-regexp">/door 2/</span>, <span class="hljs-string">'bar'</span>, () =&gt; bar() ]
+  [ <span class="hljs-regexp">/door 3/</span>, () =&gt; baz() ]
+])
+robot.hear(<span class="hljs-regexp">/door/</span>, (res) =&gt; choice.match(res))
+</code></pre>
 <hr>
 
         
