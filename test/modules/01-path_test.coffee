@@ -171,10 +171,9 @@ describe 'Path', ->
     context 'with string matching branch regex', ->
 
       beforeEach ->
-        pretend.user('sam').send 'door 2'
-        .then =>
-          @res = pretend.responses.incoming[0]
-          @branch = @path.match @res
+        yield pretend.user('sam').send 'door 2'
+        @res = pretend.responses.incoming[0]
+        @branch = @path.match @res
 
       it 'returns the matching branch', ->
         @branch.should.eql @path.branches[1]
@@ -188,10 +187,9 @@ describe 'Path', ->
     context 'with string matching multiple branches', ->
 
       beforeEach ->
-        pretend.user('sam').send 'door 1 and door 2'
-        .then =>
-          @res = pretend.responses.incoming[0]
-          @branch = @path.match @res
+        yield pretend.user('sam').send 'door 1 and door 2'
+        @res = pretend.responses.incoming[0]
+        @branch = @path.match @res
 
       it 'returns the first matching branch', ->
         @branch.should.eql @path.branches[0]
@@ -205,10 +203,9 @@ describe 'Path', ->
     context 'with string matching no branches', ->
 
       beforeEach ->
-        pretend.user('sam').send 'door X'
-        .then =>
-          @res = pretend.responses.incoming[0]
-          @branch = @path.match @res
+        yield pretend.user('sam').send 'door X'
+        @res = pretend.responses.incoming[0]
+        @branch = @path.match @res
 
       it 'returns undefined', ->
         should.not.exist @branch

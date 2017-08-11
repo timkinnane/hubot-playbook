@@ -23,6 +23,7 @@ import _ from 'lodash'
  * }
  * radOne = new RadModule(robot, { radness: 'high' })
  * radOne.id // == 'rad_1'
+ * radOne.config.radness // == 'high'
 */
 class Base {
   constructor (name, robot, ...args) {

@@ -1,6 +1,6 @@
 import _ from 'lodash'
-import Base from './Base'
-import Path from './Path'
+import Base from './base'
+import Path from './path'
 
 /**
  * Dialogues control which paths are available to which users in context.
@@ -8,12 +8,12 @@ import Path from './Path'
  * They route messages to the right paths, manage timeouts, send replies and
  * fire callbacks for the branches that match user messages.
  *
- * @param {Response} res                 Hubot Response object
- * @param {Object} [options]             Key/val options for config
- * @param {Object} [options.sendReplies] Toggle replying/sending (prefix with "@user")
- * @param {Object} [options.timeout]     Allowed time to reply (in miliseconds) before cancelling listeners
- * @param {Object} [options.timeoutText] What to send when timeout reached, set null to not send
- * @param {String} [key]                 Key name for this instance
+ * @param {Response} res                  Hubot Response object
+ * @param {Object} [options]              Key/val options for config
+ * @param {boolean} [options.sendReplies] Toggle replying/sending (prefix with "@user")
+ * @param {number} [options.timeout]      Allowed time to reply (in miliseconds) before cancelling listeners
+ * @param {string} [options.timeoutText]  What to send when timeout reached, set null to not send
+ * @param {string} [key]                  Key name for this instance
  *
  * @example <caption>listener sets up dialogue with user, with 10 second timeout</caption>
  * robot.hear(/hello/, (res) => {
@@ -39,7 +39,7 @@ class Dialogue extends Base {
   /**
    * Shutdown and emit status (for scene to disengage participants).
    *
-   * @return {Boolean} Shutdown status, false if was already ended
+   * @return {boolean} Shutdown status, false if was already ended
   */
   end () {
     if (this.ended) return false
@@ -57,8 +57,7 @@ class Dialogue extends Base {
   /**
    * Send or reply with message as configured (@user reply or send to room).
    *
-   * @param {String} strings Message strings
-   *
+   * @param {string} strings Message strings
    * @return {Promise} From hubot async middleware (if supported)
    * @todo update tests that wait for observer to use promise instead
   */
@@ -115,13 +114,13 @@ class Dialogue extends Base {
    *
    * Any new path added overwrites the previous.
    *
-   * @param  {String} [prompt]  To send on path setup (e.g. presenting options)
+   * @param {string} [prompt]   To send on path setup (e.g. presenting options)
    * @param {array}  [branches] Array of args for each branch, each containing:<br>
    *                            - RegExp for listener<br>
    *                            - String to send and/or<br>
    *                            - Function to call on match
    * @param {Object} [options]  Key/val options for path
-   * @param {String} [key]      Key name for this path
+   * @param {string} [key]      Key name for this path
    * @return {Path}             New path instance
    * @todo when .send uses promise, return promise that resolves with this.path
    *
@@ -144,7 +143,7 @@ class Dialogue extends Base {
    * created if not.
    *
    * @param {RegExp}   regex      Matching pattern
-   * @param {String}   [message]  Message text for response on match
+   * @param {string}   [message]  Message text for response on match
    * @param {Function} [callback] Function called when matched
   */
   addBranch (...args) {

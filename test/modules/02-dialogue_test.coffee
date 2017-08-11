@@ -25,8 +25,8 @@ describe 'Dialogue', ->
       sinon.spy Dialogue.prototype, key
 
     # generate a response object for starting dialogues
-    pretend.user('tester').send 'test'
-    .then => @res = pretend.responses.incoming[0]
+    yield pretend.user('tester').send 'test'
+    @res = pretend.responses.incoming[0]
 
   afterEach ->
     pretend.shutdown()
@@ -138,7 +138,7 @@ describe 'Dialogue', ->
         @send = sinon.spy()
         @dialogue.on 'send', @send
         @dialogue.send 'test'
-        wait
+        yield wait
 
       it 'sends to the room from original res', ->
         pretend.messages.pop().should.eql [ 'hubot', 'test' ]
@@ -154,7 +154,7 @@ describe 'Dialogue', ->
         @dialogue.on 'send', @send
         @dialogue.config.sendReplies = true
         @dialogue.send 'test'
-        wait
+        yield wait
 
       it 'sends to the room from original res, responding to the @user', ->
         pretend.messages.pop().should.eql ['hubot', '@tester test' ]
@@ -168,7 +168,7 @@ describe 'Dialogue', ->
         @dialogue = new Dialogue @res, timeout: 1000
         @dialogue.startTimeout()
         @clock.tick 1001
-        wait
+        yield wait
 
       it 'sends timeout message to room', ->
         pretend.messages.pop().should.eql [
@@ -381,7 +381,7 @@ describe 'Dialogue', ->
 
       beforeEach ->
         @dialogue.end()
-        @tester.send '1'
+        yield @tester.send '1'
 
       it 'returns false', ->
         @dialogue.receive.returnValues[0].should.be.false
@@ -392,7 +392,7 @@ describe 'Dialogue', ->
     context 'on matching branch', ->
 
       beforeEach ->
-        @tester.send 'foo'
+        yield @tester.send 'foo'
 
       it 'clears timeout', ->
         @dialogue.clearTimeout.should.have.calledOnce
@@ -406,7 +406,7 @@ describe 'Dialogue', ->
     context 'on matching branch with message and handler', ->
 
       beforeEach ->
-        @tester.send '1'
+        yield @tester.send '1'
 
       it 'calls the created handler', ->
         @handler1.should.have.calledOnce
@@ -417,7 +417,7 @@ describe 'Dialogue', ->
     context 'on matching branch with just a handler', ->
 
       beforeEach ->
-        @tester.send '2'
+        yield @tester.send '2'
 
       it 'calls the custom handler', ->
         @handler2.should.have.calledOnce
@@ -428,7 +428,7 @@ describe 'Dialogue', ->
     context 'on matching branch with just a message', ->
 
       beforeEach ->
-        @tester.send '3'
+        yield @tester.send '3'
 
       it 'calls the default handler', ->
         @handler3.should.have.calledOnce
@@ -439,8 +439,8 @@ describe 'Dialogue', ->
     context 'on matching branches consecutively', ->
 
       beforeEach ->
-        @tester.send '1'
-        @tester.send '2'
+        yield @tester.send '1'
+        yield @tester.send '2'
 
       it 'only processes first match', ->
         @match.should.have.calledOnce
@@ -452,7 +452,7 @@ describe 'Dialogue', ->
 
       beforeEach ->
         @dialogue.path.config.catchMessage = 'huh?'
-        @tester.send '?'
+        yield @tester.send '?'
 
       it 'emits catch with self and res', ->
         @catch.should.have.calledWith @matchArgs...
@@ -469,7 +469,7 @@ describe 'Dialogue', ->
     context 'on mismatch without catch', ->
 
       beforeEach ->
-        @tester.send '?'
+        yield @tester.send '?'
 
       it 'emits mismatch with self and res', ->
         @mismatch.should.have.calledWith @matchArgs...
@@ -486,7 +486,7 @@ describe 'Dialogue', ->
         @dialogue.addBranch /more/, =>
           @dialogue.addBranch /4/, 'got 4'
           @dialogue.addBranch /5/, 'got 5'
-        @tester.send 'more'
+        yield @tester.send 'more'
 
       it 'added branches to current path', ->
         _.map @dialogue.path.branches, (branch) -> branch.regex
@@ -503,7 +503,7 @@ describe 'Dialogue', ->
             [ /1/, 'got 1' ]
             [ /2/, 'got 2' ]
           ]
-        @tester.send 'new'
+        yield @tester.send 'new'
 
       it 'added new branches to new path, overwrites prev path', ->
         _.map @dialogue.path.branches, (branch) -> branch.regex

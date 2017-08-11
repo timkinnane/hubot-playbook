@@ -2,7 +2,7 @@
 
 <html>
 <head>
-  <title>dialogue.js.md</title>
+  <title>scene.js.md</title>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
   <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
   <link rel="stylesheet" media="all" href="public/stylesheets/normalize.css" />
@@ -82,35 +82,45 @@
         
           
           
-          <h1>Dialogue</h1>
+          <h1>Scene</h1>
         
       </div>
 
       
         
-        <p><a name="Dialogue"></a></p>
-<h2 id="dialogue">Dialogue</h2>
-<p>Dialogues control which paths are available to which users in context.</p>
-<p>They route messages to the right paths, manage timeouts, send replies and
-fire callbacks for the branches that match user messages.</p>
+        <p><a name="Scene"></a></p>
+<h2 id="scene">Scene</h2>
+<p>Scenes conduct participantion in dialogues with the bot. They use listeners
+to enter an audience into a new dialogue. They can handle multiple concurrent
+users and rooms in either isolated or group dialogues as required.</p>
+<p>Once entered into a scene, the audience is <em>engaged</em> and the bot will only
+respond to dialogue choices defined by that scene. The type of audience is
+determined by the scene’s scope:</p>
+<ul>
+<li>entering a <em>user</em> scene will engage the user (in any room)</li>
+<li>entering a <em>room</em> scene will engage the whole room</li>
+<li>entering a <em>direct</em> scene will engage the user in that room only</li>
+</ul>
 <p><strong>Kind</strong>: global class  </p>
 <ul>
-<li><a href="#Dialogue">Dialogue</a><ul>
-<li><a href="#new_Dialogue_new">new Dialogue(res, [options], [key])</a></li>
-<li><a href="#Dialogue+end">.end()</a> ⇒ <code>boolean</code></li>
-<li><a href="#Dialogue+send">.send(…strings)</a> ⇒ <code>Promise</code></li>
-<li><a href="#Dialogue+onTimeout">.onTimeout([override])</a></li>
-<li><a href="#Dialogue+clearTimeout">.clearTimeout()</a></li>
-<li><a href="#Dialogue+startTimeout">.startTimeout()</a></li>
-<li><a href="#Dialogue+addPath">.addPath([prompt], [branches], [options], [key])</a> ⇒ <code>Path</code></li>
-<li><a href="#Dialogue+addBranch">.addBranch(regex, [message], [callback])</a></li>
-<li><a href="#Dialogue+receive">.receive(res)</a></li>
+<li><a href="#Scene">Scene</a><ul>
+<li><a href="#new_Scene_new">new Scene(robot, [options], [key])</a></li>
+<li><a href="#Scene+_middleware">._middleware(context, next, done)</a></li>
+<li><a href="#Scene+listen">.listen(type, regex, callback)</a></li>
+<li><a href="#Scene+hear">.hear()</a></li>
+<li><a href="#Scene+respond">.respond()</a></li>
+<li><a href="#Scene+whoSpeaks">.whoSpeaks(res)</a> ⇒ <code>string</code></li>
+<li><a href="#Scene+enter">.enter(res, [options], …args)</a> ⇒ <code>Dialogue</code></li>
+<li><a href="#Scene+exit">.exit(res, [status])</a> ⇒ <code>boolean</code></li>
+<li><a href="#Scene+exitAll">.exitAll()</a></li>
+<li><a href="#Scene+getDialogue">.getDialogue(participants)</a> ⇒ <code>Dialogue</code></li>
+<li><a href="#Scene+inDialogue">.inDialogue(participants)</a> ⇒ <code>boolean</code></li>
 </ul>
 </li>
 </ul>
 <hr>
-<p><a name="new_Dialogue_new"></a></p>
-<h3 id="new-dialogue-res-options-key-">new Dialogue(res, [options], [key])</h3>
+<p><a name="new_Scene_new"></a></p>
+<h3 id="new-scene-robot-options-key-">new Scene(robot, [options], [key])</h3>
 <table>
 <thead>
 <tr>
@@ -121,9 +131,9 @@ fire callbacks for the branches that match user messages.</p>
 </thead>
 <tbody>
 <tr>
-<td>res</td>
-<td><code>Response</code></td>
-<td>Hubot Response object</td>
+<td>robot</td>
+<td><code>Robot</code></td>
+<td>Hubot Robot instance</td>
 </tr>
 <tr>
 <td>[options]</td>
@@ -131,19 +141,16 @@ fire callbacks for the branches that match user messages.</p>
 <td>Key/val options for config</td>
 </tr>
 <tr>
+<td>[options.scope]</td>
+<td><code>string</code></td>
+<td>How to address participants: user(default)</td>
+<td>room</td>
+<td>direct</td>
+</tr>
+<tr>
 <td>[options.sendReplies]</td>
 <td><code>boolean</code></td>
-<td>Toggle replying/sending (prefix with “@user”)</td>
-</tr>
-<tr>
-<td>[options.timeout]</td>
-<td><code>number</code></td>
-<td>Allowed time to reply (in miliseconds) before cancelling listeners</td>
-</tr>
-<tr>
-<td>[options.timeoutText]</td>
-<td><code>string</code></td>
-<td>What to send when timeout reached, set null to not send</td>
+<td>Toggle replying/sending (prefix message with “@user”)</td>
 </tr>
 <tr>
 <td>[key]</td>
@@ -152,25 +159,14 @@ fire callbacks for the branches that match user messages.</p>
 </tr>
 </tbody>
 </table>
-<p><strong>Example</strong> <em>(listener sets up dialogue with user, with 10 second timeout)</em>  </p>
-<pre><code class="lang-js">robot.hear(<span class="hljs-regexp">/hello/</span>, (res) =&gt; {
-  <span class="hljs-keyword">let</span> dlg = <span class="hljs-keyword">new</span> Dialogue(res, { <span class="hljs-attr">timeout</span>: <span class="hljs-number">10000</span> })
-  <span class="hljs-comment">// ...proceed to add paths</span>
-})
+<p><strong>Example</strong>  </p>
+<pre><code class="lang-js"><span class="hljs-keyword">let</span> roomScene = <span class="hljs-keyword">new</span> Scene(robot, { <span class="hljs-attr">scope</span>: <span class="hljs-string">'room'</span> })
 </code></pre>
 <hr>
-<p><a name="Dialogue+end"></a></p>
-<h3 id="dialogue-end-code-boolean-code-">dialogue.end() ⇒ <code>boolean</code></h3>
-<p>Shutdown and emit status (for scene to disengage participants).</p>
-<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a><br><strong>Returns</strong>: <code>boolean</code> - Shutdown status, false if was already ended  </p>
-<hr>
-<p><a name="Dialogue+send"></a></p>
-<h3 id="dialogue-send-strings-code-promise-code-">dialogue.send(…strings) ⇒ <code>Promise</code></h3>
-<p>Send or reply with message as configured (@user reply or send to room).</p>
-<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a><br><strong>Returns</strong>: <code>Promise</code> - From hubot async middleware (if supported)<br><strong>Todo</strong></p>
-<ul>
-<li>[ ] update tests that wait for observer to use promise instead</li>
-</ul>
+<p><a name="Scene+_middleware"></a></p>
+<h3 id="scene-_middleware-context-next-done-">scene._middleware(context, next, done)</h3>
+<p>Process incoming messages, re-route to dialogue for engaged participants.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a>  </p>
 <table>
 <thead>
 <tr>
@@ -181,136 +177,77 @@ fire callbacks for the branches that match user messages.</p>
 </thead>
 <tbody>
 <tr>
-<td>…strings</td>
-<td><code>string</code></td>
-<td>Message strings</td>
-</tr>
-</tbody>
-</table>
-<hr>
-<p><a name="Dialogue+onTimeout"></a></p>
-<h3 id="dialogue-ontimeout-override-">dialogue.onTimeout([override])</h3>
-<p>Default timeout method sends message, unless null or method overriden.</p>
-<p>If given a method it will call that or can be reassigned as a new function.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a>  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>[override]</td>
-<td><code>function</code></td>
-<td>New function to call (optional)</td>
-</tr>
-</tbody>
-</table>
-<hr>
-<p><a name="Dialogue+clearTimeout"></a></p>
-<h3 id="dialogue-cleartimeout-">dialogue.clearTimeout()</h3>
-<p>Stop countdown for matching dialogue branches.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a>  </p>
-<hr>
-<p><a name="Dialogue+startTimeout"></a></p>
-<h3 id="dialogue-starttimeout-">dialogue.startTimeout()</h3>
-<p>Start (or restart) countdown for matching dialogue branches.</p>
-<p>Catches the onTimeout method because it can be overriden and may throw.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a>  </p>
-<hr>
-<p><a name="Dialogue+addPath"></a></p>
-<h3 id="dialogue-addpath-prompt-branches-options-key-code-path-code-">dialogue.addPath([prompt], [branches], [options], [key]) ⇒ <code>Path</code></h3>
-<p>Add a dialogue path, with branches to follow and a prompt (optional).</p>
-<p>Any new path added overwrites the previous.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a><br><strong>Returns</strong>: <code>Path</code> - New path instance<br><strong>Todo</strong></p>
-<ul>
-<li>[ ] when .send uses promise, return promise that resolves with this.path</li>
-</ul>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>[prompt]</td>
-<td><code>string</code></td>
-<td>To send on path setup (e.g. presenting options)</td>
-</tr>
-<tr>
-<td>[branches]</td>
-<td><code>array</code></td>
-<td>Array of args for each branch, each containing:<br>                            - RegExp for listener<br>                            - String to send and/or<br>                            - Function to call on match</td>
-</tr>
-<tr>
-<td>[options]</td>
+<td>context</td>
 <td><code>Object</code></td>
-<td>Key/val options for path</td>
+<td>Passed through the middleware stack, with res</td>
 </tr>
 <tr>
-<td>[key]</td>
-<td><code>string</code></td>
-<td>Key name for this path</td>
+<td>next</td>
+<td><code>function</code></td>
+<td>Called when all middleware is complete</td>
+</tr>
+<tr>
+<td>done</td>
+<td><code>function</code></td>
+<td>Initial (final) completion callback</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><a name="Scene+listen"></a></p>
+<h3 id="scene-listen-type-regex-callback-">scene.listen(type, regex, callback)</h3>
+<p>Add listener that enters the audience into the scene with callback, to then
+add dialogue branches or process response as required.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a>  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>type</td>
+<td><code>String</code></td>
+<td>The listener type: hear</td>
+<td>respond</td>
+</tr>
+<tr>
+<td>regex</td>
+<td><code>RegExp</code></td>
+<td>Matcher for listener</td>
+</tr>
+<tr>
+<td>callback</td>
+<td><code>function</code></td>
+<td>Called when matched, with Response and Dialogue as arguments</td>
 </tr>
 </tbody>
 </table>
 <p><strong>Example</strong>  </p>
-<pre><code class="lang-js"><span class="hljs-keyword">let</span> dlg = <span class="hljs-keyword">new</span> Dialogue(res)
-<span class="hljs-keyword">let</span> path = dlg.addPath(<span class="hljs-string">'Turn left or right?'</span>, [
-  [ <span class="hljs-regexp">/left/</span>, <span class="hljs-string">'Ok, going left!'</span> ]
-  [ <span class="hljs-regexp">/right/</span>, <span class="hljs-string">'Ok, going right!'</span> ]
-], <span class="hljs-string">'which-way'</span>)
+<pre><code class="lang-js"><span class="hljs-keyword">let</span> scene = <span class="hljs-keyword">new</span> Scene(robot, { <span class="hljs-attr">scope</span>: <span class="hljs-string">'user'</span> })
+scene.listen(<span class="hljs-string">'respond'</span>, /hello/, (res, dlg) =&gt; {
+  res.reply(<span class="hljs-string">'you are now in a scene'</span>)
+  <span class="hljs-comment">// add dialogue branches now...</span>
+})
 </code></pre>
 <hr>
-<p><a name="Dialogue+addBranch"></a></p>
-<h3 id="dialogue-addbranch-regex-message-callback-">dialogue.addBranch(regex, [message], [callback])</h3>
-<p>Add a branch to dialogue path, which is usually added first, but will be
-created if not.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a>  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>regex</td>
-<td><code>RegExp</code></td>
-<td>Matching pattern</td>
-</tr>
-<tr>
-<td>[message]</td>
-<td><code>string</code></td>
-<td>Message text for response on match</td>
-</tr>
-<tr>
-<td>[callback]</td>
-<td><code>function</code></td>
-<td>Function called when matched</td>
-</tr>
-</tbody>
-</table>
+<p><a name="Scene+hear"></a></p>
+<h3 id="scene-hear-">scene.hear()</h3>
+<p>Alias of Scene.listen with <code>hear</code> as specified type.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a>  </p>
 <hr>
-<p><a name="Dialogue+receive"></a></p>
-<h3 id="dialogue-receive-res-">dialogue.receive(res)</h3>
-<p>Process incoming message for match against path branches.</p>
-<p>If matched, fire handler, restart timeout.</p>
-<p>if no additional paths or branches added (by handler), end dialogue.</p>
-<p>Overrides the original response with current one.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a><br><strong>Todo</strong></p>
-<ul>
-<li>[ ] Wrap handler in promise, don’t end() until it resolves</li>
-<li>[ ] Test with handler using res.http/get to populate new path</li>
-</ul>
+<p><a name="Scene+respond"></a></p>
+<h3 id="scene-respond-">scene.respond()</h3>
+<p>Alias of Scene.listen with <code>respond</code> as specified type.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a>  </p>
+<hr>
+<p><a name="Scene+whoSpeaks"></a></p>
+<h3 id="scene-whospeaks-res-code-string-code-">scene.whoSpeaks(res) ⇒ <code>string</code></h3>
+<p>Identify the source of a message relative to the scene scope.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a><br><strong>Returns</strong>: <code>string</code> - ID of room, user or composite  </p>
 <table>
 <thead>
 <tr>
@@ -324,6 +261,118 @@ created if not.</p>
 <td>res</td>
 <td><code>Response</code></td>
 <td>Hubot Response object</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><a name="Scene+enter"></a></p>
+<h3 id="scene-enter-res-options-args-code-dialogue-code-">scene.enter(res, [options], …args) ⇒ <code>Dialogue</code></h3>
+<p>Engage the participants in dialogue. A new Dialogue instance is created and
+all further messages from the audience in this scene’s scope will be passed
+to that dialogue, untill they are exited from the scene.</p>
+<p>Would usually be invoked by a listener, using the Scene <code>.listen</code>, <code>.hear</code>
+or <code>respond</code> methods, but could be called directly to force audience into
+a scene unprompted.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a><br><strong>Returns</strong>: <code>Dialogue</code> - The started dialogue  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>res</td>
+<td><code>Response</code></td>
+<td>Hubot Response object</td>
+</tr>
+<tr>
+<td>[options]</td>
+<td><code>Object</code></td>
+<td>Dialogue options merged with scene config</td>
+</tr>
+<tr>
+<td>…args</td>
+<td><code>Mixed</code></td>
+<td>Any additional args for Dialogue constructor</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><a name="Scene+exit"></a></p>
+<h3 id="scene-exit-res-status-code-boolean-code-">scene.exit(res, [status]) ⇒ <code>boolean</code></h3>
+<p>Disengage participants from dialogue e.g. in case of timeout or error.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a><br><strong>Returns</strong>: <code>boolean</code> - Exit success (may fail if already disengaged)  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>res</td>
+<td><code>Response</code></td>
+<td></td>
+<td>Hubot Response object</td>
+</tr>
+<tr>
+<td>[status]</td>
+<td><code>string</code></td>
+<td><code>&quot;unknown&quot;</code></td>
+<td>Some context, for logs</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><a name="Scene+exitAll"></a></p>
+<h3 id="scene-exitall-">scene.exitAll()</h3>
+<p>End all engaged dialogues.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a>  </p>
+<hr>
+<p><a name="Scene+getDialogue"></a></p>
+<h3 id="scene-getdialogue-participants-code-dialogue-code-">scene.getDialogue(participants) ⇒ <code>Dialogue</code></h3>
+<p>Get the dialogue for engaged participants (relative to scene scope).</p>
+<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a><br><strong>Returns</strong>: <code>Dialogue</code> - Engaged dialogue instance  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>participants</td>
+<td><code>string</code></td>
+<td>ID of user, room or composite</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><a name="Scene+inDialogue"></a></p>
+<h3 id="scene-indialogue-participants-code-boolean-code-">scene.inDialogue(participants) ⇒ <code>boolean</code></h3>
+<p>Get the engaged status for participants.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a><br><strong>Returns</strong>: <code>boolean</code> - Is engaged status  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>participants</td>
+<td><code>string</code></td>
+<td>ID of user, room or composite</td>
 </tr>
 </tbody>
 </table>
