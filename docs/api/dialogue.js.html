@@ -84,6 +84,15 @@
                   </a>
                 </li>
               
+                
+                <li>
+                  <a class="source" href="transcript.js.html">
+                    
+                    
+                    Transcript
+                  </a>
+                </li>
+              
             </ol>
           </div>
         
@@ -161,7 +170,7 @@ fire callbacks for the branches that match user messages.</p>
 </tr>
 </tbody>
 </table>
-<p><strong>Example</strong> <em>(listener sets up dialogue with user, with 10 second timeout)</em>  </p>
+<p><strong>Example</strong> <em>(listener sets up dialogue with user on match (10 second timeout))</em>  </p>
 <pre><code class="lang-js">robot.hear(<span class="hljs-regexp">/hello/</span>, (res) =&gt; {
   <span class="hljs-keyword">let</span> dlg = <span class="hljs-keyword">new</span> Dialogue(res, { <span class="hljs-attr">timeout</span>: <span class="hljs-number">10000</span> })
   <span class="hljs-comment">// ...proceed to add paths</span>

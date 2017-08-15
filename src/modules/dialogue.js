@@ -15,7 +15,7 @@ import Path from './path'
  * @param {string} [options.timeoutText]  What to send when timeout reached, set null to not send
  * @param {string} [key]                  Key name for this instance
  *
- * @example <caption>listener sets up dialogue with user, with 10 second timeout</caption>
+ * @example <caption>listener sets up dialogue with user on match (10 second timeout)</caption>
  * robot.hear(/hello/, (res) => {
  *   let dlg = new Dialogue(res, { timeout: 10000 })
  *   // ...proceed to add paths

@@ -85,7 +85,7 @@ class Path extends Base {
    *
    * @return {Object} Contains .handler (function) or null if not configured
   */
-  _catch () {
+  catch () {
     if ((this.config.catchMessage == null) && (this.config.catchCallback == null)) return
     return {
       handler: (res, dialogue) => {
@@ -122,7 +122,7 @@ class Path extends Base {
       return res.match
     }) // truthy / falsey
     if (branch != null) { this.closed = true }
-    return branch || this._catch()
+    return branch || this.catch()
   }
 }
 

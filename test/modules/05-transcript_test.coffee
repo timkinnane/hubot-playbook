@@ -5,25 +5,28 @@ chai.use require 'sinon-chai'
 chai.use require 'chai-subset'
 
 _ = require 'lodash'
-co = require 'co'
+pretend = require 'hubot-pretend'
+Transcript = require '../../lib/modules/transcript'
+Director = require '../../lib/modules/director'
+Scene = require '../../lib/modules/scene'
+Dialogue = require '../../lib/modules/dialogue'
+Base = require '../../lib/modules/base'
+Module = require '../../lib/utils/module'
 
-Pretend = require 'hubot-pretend'
-pretend = new Pretend '../scripts/shh.coffee'
-{Transcript, Director, Scene, Dialogue, Base} = require '../../src/modules'
-
-class MockModule extends Base
-  constructor: (args...) -> super 'module', pretend.robot, args...
+# helper clears existing listeners to check specific listeners are added
+removeListeners = (robot) -> robot.events.removeAllListeners.apply robot
 
 describe 'Transcript', ->
 
   beforeEach ->
-    pretend.startup()
+    pretend.start()
+    pretend.log.level = 'silent'
     @tester = pretend.user 'tester', room: 'testing'
     @clock = sinon.useFakeTimers()
     @now = _.now()
 
-    _.forIn Transcript.prototype, (val, key) ->
-      sinon.spy Transcript.prototype, key if _.isFunction val
+    Object.getOwnPropertyNames(Transcript.prototype).map (key) ->
+      sinon.spy Transcript.prototype, key
 
     # generate first response for mock events
     @tester.send('test').then => @res = pretend.responses.incoming[0]
@@ -32,8 +35,8 @@ describe 'Transcript', ->
     pretend.shutdown()
     @clock.restore()
 
-    _.forIn Transcript.prototype, (val, key) ->
-      Transcript.prototype[key].restore() if _.isFunction val
+    Object.getOwnPropertyNames(Transcript.prototype).map (key) ->
+      Transcript.prototype[key].restore()
 
   describe 'constructor', ->
 
@@ -76,38 +79,38 @@ describe 'Transcript', ->
 
       beforeEach ->
         @transcript = new Transcript pretend.robot, save: false
-        @module = new MockModule 'foo'
+        @module = new Module pretend.robot, 'foo'
         @module.on 'mockEvent', (args...) =>
           @transcript.recordEvent 'mockEvent', args...
 
       context 'with default config', ->
 
-        beforeEach (done) ->
-          @record = record = sinon.spy()
-          @transcript.on 'record', @record
-          @transcript.on 'record', -> done()
+        it 'records default instance attributes', (done) ->
+          @transcript.on 'record', =>
+            @transcript.records[0].should.containSubset instance:
+              name: @module.name
+              key: @module.key
+              id: @module.id
+            done()
           @module.emit 'mockEvent', @res
 
-        it 'records default instance attributes', ->
-          @transcript.records[0].should.containSubset instance:
-            name: @module.name
-            key: @module.key
-            id: @module.id
+        it 'records default response attributes', (done) ->
+          @transcript.on 'record', =>
+            @transcript.records[0].should.containSubset response:
+              match: @res.match
+            done()
+          @module.emit 'mockEvent', @res
 
-        it 'records default response attributes', ->
-          @transcript.records[0].should.containSubset response:
-            match: @res.match
-
-        it 'records default message attributes', ->
-          @transcript.records[0].should.containSubset message:
-            user:
-              id: @res.message.user.id
-              name: @res.message.user.name
-            room: @res.message.room
-            text: @res.message.text
-
-        it 'emits new record once created', ->
-          @record.should.have.calledWith @transcript, @transcript.records.pop()
+        it 'records default message attributes', (done) ->
+          @transcript.on 'record', =>
+            @transcript.records[0].should.containSubset message:
+              user:
+                id: @res.message.user.id
+                name: @res.message.user.name
+              room: @res.message.room
+              text: @res.message.text
+            done()
+          @module.emit 'mockEvent', @res
 
       context 'with transcript key', ->
 
@@ -228,15 +231,14 @@ describe 'Transcript', ->
     context 'with default event set', ->
 
       beforeEach (done) ->
-        pretend.robot.events.removeAllListeners()
+        removeListeners pretend.robot
         @transcript.recordDialogue @dialogue
         @dialogue.on 'match', -> done()
         @dialogue.emit 'match'
 
       it 'attached listener for default events from dialogue', ->
-        _.keys pretend.robot.events.events
+        _.keys pretend.robot._events
         .should.eql @transcript.config.events
-        # TODO: could use events.eventNames() when EventEmitter in hubot updated
 
       it 'calls the listener when event emmited from dialogue', ->
         @transcript.recordEvent.should.have.calledWith 'match', @dialogue
@@ -244,7 +246,7 @@ describe 'Transcript', ->
     context 'with custom event set', ->
 
       beforeEach (done) ->
-        pretend.robot.events.removeAllListeners()
+        removeListeners pretend.robot
         @transcript.config.events = ['match', 'mismatch']
         @transcript.recordDialogue @dialogue
         @dialogue.emit 'send'
@@ -252,7 +254,7 @@ describe 'Transcript', ->
         @dialogue.emit 'match'
 
       it 'attached listener for default events from dialogue', ->
-        _.keys pretend.robot.events.events
+        _.keys pretend.robot._events
         .should.eql ['match', 'mismatch']
 
       it 'calls the listener when event emmited from dialogue', ->
@@ -264,7 +266,7 @@ describe 'Transcript', ->
   describe '.recordScene', ->
 
     beforeEach (done) ->
-      pretend.robot.events.removeAllListeners()
+      removeListeners pretend.robot
       @transcript = new Transcript pretend.robot,
         save: false
         events: ['match']
@@ -275,7 +277,7 @@ describe 'Transcript', ->
       @dialogue.receive @res
 
     it 'attached listener for scene and dialogue events', ->
-      _.keys pretend.robot.events.events
+      _.keys pretend.robot._events
       .should.containSubset ['enter', 'exit', 'match']
       # subset checked because scene enter adds its own listeners
 
@@ -288,7 +290,7 @@ describe 'Transcript', ->
   describe '.recordDirector', ->
 
     beforeEach (done) ->
-      pretend.robot.events.removeAllListeners()
+      removeListeners pretend.robot
       @transcript = new Transcript pretend.robot, save: false
       @director = new Director pretend.robot, type: 'blacklist'
       @transcript.recordDirector @director
@@ -299,7 +301,7 @@ describe 'Transcript', ->
       @director.process @res
 
     it 'attached listeners for director events', ->
-      _.keys pretend.robot.events.events
+      _.keys pretend.robot._events
       .should.eql ['allow', 'deny']
 
     it 'records events emitted by director', ->
@@ -317,28 +319,28 @@ describe 'Transcript', ->
         event: 'match'
         instance: key: 'time'
         message:
-          user: name: 'jon',
+          user: name: 'jon'
           text: 'now'
       ,
         time: 0
         event: 'match'
         instance: key: 'direction'
         message:
-          user: name: 'jon',
+          user: name: 'jon'
           text: 'left'
       ,
         time: 0
         event: 'match'
         instance: key: 'time'
         message:
-          user: name: 'luc',
+          user: name: 'luc'
           text: 'later'
       ,
         time: 0
         event: 'match'
         instance: key: 'direction'
         message:
-          user: name: 'luc',
+          user: name: 'luc'
           text: 'right'
       ]
 
@@ -351,25 +353,19 @@ describe 'Transcript', ->
           event: 'match'
           instance: key: 'time'
           message:
-            user: name: 'jon',
+            user: name: 'jon'
             text: 'now'
         ,
           time: 0
           event: 'match'
           instance: key: 'direction'
           message:
-            user: name: 'jon',
+            user: name: 'jon'
             text: 'left'
         ]
 
-    context 'with record subset and path matcher', ->
+    context 'with record subset matcher', ->
 
-      it 'returns only the values at path', ->
+      it 'returns only the values at given path', ->
         @transcript.findRecords message: user: name: 'jon', 'message.text'
-        .should.eql [ 'now', 'left' ]
-
-    context 'with record path subset and path matcher', ->
-
-      it 'returns only the values at path', ->
-        @transcript.findRecords 'message.user.name': 'jon', 'message.text'
         .should.eql [ 'now', 'left' ]

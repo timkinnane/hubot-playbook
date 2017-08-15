@@ -84,6 +84,15 @@
                   </a>
                 </li>
               
+                
+                <li>
+                  <a class="source" href="transcript.js.html">
+                    
+                    
+                    Transcript
+                  </a>
+                </li>
+              
             </ol>
           </div>
         
@@ -114,7 +123,7 @@ determined by the scene’s scope:</p>
 <ul>
 <li><a href="#Scene">Scene</a><ul>
 <li><a href="#new_Scene_new">new Scene(robot, [options], [key])</a></li>
-<li><a href="#Scene+_middleware">._middleware(context, next, done)</a></li>
+<li><a href="#Scene+middleware">.middleware(context, next, done)</a></li>
 <li><a href="#Scene+listen">.listen(type, regex, callback)</a></li>
 <li><a href="#Scene+hear">.hear()</a></li>
 <li><a href="#Scene+respond">.respond()</a></li>
@@ -172,8 +181,8 @@ determined by the scene’s scope:</p>
 <pre><code class="lang-js"><span class="hljs-keyword">let</span> roomScene = <span class="hljs-keyword">new</span> Scene(robot, { <span class="hljs-attr">scope</span>: <span class="hljs-string">'room'</span> })
 </code></pre>
 <hr>
-<p><a name="Scene+_middleware"></a></p>
-<h3 id="scene-_middleware-context-next-done-">scene._middleware(context, next, done)</h3>
+<p><a name="Scene+middleware"></a></p>
+<h3 id="scene-middleware-context-next-done-">scene.middleware(context, next, done)</h3>
 <p>Process incoming messages, re-route to dialogue for engaged participants.</p>
 <p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a>  </p>
 <table>

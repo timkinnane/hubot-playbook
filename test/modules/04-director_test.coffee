@@ -385,7 +385,7 @@ describe 'Director', ->
       it 'returns true', ->
         @result.should.be.true
 
-  describe '._process', ->
+  describe '.process', ->
 
     beforeEach ->
       @reply = sinon.spy @res, 'reply'
@@ -395,7 +395,7 @@ describe 'Director', ->
     context 'denied user', ->
 
       beforeEach ->
-        @result = @director._process @res
+        @result = @director.process @res
 
       it 'calls .isAllowed to determine if user is allowed or denied', ->
         @director.isAllowed.should.have.calledWith @res
@@ -406,7 +406,7 @@ describe 'Director', ->
     context 'denied with denied reply value', ->
 
       beforeEach ->
-        @result = @director._process @res
+        @result = @director.process @res
 
       it 'calls response method reply with reply value', ->
         @reply.should.have.calledWith @director.config.deniedReply
@@ -415,7 +415,7 @@ describe 'Director', ->
 
       beforeEach ->
         @director.config.deniedReply = null
-        @result = @director._process @res
+        @result = @director.process @res
 
       it 'does not call response reply method', ->
         @reply.should.not.have.called
@@ -424,7 +424,7 @@ describe 'Director', ->
 
       beforeEach ->
         @director.names = ['tester']
-        @result = @director._process @res
+        @result = @director.process @res
 
       it 'calls .isAllowed to determine if user is allowed or denied', ->
         @director.isAllowed.should.have.calledWith @res
@@ -449,8 +449,8 @@ describe 'Director', ->
         @director.names = ['tester']
         yield @tester.send 'test'
 
-      it 'calls ._process with response to perform access checks and reply', ->
-        @director._process.should.have.calledOnce
+      it 'calls .process with response to perform access checks and reply', ->
+        @director.process.should.have.calledOnce
 
       it 'triggers match callback normally', ->
         @callback.should.have.calledOnce
@@ -460,8 +460,8 @@ describe 'Director', ->
       beforeEach ->
         yield @tester.send 'test'
 
-      it 'calls ._process to perform access checks and reply', ->
-        @director._process.should.have.calledOnce
+      it 'calls .process to perform access checks and reply', ->
+        @director.process.should.have.calledOnce
 
       it 'prevents match callback from triggering', ->
         @callback.should.not.have.called
@@ -471,8 +471,8 @@ describe 'Director', ->
       beforeEach ->
         yield @tester.send 'foo'
 
-      it 'does not call ._process because middleware did not match', ->
-        @director._process.should.not.have.called
+      it 'does not call .process because middleware did not match', ->
+        @director.process.should.not.have.called
 
   describe '.directListener', ->
 
@@ -488,8 +488,8 @@ describe 'Director', ->
         @director.names = ['tester']
         yield @tester.send 'test'
 
-      it 'calls ._process with response to perform access checks and reply', ->
-        @director._process.should.have.calledOnce
+      it 'calls .process with response to perform access checks and reply', ->
+        @director.process.should.have.calledOnce
 
       it 'triggers match callback normally', ->
         @callback.should.have.calledOnce
@@ -499,8 +499,8 @@ describe 'Director', ->
       beforeEach ->
         yield @tester.send 'test'
 
-      it 'calls ._process to perform access checks and reply', ->
-        @director._process.should.have.calledOnce
+      it 'calls .process to perform access checks and reply', ->
+        @director.process.should.have.calledOnce
 
       it 'prevents match callback from triggering', ->
         @callback.should.not.have.called
@@ -510,8 +510,8 @@ describe 'Director', ->
       beforeEach ->
         yield @tester.send 'foo'
 
-      it 'does not call ._process because middleware did not match', ->
-        @director._process.should.not.have.called
+      it 'does not call .process because middleware did not match', ->
+        @director.process.should.not.have.called
 
   describe '.directScene', ->
 
@@ -530,8 +530,8 @@ describe 'Director', ->
         @director.names = ['tester']
         @result = @scene.enter @res
 
-      it 'calls ._process to perform access checks and reply', ->
-        @director._process.should.have.calledWith @res
+      it 'calls .process to perform access checks and reply', ->
+        @director.process.should.have.calledWith @res
 
       it 'allowed the .enter method, returning a Dialogue object', ->
         @result.should.be.instanceof Dialogue
@@ -541,8 +541,8 @@ describe 'Director', ->
       beforeEach ->
         @result = @scene.enter @res # no list, denies all in whitelist mode
 
-      it 'calls ._process to perform access checks and reply', ->
-        @director._process.should.have.calledWith @res
+      it 'calls .process to perform access checks and reply', ->
+        @director.process.should.have.calledWith @res
 
       it 'preempts scene.enter, returning false instead', ->
         @result.should.be.false

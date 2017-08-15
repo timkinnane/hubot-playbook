@@ -137,15 +137,15 @@ describe 'Path', ->
         @path = new Path pretend.robot,
           catchMessage: 'always be catching'
           catchCallback: @callback
-        @path._catch()
+        @path.catch()
 
       it 'returns valid handler', ->
-        @path._catch.returnValues[0].handler.should.be.a 'function'
+        @path.catch.returnValues[0].handler.should.be.a 'function'
 
       context 'when handler called', ->
 
         beforeEach ->
-          @path._catch().handler @mockRes, @mockDlg
+          @path.catch().handler @mockRes, @mockDlg
 
         it 'sends the message with given dialogue', ->
           @mockDlg.send.should.have.calledWith 'always be catching'
@@ -157,7 +157,7 @@ describe 'Path', ->
 
       it 'returns undefined', ->
         path = new Path pretend.robot
-        should.not.exist path._catch()
+        should.not.exist path.catch()
 
   describe '.match', ->
 

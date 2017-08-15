@@ -84,6 +84,15 @@
                   </a>
                 </li>
               
+                
+                <li>
+                  <a class="source" href="transcript.js.html">
+                    
+                    
+                    Transcript
+                  </a>
+                </li>
+              
             </ol>
           </div>
         
@@ -112,7 +121,7 @@ without any new ones added.</p>
 <li><a href="#Path">Path</a><ul>
 <li><a href="#new_Path_new">new Path(robot, [branches], [options], [key])</a></li>
 <li><a href="#Path+addBranch">.addBranch(regex, [message], [callback])</a></li>
-<li><a href="#Path+_catch">._catch()</a> ⇒ <code>Object</code></li>
+<li><a href="#Path+catch">.catch()</a> ⇒ <code>Object</code></li>
 <li><a href="#Path+match">.match(res)</a> ⇒ <code>Object</code> | <code>undefined</code></li>
 </ul>
 </li>
@@ -200,8 +209,8 @@ without any new ones added.</p>
 <pre><code class="lang-js">path.addBranch(<span class="hljs-regexp">/hello/i</span>, <span class="hljs-string">'hello there'</span>, helloCallback)
 </code></pre>
 <hr>
-<p><a name="Path+_catch"></a></p>
-<h3 id="path-_catch-code-object-code-">path._catch() ⇒ <code>Object</code></h3>
+<p><a name="Path+catch"></a></p>
+<h3 id="path-catch-code-object-code-">path.catch() ⇒ <code>Object</code></h3>
 <p>Called when nothing matches, behaviour depends on config:</p>
 <ul>
 <li>catchMessage: Message to send via handler</li>

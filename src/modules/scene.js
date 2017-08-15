@@ -36,7 +36,7 @@ class Scene extends Base {
 
     this.Dialogue = Dialogue
     this.engaged = {}
-    this.robot.receiveMiddleware((c, n, d) => this._middleware(c, n, d))
+    this.robot.receiveMiddleware((c, n, d) => this.middleware(c, n, d))
   }
 
   /**
@@ -46,7 +46,7 @@ class Scene extends Base {
    * @param {Function} next  Called when all middleware is complete
    * @param {Function} done  Initial (final) completion callback
   */
-  _middleware (context, next, done) {
+  middleware (context, next, done) {
     const res = context.response
     const participants = this.whoSpeaks(res)
 

@@ -1,13 +1,18 @@
 import _ from 'lodash'
-import Base from './Base'
+import Base from './base'
 import hooker from 'hooker'
 
 /**
- * Controls listeners and access to a scene (via audience blacklist/whitelist).
+ * Provides conversation firewalls, allowing listed users or custom logic to
+ * authorise or block users from entering interactions or following specific
+ * paths.
  *
- * Can use an `authorise` property (function) to allow or deny, as fallback for
- * anyone not on the list. Authorise callback is given the user or room name and
- * response object. Must return boolean to determine access.
+ * Access is determined by blacklist or whitelist, or if defined a fallback
+ * _authorise_ function to allow or deny anyone not on the list.
+ *
+ * Authorise callback is given the user or room name (depending on the scope
+ * configured for the direcrot) and response object. It must return a boolean to
+ * determine access.
  *
  * @param {Robot}    robot               Hubot Robot instance
  * @param {Function} [authorise]         Function to determine access (as fallback)
@@ -121,7 +126,7 @@ class Director extends Base {
    * @param  {Response} res Hubot Response object
    * @return {boolean}      Access allowed
   */
-  _process (res) {
+  process (res) {
     const allowed = this.isAllowed(res)
     const user = res.message.user.name
     const message = res.message.text
@@ -148,7 +153,7 @@ class Director extends Base {
     this.robot.listenerMiddleware((context, next, done) => {
       const res = context.response
       const isMatch = res.message.text.match(regex)
-      const isDenied = !this._process(res)
+      const isDenied = !this.process(res)
       if (isMatch && isDenied) {
         res.message.finish() // don't process this message further
         return done() // don't process further middleware
@@ -171,7 +176,7 @@ class Director extends Base {
     this.robot.listenerMiddleware((context, next, done) => {
       const res = context.response
       const isMatch = context.listener.options.id === id
-      const isDenied = !this._process(res)
+      const isDenied = !this.process(res)
       if (isMatch && isDenied) {
         context.response.message.finish() // don't process this message further
         return done() // don't process further middleware
@@ -196,7 +201,7 @@ class Director extends Base {
     this.directListener(scene.id) //  to control scene's listeners
     hooker.hook(scene, 'enter', {
       pre: res => {
-        if (!this._process(res)) return hooker.preempt(false)
+        if (!this.process(res)) return hooker.preempt(false)
       }
     })
     return this

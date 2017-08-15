@@ -2,7 +2,7 @@
 
 <html>
 <head>
-  <title>director.js.md</title>
+  <title>transcript.js.md</title>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
   <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
   <link rel="stylesheet" media="all" href="public/stylesheets/normalize.css" />
@@ -100,47 +100,40 @@
         
           
           
-          <h1>Director</h1>
+          <h1>Transcript</h1>
         
       </div>
 
       
         
-        <p><a name="Director"></a></p>
-<h2 id="director">Director</h2>
-<p>Provides conversation firewalls, allowing listed users or custom logic to
-authorise or block users from entering interactions or following specific
-paths.</p>
-<p>Access is determined by blacklist or whitelist, or if defined a fallback
-<em>authorise</em> function to allow or deny anyone not on the list.</p>
-<p>Authorise callback is given the user or room name (depending on the scope
-configured for the direcrot) and response object. It must return a boolean to
-determine access.</p>
+        <p><a name="Transcript"></a></p>
+<h2 id="transcript">Transcript</h2>
+<p>Records conversation events, including meta about the user, message and
+current module state. It is configurable to provide an overview or drilled
+down analytics of specific interactions.</p>
+<p>Transcripts are searchable, to provide context to interactions from
+conversation history with a given user of any other attribute. If saving to
+the hubot brain, they will also search from the brain’s persisted transcript
+history.</p>
+<p>It can record all events emitted through the robot or just those originating
+from a given Playbook module instance</p>
 <p><strong>Kind</strong>: global class  </p>
 <ul>
-<li><a href="#Director">Director</a><ul>
-<li><a href="#new_Director_new">new Director(robot, [authorise], [options], [key])</a></li>
-<li><a href="#Director+add">.add(names)</a> ⇒ <a href="#Director"><code>Director</code></a></li>
-<li><a href="#Director+remove">.remove(names)</a> ⇒ <a href="#Director"><code>Director</code></a></li>
-<li><a href="#Director+isAllowed">.isAllowed(res)</a> ⇒ <code>boolean</code></li>
-<li><a href="#Director+process">.process(res)</a> ⇒ <code>boolean</code></li>
-<li><a href="#Director+directMatch">.directMatch(regex)</a> ⇒ <a href="#Director"><code>Director</code></a></li>
-<li><a href="#Director+directListener">.directListener(id)</a> ⇒ <a href="#Director"><code>Director</code></a></li>
-<li><a href="#Director+directScene">.directScene(scene)</a> ⇒ <a href="#Director"><code>Director</code></a></li>
+<li><a href="#Transcript">Transcript</a><ul>
+<li><a href="#new_Transcript_new">new Transcript(robot, [options], [key])</a></li>
+<li><a href="#Transcript+recordEvent">.recordEvent(event)</a></li>
+<li><a href="#Transcript+recordAll">.recordAll()</a></li>
+<li><a href="#Transcript+recordDialogue">.recordDialogue(dialogue)</a></li>
+<li><a href="#Transcript+recordScene">.recordScene(scene)</a></li>
+<li><a href="#Transcript+recordDirector">.recordDirector(scene)</a></li>
+<li><a href="#Transcript+findRecords">.findRecords(subsetMatch, [returnPath])</a> ⇒ <code>array</code></li>
+<li><a href="#Transcript+findKeyMatches">.findKeyMatches(instanceKey, [capture])</a> ⇒ <code>array</code></li>
 </ul>
 </li>
 </ul>
 <hr>
-<p><a name="new_Director_new"></a></p>
-<h3 id="new-director-robot-authorise-options-key-">new Director(robot, [authorise], [options], [key])</h3>
-<p><code>config.deniedReply</code> can be set globally with environment var <code>DENIED_REPLY</code></p>
-<p>Environment vars can also provide global default lists:</p>
-<ul>
-<li><code>WHITELIST_USERNAMES</code> for whitelist type and username scope directors</li>
-<li><code>WHITELIST_ROOMS</code> for whitelist type and room scope directors</li>
-<li><code>BLACKLIST_USERNAMES</code> for blacklist type and username scope directors</li>
-<li><code>BLACKLIST_ROOMS</code> for blacklist type and room scope directors</li>
-</ul>
+<p><a name="new_Transcript_new"></a></p>
+<h3 id="new-transcript-robot-options-key-">new Transcript(robot, [options], [key])</h3>
 <table>
 <thead>
 <tr>
@@ -156,24 +149,29 @@ determine access.</p>
 <td>Hubot Robot instance</td>
 </tr>
 <tr>
-<td>[authorise]</td>
-<td><code>function</code></td>
-<td>Function to determine access (as fallback)</td>
-</tr>
-<tr>
 <td>[options]</td>
 <td><code>Object</code></td>
 <td>Key/val options for config</td>
 </tr>
 <tr>
-<td>[options.type]</td>
-<td><code>string</code></td>
-<td><code>&#39;whitelist&#39;</code> (default) or <code>&#39;blacklist&#39;</code></td>
+<td>[options.save]</td>
+<td><code>Object</code></td>
+<td>Store records in hubot brain</td>
 </tr>
 <tr>
-<td>[options.deniedReply]</td>
-<td><code>string</code></td>
-<td>Sent when denied access</td>
+<td>[options.events]</td>
+<td><code>Object</code></td>
+<td>Array of event names to record</td>
+</tr>
+<tr>
+<td>[options.responseAtts]</td>
+<td><code>Object</code></td>
+<td>Hubot Response attribute keys to add to record</td>
+</tr>
+<tr>
+<td>[options.instanceAtts]</td>
+<td><code>Object</code></td>
+<td>Module instance attribute keys to add to record</td>
 </tr>
 <tr>
 <td>[key]</td>
@@ -182,17 +180,20 @@ determine access.</p>
 </tr>
 </tbody>
 </table>
-<p><strong>Example</strong> <em>(check if user has a particular role in platform)</em>  </p>
-<pre><code class="lang-js"><span class="hljs-keyword">let</span> adminsOnly = <span class="hljs-keyword">new</span> Director(robot, (username) =&gt; {
-  <span class="hljs-keyword">return</span> chatPlatform.userHasPermission(username, <span class="hljs-string">'admin'</span>)
+<p><strong>Example</strong> <em>(transcript to record room name when match emitted)</em>  </p>
+<pre><code class="lang-js"><span class="hljs-keyword">let</span> matchRecords = <span class="hljs-keyword">new</span> Transcript(robot, {
+  <span class="hljs-attr">responseAtts</span>: [<span class="hljs-string">'message.room'</span>]
+  events: [<span class="hljs-string">'match'</span>]
 })
-<span class="hljs-comment">// ...when directing a scene, will only allow platform admins to enter.</span>
+<span class="hljs-comment">// does not start recording until calling one of the record methods, like:</span>
+matchRecords.recordAll()
 </code></pre>
 <hr>
-<p><a name="Director+add"></a></p>
-<h3 id="director-add-names-code-director-code-director-">director.add(names) ⇒ <a href="#Director"><code>Director</code></a></h3>
-<p>Add new usernames/rooms to list.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Director"><code>Director</code></a><br><strong>Returns</strong>: <a href="#Director"><code>Director</code></a> - Self, for chaining methods  </p>
+<p><a name="Transcript+recordEvent"></a></p>
+<h3 id="transcript-recordevent-event-">transcript.recordEvent(event)</h3>
+<p>Record given event details in array, save to hubot brain if configured to
+Events emitted by Playbook always include module instance as first param.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Transcript"><code>Transcript</code></a>  </p>
 <table>
 <thead>
 <tr>
@@ -203,137 +204,50 @@ determine access.</p>
 </thead>
 <tbody>
 <tr>
-<td>names</td>
-<td><code>string/array</code></td>
-<td>Usernames or Room names (depending on scope)</td>
-</tr>
-</tbody>
-</table>
-<hr>
-<p><a name="Director+remove"></a></p>
-<h3 id="director-remove-names-code-director-code-director-">director.remove(names) ⇒ <a href="#Director"><code>Director</code></a></h3>
-<p>Remove new usernames/rooms from list.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Director"><code>Director</code></a><br><strong>Returns</strong>: <a href="#Director"><code>Director</code></a> - Self, for chaining methods  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>names</td>
-<td><code>string/array</code></td>
-<td>Usernames or Room names (depending on scope)</td>
-</tr>
-</tbody>
-</table>
-<hr>
-<p><a name="Director+isAllowed"></a></p>
-<h3 id="director-isallowed-res-code-boolean-code-">director.isAllowed(res) ⇒ <code>boolean</code></h3>
-<p>Determine if user has access, checking usernames/rooms against lists.</p>
-<p><em>Blacklist</em> blocks names on list, let anyone else through. <em>Whitelist</em> lets
-names on list through, block anyone else. Whitelist is default behaviour.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Director"><code>Director</code></a><br><strong>Returns</strong>: <code>boolean</code> - Access allowed  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>res</td>
-<td><code>Response</code></td>
-<td>Hubot Response object</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Example</strong> <em>(assumes res1, res2 are valid Response objects)</em>  </p>
-<pre><code class="lang-js"><span class="hljs-keyword">let</span> noHomers = <span class="hljs-keyword">new</span> Director(robot, { <span class="hljs-attr">type</span>: <span class="hljs-string">'blacklist'</span> }).add(<span class="hljs-string">'homer'</span>)
-res1.message.user.name = <span class="hljs-string">'homer'</span>
-res2.message.user.name = <span class="hljs-string">'marge'</span>
-noHomers.isAllowed(res1) <span class="hljs-comment">// false</span>
-noHomers.isAllowed(res2) <span class="hljs-comment">// true</span>
-</code></pre>
-<hr>
-<p><a name="Director+process"></a></p>
-<h3 id="director-process-res-code-boolean-code-">director.process(res) ⇒ <code>boolean</code></h3>
-<p>Process access or denial (either silently or with reply, as configured).</p>
-<p><strong>Kind</strong>: instance method of <a href="#Director"><code>Director</code></a><br><strong>Returns</strong>: <code>boolean</code> - Access allowed  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>res</td>
-<td><code>Response</code></td>
-<td>Hubot Response object</td>
-</tr>
-</tbody>
-</table>
-<hr>
-<p><a name="Director+directMatch"></a></p>
-<h3 id="director-directmatch-regex-code-director-code-director-">director.directMatch(regex) ⇒ <a href="#Director"><code>Director</code></a></h3>
-<p>Let this director control access to any listener matching regex.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Director"><code>Director</code></a><br><strong>Returns</strong>: <a href="#Director"><code>Director</code></a> - - Self, for chaining methods  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>regex</td>
-<td><code>Regex</code></td>
-<td>Listener match pattern</td>
-</tr>
-</tbody>
-</table>
-<hr>
-<p><a name="Director+directListener"></a></p>
-<h3 id="director-directlistener-id-code-director-code-director-">director.directListener(id) ⇒ <a href="#Director"><code>Director</code></a></h3>
-<p>Let this director control access to a listener by listener or scene ID.</p>
-<p>If multiple listeners use the same ID, it’s assumed to deny all of them.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Director"><code>Director</code></a><br><strong>Returns</strong>: <a href="#Director"><code>Director</code></a> - Self, for chaining methods  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>id</td>
+<td>event</td>
 <td><code>string</code></td>
-<td>Listener ID (may be multiple for scene)</td>
+<td>The event name</td>
+</tr>
+<tr>
+<td>args…</td>
+<td><code>Mixed</code></td>
+<td>Args passed with the event, usually consists of:<br>                          - Playbook module instance<br>                          - Hubot response object<br>                          - other additional (special context) arguments</td>
 </tr>
 </tbody>
 </table>
 <hr>
-<p><a name="Director+directScene"></a></p>
-<h3 id="director-directscene-scene-code-director-code-director-">director.directScene(scene) ⇒ <a href="#Director"><code>Director</code></a></h3>
-<p>Let this director control access to a given scene’s listener.</p>
-<p>Also hooks into <code>Scene.enter</code> to control access to manually entered scenes.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Director"><code>Director</code></a><br><strong>Returns</strong>: <a href="#Director"><code>Director</code></a> - Self, for chaining methods<br><strong>Todo</strong></p>
-<ul>
-<li>[ ] Replace hooker usage with custom middleware on scene enter.<pre><code>e.g. https:<span class="hljs-comment">//gist.github.com/darrenscerri/5c3b3dcbe4d370435cfa</span>
-</code></pre></li>
-</ul>
+<p><a name="Transcript+recordAll"></a></p>
+<h3 id="transcript-recordall-">transcript.recordAll()</h3>
+<p>Record events emitted by all Playbook modules and/or the robot itself
+(still only applies to configured event types).</p>
+<p><strong>Kind</strong>: instance method of <a href="#Transcript"><code>Transcript</code></a>  </p>
+<hr>
+<p><a name="Transcript+recordDialogue"></a></p>
+<h3 id="transcript-recorddialogue-dialogue-">transcript.recordDialogue(dialogue)</h3>
+<p>Record events emitted by a given dialogue.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Transcript"><code>Transcript</code></a>  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>dialogue</td>
+<td><code>Dialogue</code></td>
+<td>The Dialogue instance</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><a name="Transcript+recordScene"></a></p>
+<h3 id="transcript-recordscene-scene-">transcript.recordScene(scene)</h3>
+<p>Record events emitted by a given scene and any dialogue it enters, captures
+all events fromn the scene but only configured events from dialogue.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Transcript"><code>Transcript</code></a>  </p>
 <table>
 <thead>
 <tr>
@@ -346,10 +260,106 @@ noHomers.isAllowed(res2) <span class="hljs-comment">// true</span>
 <tr>
 <td>scene</td>
 <td><code>Scene</code></td>
-<td>The Scene instance</td>
+<td>The Scnee instance</td>
 </tr>
 </tbody>
 </table>
+<hr>
+<p><a name="Transcript+recordDirector"></a></p>
+<h3 id="transcript-recorddirector-scene-">transcript.recordDirector(scene)</h3>
+<p>Record allow/deny events emitted by a given director. Ignores configured
+events because director has distinct events.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Transcript"><code>Transcript</code></a>  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>scene</td>
+<td><code>Director</code></td>
+<td>The Director instance</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><a name="Transcript+findRecords"></a></p>
+<h3 id="transcript-findrecords-subsetmatch-returnpath-code-array-code-">transcript.findRecords(subsetMatch, [returnPath]) ⇒ <code>array</code></h3>
+<p>Filter records matching a subset, e.g. user name or instance key.</p>
+<p>Optionally return the whole record or values for a given key.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Transcript"><code>Transcript</code></a><br><strong>Returns</strong>: <code>array</code> - Whole records or selected values found  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>subsetMatch</td>
+<td><code>Object</code></td>
+<td>Key/s:value/s to match (accepts path key)</td>
+</tr>
+<tr>
+<td>[returnPath]</td>
+<td><code>string</code></td>
+<td>Key or path within record to return</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example</strong>  </p>
+<pre><code class="lang-js">transcript.findRecords({
+  <span class="hljs-attr">message</span>: { <span class="hljs-attr">user</span>: { <span class="hljs-attr">name</span>: <span class="hljs-string">'jon'</span> } }
+})
+<span class="hljs-comment">// returns array of event objects</span>
+
+transcript.findRecords({
+  <span class="hljs-attr">message</span>: { <span class="hljs-attr">user</span>: { <span class="hljs-attr">name</span>: <span class="hljs-string">'jon'</span> } }
+}, <span class="hljs-string">'message.text'</span>)
+<span class="hljs-comment">// returns array of message text only</span>
+</code></pre>
+<hr>
+<p><a name="Transcript+findKeyMatches"></a></p>
+<h3 id="transcript-findkeymatches-instancekey-capture-code-array-code-">transcript.findKeyMatches(instanceKey, [capture]) ⇒ <code>array</code></h3>
+<p>Shortcut for findRecords for just response match attributes, with a given
+instance key, useful for simple lookups of information provided by user
+within a specific conversation.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Transcript"><code>Transcript</code></a><br><strong>Returns</strong>: <code>array</code> - Contains full match or just capture group<br><strong>Todo</strong></p>
+<ul>
+<li>[ ] option filter by ID - e.g. only searching current module interactions</li>
+<li>[ ] option filter by User</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>instanceKey</td>
+<td><code>string</code></td>
+<td>From the recorded instance to lookup</td>
+</tr>
+<tr>
+<td>[capture]</td>
+<td><code>integer</code></td>
+<td>Filter match by regex capture group subset</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example</strong> <em>(find answers from a specific dialogue path)</em>  </p>
+<pre><code class="lang-js"><span class="hljs-keyword">let</span> colorMatches = transcript.findKeyMatches(<span class="hljs-string">'pick-a-color'</span>, <span class="hljs-number">0</span>)
+<span class="hljs-keyword">let</span> latestColor = colorMatches[<span class="hljs-number">0</span>]
+</code></pre>
 <hr>
 
         

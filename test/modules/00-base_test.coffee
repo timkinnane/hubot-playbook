@@ -148,11 +148,11 @@ describe 'Base', ->
   describe '.emit', ->
 
     it 'emits event via the robot with instance as first arg', ->
-      @mockEvent = sinon.spy()
-      pretend.robot.on 'mockEvent', @mockEvent
       @base = new Base 'module', pretend.robot
+      @eventSpy = sinon.spy()
+      pretend.robot.on 'mockEvent', @eventSpy
       @base.emit 'mockEvent', foo: 'bar'
-      @mockEvent.should.have.calledWith @base, foo: 'bar'
+      @eventSpy.should.have.calledWith @base, foo: 'bar'
 
   describe '.on', ->
 
