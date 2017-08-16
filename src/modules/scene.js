@@ -24,8 +24,8 @@ import Dialogue from './dialogue'
  * let roomScene = new Scene(robot, { scope: 'room' })
 */
 class Scene extends Base {
-  constructor (robot, ...args) {
-    super('scene', robot, ...args)
+  constructor (...args) {
+    super('scene', ...args)
     this.defaults({ scope: 'user' })
 
     // by default, prefix @user in room scene (to identify target recipient)

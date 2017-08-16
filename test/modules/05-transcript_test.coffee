@@ -20,7 +20,7 @@ describe 'Transcript', ->
 
   beforeEach ->
     pretend.start()
-    pretend.log.level = 'silent'
+    # pretend.log.level = 'silent'
     @tester = pretend.user 'tester', room: 'testing'
     @clock = sinon.useFakeTimers()
     @now = _.now()
@@ -369,3 +369,115 @@ describe 'Transcript', ->
       it 'returns only the values at given path', ->
         @transcript.findRecords message: user: name: 'jon', 'message.text'
         .should.eql [ 'now', 'left' ]
+
+  describe '.findKeyMatches', ->
+
+    beforeEach ->
+      @transcript = new Transcript pretend.robot, save: false
+      @transcript.records = [
+        time: 0
+        event: 'match'
+        instance: key: 'pick-a-color'
+        response: match: 'blue'.match /(.*)/
+        message: user: id: '111', name: 'ami'
+      ,
+        time: 0
+        event: 'match'
+        instance: key: 'pick-a-color'
+        response: match: 'orange'.match /(.*)/
+        message: user: id: '111', name: 'ami'
+      ,
+        time: 0
+        event: 'match'
+        instance: key: 'not-a-color'
+        response: match: 'up'.match /(.*)/
+        message: user: id: '111', name: 'ami'
+      ,
+        time: 0
+        event: 'match'
+        instance: key: 'pick-a-color'
+        response: match: 'red'.match /(.*)/
+        message: user: id: '222', name: 'jon'
+    ]
+
+    context 'with an instance key and capture group', ->
+
+      it 'returns the answers matching the key', ->
+        @transcript.findKeyMatches('pick-a-color', 0)
+        .should.eql ['blue', 'orange', 'red']
+
+    context 'with an instance key, user ID and capture group', ->
+
+      it 'returns the answers matching the key for the user', ->
+        @transcript.findKeyMatches('pick-a-color', '111', 0)
+        .should.eql ['blue', 'orange']
+
+  ###
+  describe '.findIdMatches', ->
+
+    beforeEach ->
+      @transcript = new Transcript pretend.robot, save: false
+      @transcript.records = [
+        time: 0
+        event: 'match'
+        listener: options: id: 'aaa'
+        response: match: 'blue'.match /(.*)/
+        message: user: id: '111', name: 'ami'
+      ,
+        time: 0
+        event: 'match'
+        listener: options: id: 'aaa'
+        response: match: 'orange'.match /(.*)/
+        message: user: id: '222', name: 'jon'
+      ,
+        time: 0
+        event: 'match'
+        listener: options: id: 'bbb'
+        response: match: 'foo'.match /(.*)/
+        message: user: id: '222', name: 'jon'
+      ]
+
+    context 'with a listener ID and capture group', ->
+
+      it 'returns the answers matching the key', ->
+        @transcript.findIdMatches('aaa', 0)
+        .should.eql ['blue', 'orange']
+
+    context 'with a listener ID, user ID and capture group', ->
+
+      it 'returns the answers matching the key for the user', ->
+        @transcript.findIdMatches('aaa', '111', 0)
+        .should.eql ['blue']
+  ###
+
+  describe 'Usage', ->
+
+    context 'docs example for .findKeyMatches', ->
+
+      beforeEach ->
+        @transcript = new Transcript pretend.robot, save: false
+        pretend.robot.hear /color/, (res) =>
+          favColor = new Dialogue res, 'fav-color'
+          @transcript.recordDialogue favColor
+          favColor.addPath [
+            [ /my favorite color is (.*)/, 'duly noted' ]
+          ]
+          favColor.receive res
+        pretend.robot.respond /what is my favorite color/, (res) =>
+          colorMatches = @transcript.findKeyMatches 'fav-color', 1
+          # ^ word we're looking for from capture group is at index: 1
+          if colorMatches.length
+            res.reply "I remember, it's #{ colorMatches.pop() }"
+          else
+            res.reply "I don't know!?"
+
+      it 'records and recalls favorite color if provided', ->
+        yield pretend.user('tim').send('my favorite color is orange')
+        yield pretend.user('tim').send('hubot what is my favorite color?')
+        pretend.messages.should.eql [
+          [ 'testing', 'tester', 'test' ]
+          [ 'tim', 'my favorite color is orange' ]
+          [ 'hubot', 'duly noted' ]
+          [ 'tim', 'hubot what is my favorite color?' ]
+          [ 'hubot', '@tim I remember, it\'s orange' ]
+        ]

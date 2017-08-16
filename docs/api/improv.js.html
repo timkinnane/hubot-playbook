@@ -2,7 +2,7 @@
 
 <html>
 <head>
-  <title>scene.js.md</title>
+  <title>improv.js.md</title>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
   <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
   <link rel="stylesheet" media="all" href="public/stylesheets/normalize.css" />
@@ -109,45 +109,44 @@
         
           
           
-          <h1>Scene</h1>
+          <h1>Improv</h1>
         
       </div>
 
       
         
-        <p><a name="Scene"></a></p>
-<h2 id="scene">Scene</h2>
-<p>Scenes conduct participantion in dialogues with the bot. They use listeners
-to enter an audience into a new dialogue. They can handle multiple concurrent
-users and rooms in either isolated or group dialogues as required.</p>
-<p>Once entered into a scene, the audience is <em>engaged</em> and the bot will only
-respond to dialogue choices defined by that scene. The type of audience is
-determined by the scene’s scope:</p>
-<ul>
-<li>entering a <em>user</em> scene will engage the user (in any room)</li>
-<li>entering a <em>room</em> scene will engage the whole room</li>
-<li>entering a <em>direct</em> scene will engage the user in that room only</li>
-</ul>
+        <p><a name="Improv"></a></p>
+<h2 id="improv">Improv</h2>
+<p>Parse message templates with context from user attributes, pre-populated
+custom data (optionally persisted in brain) or from custom functions, e.g. to
+query conversation history via a Transcript instance.</p>
+<p>Improv will parse any strings containing javascript template expressions, but
+it is important NOT to use back-ticks when declaring the string, or they will
+be rendered immediately instead of at runtime with Improv’s context object.</p>
+<p>The context object is applied as ‘this’ in the scope where the template is
+rendered, e.g. <code>&quot;hello ${ this.user.name }&quot;</code> will render with the value at
+the <em>user.name</em> path in the context object, which should be the current user
+(unless its been overriden by configurable extensions).</p>
+<p>Improv uses singleton pattern, all templates are handled by one instance.
+If an instance exists and a new one is requested, new options will be applied
+to the original instance, which is returned by the constructor instead.</p>
 <p><strong>Kind</strong>: global class  </p>
 <ul>
-<li><a href="#Scene">Scene</a><ul>
-<li><a href="#new_Scene_new">new Scene(robot, [options], [key])</a></li>
-<li><a href="#Scene+middleware">.middleware(context, next, done)</a></li>
-<li><a href="#Scene+listen">.listen(type, regex, callback)</a></li>
-<li><a href="#Scene+hear">.hear()</a></li>
-<li><a href="#Scene+respond">.respond()</a></li>
-<li><a href="#Scene+whoSpeaks">.whoSpeaks(res)</a> ⇒ <code>string</code></li>
-<li><a href="#Scene+enter">.enter(res, [options], …args)</a> ⇒ <code>Dialogue</code></li>
-<li><a href="#Scene+exit">.exit(res, [status])</a> ⇒ <code>boolean</code></li>
-<li><a href="#Scene+exitAll">.exitAll()</a></li>
-<li><a href="#Scene+getDialogue">.getDialogue(participants)</a> ⇒ <code>Dialogue</code></li>
-<li><a href="#Scene+inDialogue">.inDialogue(participants)</a> ⇒ <code>boolean</code></li>
+<li><a href="#Improv">Improv</a><ul>
+<li><a href="#new_Improv_new">new Improv(robot, [options], [key])</a></li>
+<li><a href="#Improv+use">.use(robot)</a> ⇒ <a href="#Improv"><code>Improv</code></a></li>
+<li><a href="#Improv+extend">.extend(dataFunc, dataFunc)</a> ⇒ <a href="#Improv"><code>Improv</code></a> | <code>Self</code></li>
+<li><a href="#Improv+mergeData">.mergeData(user)</a> ⇒ <code>Object</code></li>
+<li><a href="#Improv+parse">.parse(strings, context)</a> ⇒ <code>array</code></li>
+<li><a href="#Improv+middleware">.middleware(context, next, done)</a></li>
+<li><a href="#Improv+reset">.reset()</a> ⇒ <code>Self</code></li>
+<li><a href="#Improv+destroy">.destroy()</a></li>
 </ul>
 </li>
 </ul>
 <hr>
-<p><a name="new_Scene_new"></a></p>
-<h3 id="new-scene-robot-options-key-">new Scene(robot, [options], [key])</h3>
+<p><a name="new_Improv_new"></a></p>
+<h3 id="new-improv-robot-options-key-">new Improv(robot, [options], [key])</h3>
 <table>
 <thead>
 <tr>
@@ -168,16 +167,29 @@ determined by the scene’s scope:</p>
 <td>Key/val options for config</td>
 </tr>
 <tr>
-<td>[options.scope]</td>
-<td><code>string</code></td>
-<td>How to address participants: user(default)</td>
-<td>room</td>
-<td>direct</td>
+<td>[options.save]</td>
+<td><code>boolean</code></td>
+<td>Keep context collection in hubot brain</td>
 </tr>
 <tr>
-<td>[options.sendReplies]</td>
-<td><code>boolean</code></td>
-<td>Toggle replying/sending (prefix message with “@user”)</td>
+<td>[options.fallback]</td>
+<td><code>string</code></td>
+<td>Fallback content replace any unknowns within messages</td>
+</tr>
+<tr>
+<td>[options.replacement]</td>
+<td><code>string</code></td>
+<td>Replace all messages containing unknowns, overrides fallback</td>
+</tr>
+<tr>
+<td>[options.app]</td>
+<td><code>Object</code></td>
+<td>Data object with app context attributes to merge into tempaltes</td>
+</tr>
+<tr>
+<td>[options.admins]</td>
+<td><code>array</code></td>
+<td>Array of usernames authorised to populate context data</td>
 </tr>
 <tr>
 <td>[key]</td>
@@ -186,14 +198,128 @@ determined by the scene’s scope:</p>
 </tr>
 </tbody>
 </table>
-<p><strong>Example</strong>  </p>
-<pre><code class="lang-js"><span class="hljs-keyword">let</span> roomScene = <span class="hljs-keyword">new</span> Scene(robot, { <span class="hljs-attr">scope</span>: <span class="hljs-string">'room'</span> })
+<hr>
+<p><a name="Improv+use"></a></p>
+<h3 id="improv-use-robot-code-improv-code-improv-">improv.use(robot) ⇒ <a href="#Improv"><code>Improv</code></a></h3>
+<p>Use a robot and get data from the brain. Separated from constructor for
+testing with reset robots.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Improv"><code>Improv</code></a><br><strong>Returns</strong>: <a href="#Improv"><code>Improv</code></a> - Self for chaining  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>robot</td>
+<td><code>Robot</code></td>
+<td>The robot to use, usually existing from constructor</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><a name="Improv+extend"></a></p>
+<h3 id="improv-extend-datafunc-datafunc-code-improv-code-improv-code-self-code-">improv.extend(dataFunc, dataFunc) ⇒ <a href="#Improv"><code>Improv</code></a> | <code>Self</code></h3>
+<p>Add extra functions to provide further context. They are called with the
+current context whenever a template is rendered and should return extra
+key/values to merge with context and/or override keys of existing data.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Improv"><code>Improv</code></a><br><strong>Returns</strong>: <a href="#Improv"><code>Improv</code></a> - Self for chaining<code>Self</code> - - The instance for chaining  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>dataFunc</td>
+<td><code>function</code></td>
+<td>Receives current context, to return more data</td>
+</tr>
+<tr>
+<td>dataFunc</td>
+<td><code>function</code></td>
+<td>Receives merge data, to more return data</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example</strong> <em>(extend context with user transcript history)</em>  </p>
+<pre><code class="lang-js">
+<span class="hljs-keyword">let</span> improv = <span class="hljs-keyword">new</span> Improv(robot)
+<span class="hljs-keyword">let</span> transcript = <span class="hljs-keyword">new</span> Transcript(robot)
+improv.extend(<span class="hljs-function">(<span class="hljs-params">data</span>) =&gt;</span> {
+  <span class="hljs-comment">// get array of match objects from history of user supplying their favorite color</span>
+  <span class="hljs-keyword">let</span> colorMessageMatches = transcript.findIdMatches(<span class="hljs-string">'fav-color'</span>, data.user.id)
+  <span class="hljs-comment">// if found, get the latest match and text from the capture group, add to context</span>
+  <span class="hljs-keyword">if</span> (colorMessageMatches) data.user.favColor = colorMessageMatches[<span class="hljs-number">0</span>].pop()
+  <span class="hljs-keyword">return</span> data
+})
 </code></pre>
 <hr>
-<p><a name="Scene+middleware"></a></p>
-<h3 id="scene-middleware-context-next-done-">scene.middleware(context, next, done)</h3>
-<p>Process incoming messages, re-route to dialogue for engaged participants.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a>  </p>
+<p><a name="Improv+mergeData"></a></p>
+<h3 id="improv-mergedata-user-code-object-code-">improv.mergeData(user) ⇒ <code>Object</code></h3>
+<p>Provdies current known user and app data for merging with tempalte.</p>
+<p>Runs any extension functions, e.g. to merge data from other sources.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Improv"><code>Improv</code></a><br><strong>Returns</strong>: <code>Object</code> - App and user (from brain) data, with any extras<br><strong>Todo</strong></p>
+<ul>
+<li>[ ] Allow tagging other user’s data by merge with robot.brain.userForId</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>user</td>
+<td><code>Object</code></td>
+<td>User (usually from middleware context)</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><a name="Improv+parse"></a></p>
+<h3 id="improv-parse-strings-context-code-array-code-">improv.parse(strings, context) ⇒ <code>array</code></h3>
+<p>Merge templated messages with context data (replace unknown as configured).
+Used internally after context data gathered and possibly extended.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Improv"><code>Improv</code></a><br><strong>Returns</strong>: <code>array</code> - Strings populated with context values<br><strong>Todo</strong></p>
+<ul>
+<li>[ ] use fallback/replace for unknowns</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>strings</td>
+<td><code>array</code></td>
+<td>One or more strings being posted</td>
+</tr>
+<tr>
+<td>context</td>
+<td><code>Object</code></td>
+<td>Template data, called as ‘this’ for interpolation</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><a name="Improv+middleware"></a></p>
+<h3 id="improv-middleware-context-next-done-">improv.middleware(context, next, done)</h3>
+<p>Middleware checks for template tags and parses if required.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Improv"><code>Improv</code></a>  </p>
 <table>
 <thead>
 <tr>
@@ -206,7 +332,7 @@ determined by the scene’s scope:</p>
 <tr>
 <td>context</td>
 <td><code>Object</code></td>
-<td>Passed through the middleware stack, with res</td>
+<td>Passed through middleware stack, with res</td>
 </tr>
 <tr>
 <td>next</td>
@@ -221,188 +347,15 @@ determined by the scene’s scope:</p>
 </tbody>
 </table>
 <hr>
-<p><a name="Scene+listen"></a></p>
-<h3 id="scene-listen-type-regex-callback-">scene.listen(type, regex, callback)</h3>
-<p>Add listener that enters the audience into the scene with callback, to then
-add dialogue branches or process response as required.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a>  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>type</td>
-<td><code>String</code></td>
-<td>The listener type: hear</td>
-<td>respond</td>
-</tr>
-<tr>
-<td>regex</td>
-<td><code>RegExp</code></td>
-<td>Matcher for listener</td>
-</tr>
-<tr>
-<td>callback</td>
-<td><code>function</code></td>
-<td>Called when matched, with Response and Dialogue as arguments</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Example</strong>  </p>
-<pre><code class="lang-js"><span class="hljs-keyword">let</span> scene = <span class="hljs-keyword">new</span> Scene(robot, { <span class="hljs-attr">scope</span>: <span class="hljs-string">'user'</span> })
-scene.listen(<span class="hljs-string">'respond'</span>, /hello/, (res, dlg) =&gt; {
-  res.reply(<span class="hljs-string">'you are now in a scene'</span>)
-  <span class="hljs-comment">// add dialogue branches now...</span>
-})
-</code></pre>
+<p><a name="Improv+reset"></a></p>
+<h3 id="improv-reset-code-self-code-">improv.reset() ⇒ <code>Self</code></h3>
+<p>Shutdown and re-initialise instance (mostly for tests)</p>
+<p><strong>Kind</strong>: instance method of <a href="#Improv"><code>Improv</code></a><br><strong>Returns</strong>: <code>Self</code> - - The reset instance  </p>
 <hr>
-<p><a name="Scene+hear"></a></p>
-<h3 id="scene-hear-">scene.hear()</h3>
-<p>Alias of Scene.listen with <code>hear</code> as specified type.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a>  </p>
-<hr>
-<p><a name="Scene+respond"></a></p>
-<h3 id="scene-respond-">scene.respond()</h3>
-<p>Alias of Scene.listen with <code>respond</code> as specified type.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a>  </p>
-<hr>
-<p><a name="Scene+whoSpeaks"></a></p>
-<h3 id="scene-whospeaks-res-code-string-code-">scene.whoSpeaks(res) ⇒ <code>string</code></h3>
-<p>Identify the source of a message relative to the scene scope.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a><br><strong>Returns</strong>: <code>string</code> - ID of room, user or composite  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>res</td>
-<td><code>Response</code></td>
-<td>Hubot Response object</td>
-</tr>
-</tbody>
-</table>
-<hr>
-<p><a name="Scene+enter"></a></p>
-<h3 id="scene-enter-res-options-args-code-dialogue-code-">scene.enter(res, [options], …args) ⇒ <code>Dialogue</code></h3>
-<p>Engage the participants in dialogue. A new Dialogue instance is created and
-all further messages from the audience in this scene’s scope will be passed
-to that dialogue, untill they are exited from the scene.</p>
-<p>Would usually be invoked by a listener, using the Scene <code>.listen</code>, <code>.hear</code>
-or <code>respond</code> methods, but could be called directly to force audience into
-a scene unprompted.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a><br><strong>Returns</strong>: <code>Dialogue</code> - The started dialogue  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>res</td>
-<td><code>Response</code></td>
-<td>Hubot Response object</td>
-</tr>
-<tr>
-<td>[options]</td>
-<td><code>Object</code></td>
-<td>Dialogue options merged with scene config</td>
-</tr>
-<tr>
-<td>…args</td>
-<td><code>Mixed</code></td>
-<td>Any additional args for Dialogue constructor</td>
-</tr>
-</tbody>
-</table>
-<hr>
-<p><a name="Scene+exit"></a></p>
-<h3 id="scene-exit-res-status-code-boolean-code-">scene.exit(res, [status]) ⇒ <code>boolean</code></h3>
-<p>Disengage participants from dialogue e.g. in case of timeout or error.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a><br><strong>Returns</strong>: <code>boolean</code> - Exit success (may fail if already disengaged)  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>res</td>
-<td><code>Response</code></td>
-<td></td>
-<td>Hubot Response object</td>
-</tr>
-<tr>
-<td>[status]</td>
-<td><code>string</code></td>
-<td><code>&quot;unknown&quot;</code></td>
-<td>Some context, for logs</td>
-</tr>
-</tbody>
-</table>
-<hr>
-<p><a name="Scene+exitAll"></a></p>
-<h3 id="scene-exitall-">scene.exitAll()</h3>
-<p>End all engaged dialogues.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a>  </p>
-<hr>
-<p><a name="Scene+getDialogue"></a></p>
-<h3 id="scene-getdialogue-participants-code-dialogue-code-">scene.getDialogue(participants) ⇒ <code>Dialogue</code></h3>
-<p>Get the dialogue for engaged participants (relative to scene scope).</p>
-<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a><br><strong>Returns</strong>: <code>Dialogue</code> - Engaged dialogue instance  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>participants</td>
-<td><code>string</code></td>
-<td>ID of user, room or composite</td>
-</tr>
-</tbody>
-</table>
-<hr>
-<p><a name="Scene+inDialogue"></a></p>
-<h3 id="scene-indialogue-participants-code-boolean-code-">scene.inDialogue(participants) ⇒ <code>boolean</code></h3>
-<p>Get the engaged status for participants.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a><br><strong>Returns</strong>: <code>boolean</code> - Is engaged status  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>participants</td>
-<td><code>string</code></td>
-<td>ID of user, room or composite</td>
-</tr>
-</tbody>
-</table>
+<p><a name="Improv+destroy"></a></p>
+<h3 id="improv-destroy-">improv.destroy()</h3>
+<p>Reset the singleton, for tests to get a real new instance</p>
+<p><strong>Kind</strong>: instance method of <a href="#Improv"><code>Improv</code></a>  </p>
 <hr>
 
         

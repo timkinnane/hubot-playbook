@@ -43,6 +43,11 @@ A transcript records conversational events, including meta about the user,
 message and module states. It is configurable to provide an overview or
 drilled down analytics of specific interactions.
 
+### Improv
+
+Parse message templates with context from conversation history (via the
+Transcript module), user attributes, app / environment or other sources.
+
 ### Pretend
 
 Hubot Pretend is actually an external module for unit testing Hubot

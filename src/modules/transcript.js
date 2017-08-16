@@ -10,32 +10,34 @@ _.mixin({
 
 /**
  * Records conversation events, including meta about the user, message and
- * current module state. It is configurable to provide an overview or drilled
- * down analytics of specific interactions.
+ * current module state. Instances are configurable to provide an overview or
+ * drilled down analytics of specific interactions.
  *
- * Transcripts are searchable, to provide context to interactions from
- * conversation history with a given user of any other attribute. If saving to
+ * Transcripts are searchable, to provide context for interactions from
+ * conversation history with a given user or any other attribute. If saving to
  * the hubot brain, they will also search from the brain's persisted transcript
  * history.
  *
- * It can record all events emitted through the robot or just those originating
- * from a given Playbook module instance
+ * It can record attributes from any robot event or just those originating from
+ * a given Playbook module instance (using it's key).
  *
  * @param {Robot}  robot                  Hubot Robot instance
  * @param {Object} [options]              Key/val options for config
  * @param {Object} [options.save]         Store records in hubot brain
- * @param {Object} [options.events]       Array of event names to record
- * @param {Object} [options.responseAtts] Hubot Response attribute keys to add to record
- * @param {Object} [options.instanceAtts] Module instance attribute keys to add to record
- * @param {string} [key]     Key name for this instance
+ * @param {array} [options.events]        Event names to record
+ * @param {array} [options.responseAtts]  Response keys or paths to record
+ * @param {array} [options.instanceAtts]  Module instance keys or paths to record
+ * @param {string} [key]                  Key name for this instance
+ *
+ * @todo Add config to record response middleware context including listener ID
  *
  * @example <caption>transcript to record room name when match emitted</caption>
- * let matchRecords = new Transcript(robot, {
+ * let matchRecordRooms = new Transcript(robot, {
  *   responseAtts: ['message.room']
  *   events: ['match']
  * })
  * // does not start recording until calling one of the record methods, like:
- * matchRecords.recordAll()
+ * matchRecordRooms.recordAll()
 */
 class Transcript extends Base {
   constructor (...args) {
@@ -61,8 +63,12 @@ class Transcript extends Base {
   }
 
   /**
-   * Record given event details in array, save to hubot brain if configured to
+   * Record given event details in array, save to hubot brain if configured to.
+   *
    * Events emitted by Playbook always include module instance as first param.
+   *
+   * This is only called internally on watched events after running `recordAll`,
+   * `recordDialogue`, `recordScene` or `recordDirector`
    *
    * @param  {string} event   The event name
    * @param  {Mixed} args...  Args passed with the event, usually consists of:<br>
@@ -76,7 +82,6 @@ class Transcript extends Base {
     if (_.hasKeys(args[0], ['robot', 'message'])) response = args.shift()
     const record = {time: _.now(), event}
     if (this.key != null) record.key = this.key
-
     if ((instance != null) && (this.config.instanceAtts != null)) {
       record.instance = _.pickHas(instance, this.config.instanceAtts)
     }
@@ -117,15 +122,26 @@ class Transcript extends Base {
   }
 
   /**
+   * @todo Re-instate `recordListener` when regular listeners emit event with
+   * context containing options and ID.
+   */
+  /*
+  recordListener (context) {
+
+  }
+  */
+
+  /**
    * Record events emitted by a given dialogue.
    *
    * @param {Dialogue} dialogue The Dialogue instance
   */
   recordDialogue (dialogue) {
-    _.castArray(this.config.events).map((event) =>
-      dialogue.on(event, (...args) =>
-        this.recordEvent(event, ...args))
-    )
+    _.castArray(this.config.events).map((event) => {
+      dialogue.on(event, (...args) => {
+        this.recordEvent(event, ...args)
+      })
+    })
   }
 
   /**
@@ -146,7 +162,7 @@ class Transcript extends Base {
    * Record allow/deny events emitted by a given director. Ignores configured
    * events because director has distinct events.
    *
-   * @param {Director} scene The Director instance
+   * @param {Director} director The Director instance
   */
   recordDirector (director) {
     director.on('allow', (...args) => this.recordEvent('allow', ...args))
@@ -166,40 +182,84 @@ class Transcript extends Base {
    * transcript.findRecords({
    *   message: { user: { name: 'jon' } }
    * })
-   * // returns array of event objects
+   * // returns array of recorded event objects
    *
    * transcript.findRecords({
    *   message: { user: { name: 'jon' } }
    * }, 'message.text')
-   * // returns array of message text only
+   * // returns array of message text attribute from recroded events
   */
   findRecords (subsetMatch, returnPath) {
-    const found = _.filter(this.records, subsetMatch)
+    let found = _.filter(this.records, subsetMatch)
     if (returnPath == null) return found
-    return found.map((record) => _(record).at(returnPath).head())
+    let foundAtPath = found.map((record) => _(record).at(returnPath).head())
+    _.remove(foundAtPath, _.isUndefined)
+    return foundAtPath
   }
 
   /**
-   * Shortcut for findRecords for just response match attributes, with a given
-   * instance key, useful for simple lookups of information provided by user
+   * Alias for findRecords for just response match attributes with a given
+   * instance key, useful for simple lookups of information provided by users
    * within a specific conversation.
    *
-   * @param  {string}  instanceKey From the recorded instance to lookup
-   * @param  {integer} [capture]   Filter match by regex capture group subset
-   * @return {array}               Contains full match or just capture group
-   * @todo option filter by ID - e.g. only searching current module interactions
-   * @todo option filter by User
+   * @param  {string}  instanceKey    Recorded instance key to lookup
+   * @param  {string}  [userId]       Filter results by a user ID
+   * @param  {integer} [captureGroup] Filter match by regex capture group subset
+   * @return {array}                  Contains full match or just capture group
    *
    * @example <caption>find answers from a specific dialogue path</caption>
-   * let colorMatches = transcript.findKeyMatches('pick-a-color', 0)
-   * let latestColor = colorMatches[0]
+   * const transcript = new Transcript(robot)
+   * robot.hear(/color/, (res) => {
+   *   let favColor = new Dialogue(res, 'fav-color')
+   *   transcript.recordDialogue(favColor)
+   *   favColor.addPath([
+   *     [ /my favorite color is (.*)/, 'duly noted' ]
+   *   ])
+   *   favColor.receive(res)
+   * })
+   * robot.respond(/what is my favorite color/, (res) => {
+   *   let colorMatches = transcript.findKeyMatches('fav-color', 1)
+   *   # ^ word we're looking for from capture group is at index: 1
+   *   if (colorMatches.length) {
+   *     res.reply(`I remember, it's ${ colorMatches.pop() }`)
+   *   } else {
+   *     res.reply("I don't know!?")
+   *   }
+   * })
+   *
   */
-  findKeyMatches (instanceKey, captureGroup) {
-    const subset = {instance: {key: instanceKey}}
+  findKeyMatches (instanceKey, ...args) {
+    let userId = (_.isString(args[0])) ? args.shift() : null
+    let captureGroup = (_.isInteger(args[0])) ? args.shift() : null
+    let subset = { instance: { key: instanceKey } }
     let path = 'response.match'
+    if (userId != null) _.extend(subset, { message: { user: { id: userId } } })
     if (captureGroup != null) path += `[${captureGroup}]`
     return this.findRecords(subset, path)
   }
+
+  /**
+   * Alias for findRecords for just response match attributes with a given
+   * listener ID, useful for lookups of matches from a specific listener.
+   *
+   * @param  {string}  listenerId     Listener ID match to lookup
+   * @param  {string}  [userId]       Filter results by a user ID
+   * @param  {integer} [captureGroup] Filter match by regex capture group subset
+   * @return {array}                  Contains full match or just capture group
+   *
+   * @todo Re-instate `findIdMatches` when `recordListener` is funtional
+  */
+  /*
+  findIdMatches (listenerId, ...args) {
+    let userId = (_.isString(args[0])) ? args.shift() : null
+    let captureGroup = (_.isInteger(args[0])) ? args.shift() : null
+    let subset = { listener: { options: { id: listenerId } } }
+    let path = 'response.match'
+    if (userId != null) subset.message = { user: { id: userId } }
+    if (captureGroup != null) path += `[${captureGroup}]`
+    return this.findRecords(subset, path)
+  }
+  */
 }
 
 export default Transcript

@@ -68,6 +68,15 @@
               
                 
                 <li>
+                  <a class="source" href="improv.js.html">
+                    
+                    
+                    Improv
+                  </a>
+                </li>
+              
+                
+                <li>
                   <a class="source" href="path.js.html">
                     
                     
@@ -109,15 +118,18 @@
         <p><a name="Transcript"></a></p>
 <h2 id="transcript">Transcript</h2>
 <p>Records conversation events, including meta about the user, message and
-current module state. It is configurable to provide an overview or drilled
-down analytics of specific interactions.</p>
-<p>Transcripts are searchable, to provide context to interactions from
+current module state. Instances are configurable to provide an overview or
+drilled down analytics of specific interactions.</p>
+<p>Transcripts are searchable, to provide context for interactions from
 conversation history with a given user of any other attribute. If saving to
 the hubot brain, they will also search from the brain’s persisted transcript
 history.</p>
-<p>It can record all events emitted through the robot or just those originating
-from a given Playbook module instance</p>
-<p><strong>Kind</strong>: global class  </p>
+<p>It can record attributes from any event emitted through the robot or just
+those originating from a given Playbook module instance.</p>
+<p><strong>Kind</strong>: global class<br><strong>Todo</strong></p>
+<ul>
+<li>[ ] Add config to record response middleware context including listener ID</li>
+</ul>
 <ul>
 <li><a href="#Transcript">Transcript</a><ul>
 <li><a href="#new_Transcript_new">new Transcript(robot, [options], [key])</a></li>
@@ -125,9 +137,9 @@ from a given Playbook module instance</p>
 <li><a href="#Transcript+recordAll">.recordAll()</a></li>
 <li><a href="#Transcript+recordDialogue">.recordDialogue(dialogue)</a></li>
 <li><a href="#Transcript+recordScene">.recordScene(scene)</a></li>
-<li><a href="#Transcript+recordDirector">.recordDirector(scene)</a></li>
+<li><a href="#Transcript+recordDirector">.recordDirector(director)</a></li>
 <li><a href="#Transcript+findRecords">.findRecords(subsetMatch, [returnPath])</a> ⇒ <code>array</code></li>
-<li><a href="#Transcript+findKeyMatches">.findKeyMatches(instanceKey, [capture])</a> ⇒ <code>array</code></li>
+<li><a href="#Transcript+findKeyMatches">.findKeyMatches(instanceKey, [userId], [captureGroup])</a> ⇒ <code>array</code></li>
 </ul>
 </li>
 </ul>
@@ -160,18 +172,18 @@ from a given Playbook module instance</p>
 </tr>
 <tr>
 <td>[options.events]</td>
-<td><code>Object</code></td>
-<td>Array of event names to record</td>
+<td><code>array</code></td>
+<td>Event names to record</td>
 </tr>
 <tr>
 <td>[options.responseAtts]</td>
-<td><code>Object</code></td>
-<td>Hubot Response attribute keys to add to record</td>
+<td><code>array</code></td>
+<td>Response keys or paths to record</td>
 </tr>
 <tr>
 <td>[options.instanceAtts]</td>
-<td><code>Object</code></td>
-<td>Module instance attribute keys to add to record</td>
+<td><code>array</code></td>
+<td>Module instance keys or paths to record</td>
 </tr>
 <tr>
 <td>[key]</td>
@@ -181,18 +193,20 @@ from a given Playbook module instance</p>
 </tbody>
 </table>
 <p><strong>Example</strong> <em>(transcript to record room name when match emitted)</em>  </p>
-<pre><code class="lang-js"><span class="hljs-keyword">let</span> matchRecords = <span class="hljs-keyword">new</span> Transcript(robot, {
+<pre><code class="lang-js"><span class="hljs-keyword">let</span> matchRecordRooms = <span class="hljs-keyword">new</span> Transcript(robot, {
   <span class="hljs-attr">responseAtts</span>: [<span class="hljs-string">'message.room'</span>]
   events: [<span class="hljs-string">'match'</span>]
 })
 <span class="hljs-comment">// does not start recording until calling one of the record methods, like:</span>
-matchRecords.recordAll()
+matchRecordRooms.recordAll()
 </code></pre>
 <hr>
 <p><a name="Transcript+recordEvent"></a></p>
 <h3 id="transcript-recordevent-event-">transcript.recordEvent(event)</h3>
-<p>Record given event details in array, save to hubot brain if configured to
-Events emitted by Playbook always include module instance as first param.</p>
+<p>Record given event details in array, save to hubot brain if configured to.</p>
+<p>Events emitted by Playbook always include module instance as first param.</p>
+<p>This is only called internally on watched events after running <code>recordAll</code>,
+<code>recordDialogue</code>, <code>recordScene</code> or <code>recordDirector</code></p>
 <p><strong>Kind</strong>: instance method of <a href="#Transcript"><code>Transcript</code></a>  </p>
 <table>
 <thead>
@@ -266,7 +280,7 @@ all events fromn the scene but only configured events from dialogue.</p>
 </table>
 <hr>
 <p><a name="Transcript+recordDirector"></a></p>
-<h3 id="transcript-recorddirector-scene-">transcript.recordDirector(scene)</h3>
+<h3 id="transcript-recorddirector-director-">transcript.recordDirector(director)</h3>
 <p>Record allow/deny events emitted by a given director. Ignores configured
 events because director has distinct events.</p>
 <p><strong>Kind</strong>: instance method of <a href="#Transcript"><code>Transcript</code></a>  </p>
@@ -280,7 +294,7 @@ events because director has distinct events.</p>
 </thead>
 <tbody>
 <tr>
-<td>scene</td>
+<td>director</td>
 <td><code>Director</code></td>
 <td>The Director instance</td>
 </tr>
@@ -317,24 +331,20 @@ events because director has distinct events.</p>
 <pre><code class="lang-js">transcript.findRecords({
   <span class="hljs-attr">message</span>: { <span class="hljs-attr">user</span>: { <span class="hljs-attr">name</span>: <span class="hljs-string">'jon'</span> } }
 })
-<span class="hljs-comment">// returns array of event objects</span>
+<span class="hljs-comment">// returns array of recorded event objects</span>
 
 transcript.findRecords({
   <span class="hljs-attr">message</span>: { <span class="hljs-attr">user</span>: { <span class="hljs-attr">name</span>: <span class="hljs-string">'jon'</span> } }
 }, <span class="hljs-string">'message.text'</span>)
-<span class="hljs-comment">// returns array of message text only</span>
+<span class="hljs-comment">// returns array of message text attribute from recroded events</span>
 </code></pre>
 <hr>
 <p><a name="Transcript+findKeyMatches"></a></p>
-<h3 id="transcript-findkeymatches-instancekey-capture-code-array-code-">transcript.findKeyMatches(instanceKey, [capture]) ⇒ <code>array</code></h3>
-<p>Shortcut for findRecords for just response match attributes, with a given
-instance key, useful for simple lookups of information provided by user
+<h3 id="transcript-findkeymatches-instancekey-userid-capturegroup-code-array-code-">transcript.findKeyMatches(instanceKey, [userId], [captureGroup]) ⇒ <code>array</code></h3>
+<p>Alias for findRecords for just response match attributes with a given
+instance key, useful for simple lookups of information provided by users
 within a specific conversation.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Transcript"><code>Transcript</code></a><br><strong>Returns</strong>: <code>array</code> - Contains full match or just capture group<br><strong>Todo</strong></p>
-<ul>
-<li>[ ] option filter by ID - e.g. only searching current module interactions</li>
-<li>[ ] option filter by User</li>
-</ul>
+<p><strong>Kind</strong>: instance method of <a href="#Transcript"><code>Transcript</code></a><br><strong>Returns</strong>: <code>array</code> - Contains full match or just capture group  </p>
 <table>
 <thead>
 <tr>
@@ -347,18 +357,39 @@ within a specific conversation.</p>
 <tr>
 <td>instanceKey</td>
 <td><code>string</code></td>
-<td>From the recorded instance to lookup</td>
+<td>Recorded instance key to lookup</td>
 </tr>
 <tr>
-<td>[capture]</td>
+<td>[userId]</td>
+<td><code>string</code></td>
+<td>Filter results by a user ID</td>
+</tr>
+<tr>
+<td>[captureGroup]</td>
 <td><code>integer</code></td>
 <td>Filter match by regex capture group subset</td>
 </tr>
 </tbody>
 </table>
 <p><strong>Example</strong> <em>(find answers from a specific dialogue path)</em>  </p>
-<pre><code class="lang-js"><span class="hljs-keyword">let</span> colorMatches = transcript.findKeyMatches(<span class="hljs-string">'pick-a-color'</span>, <span class="hljs-number">0</span>)
-<span class="hljs-keyword">let</span> latestColor = colorMatches[<span class="hljs-number">0</span>]
+<pre><code class="lang-js">const transcript = new Transcript(robot)
+robot.hear(/color/, (res) =&gt; {
+  let favColor = new Dialogue(res, 'fav-color')
+  transcript.recordDialogue(favColor)
+  favColor.addPath([
+    [ /my favorite color is (.*)/, 'duly noted' ]
+  ])
+  favColor.receive(res)
+})
+robot.respond(/what is my favorite color/, (res) =&gt; {
+  let colorMatches = transcript.findKeyMatches('fav-color', 1)
+  # ^ word we're looking for from capture group is at index: 1
+  if (colorMatches.length) {
+    res.reply(`I remember, it's ${ colorMatches.pop() }`)
+  } else {
+    res.reply("I don't know!?")
+  }
+})
 </code></pre>
 <hr>
 

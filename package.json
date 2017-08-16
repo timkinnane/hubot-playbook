@@ -17,8 +17,8 @@
 
     "pretest": "npm run test:lint",
     "test:lint": "coffeelint ./test --quiet",
-    "test": "mocha test/modules --bail",
-    "test:watch": "onchange 'lib/**/*.js' 'test/**/*.coffee' -- npm run test",
+    "test": "mocha test/modules --bail || true",
+    "test:watch": "onchange 'lib/**/*.js' 'test/**/*.coffee' -d  500 -- npm run test",
 
     "predocs": "rimraf docs",
     "docs": "run-s docs:jsDocs docs:api",
