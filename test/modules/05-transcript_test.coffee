@@ -1,6 +1,5 @@
 sinon = require 'sinon'
 chai = require 'chai'
-co = require 'co'
 should = chai.should()
 chai.use require 'sinon-chai'
 chai.use require 'chai-subset'
@@ -29,7 +28,8 @@ describe 'Transcript', ->
       sinon.spy Transcript.prototype, key
 
     # generate first response for mock events
-    @tester.send('test').then => @res = pretend.responses.incoming[0]
+    yield @tester.send('test')
+    @res = pretend.responses.incoming[0]
 
   afterEach ->
     pretend.shutdown()
@@ -471,7 +471,7 @@ describe 'Transcript', ->
           else
             res.reply "I don't know!?"
 
-      it 'records and recalls favorite color if provided', -> co ->
+      it 'records and recalls favorite color if provided', ->
         yield pretend.user('tim').send('my favorite color is orange')
         yield pretend.user('tim').send('hubot what is my favorite color?')
         pretend.messages.should.eql [

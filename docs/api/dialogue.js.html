@@ -194,9 +194,10 @@ fire callbacks for the branches that match user messages.</p>
 <p><a name="Dialogue+send"></a></p>
 <h3 id="dialogue-send-strings-code-promise-code-">dialogue.send(…strings) ⇒ <code>Promise</code></h3>
 <p>Send or reply with message as configured (@user reply or send to room).</p>
-<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a><br><strong>Returns</strong>: <code>Promise</code> - From hubot async middleware (if supported)<br><strong>Todo</strong></p>
+<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a><br><strong>Returns</strong>: <code>Promise</code> - Resolves with that<br><strong>Todo</strong></p>
 <ul>
-<li>[ ] update tests that wait for observer to use promise instead</li>
+<li>[ ] Update to yield res when Hubot robot send uses middleware #1233</li>
+<li>[ ] Update tests that wait for observer to use promise instead</li>
 </ul>
 <table>
 <thead>

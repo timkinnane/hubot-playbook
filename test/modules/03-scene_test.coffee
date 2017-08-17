@@ -1,6 +1,5 @@
 sinon = require 'sinon'
 chai = require 'chai'
-co = require 'co'
 should = chai.should()
 chai.use require 'sinon-chai'
 
@@ -23,8 +22,8 @@ describe 'Scene', ->
       sinon.spy Scene.prototype, key
 
     # generate a response object for starting dialogues
-    @tester.send('test')
-    .then => @res = pretend.responses.incoming[0]
+    yield @tester.send('test')
+    @res = pretend.responses.incoming[0]
 
   afterEach ->
     pretend.shutdown()
@@ -83,7 +82,7 @@ describe 'Scene', ->
       beforeEach ->
         @callback = sinon.spy()
         @scene.listen 'hear', /test/, @callback
-        @tester.send 'test'
+        yield @tester.send 'test'
 
       it 'registers a robot hear listener with scene as attribute', ->
         pretend.robot.hear.should.have.calledWithMatch sinon.match.regexp
@@ -101,7 +100,7 @@ describe 'Scene', ->
       beforeEach ->
         @callback = sinon.spy()
         @id = @scene.listen 'respond', /test/, @callback
-        @tester.send 'hubot test'
+        yield @tester.send 'hubot test'
 
       it 'registers a robot respond listener with scene as attribute', ->
         pretend.robot.respond.should.have.calledWithMatch sinon.match.regexp
@@ -251,8 +250,8 @@ describe 'Scene', ->
         @scene = new Scene pretend.robot
         @dialogue = @scene.enter @res
         @dialogue.addBranch /.*/, '' # match anything
-        @tester.send 'test'
-        @tester.send 'testing again'
+        yield @tester.send 'test'
+        yield @tester.send 'testing again'
 
       it 'calls .exit once only', ->
         @scene.exit.should.have.calledOnce
@@ -339,7 +338,7 @@ describe 'Scene', ->
 
     context 'with two users in scene', ->
 
-      beforeEach -> co =>
+      beforeEach ->
         @scene = new Scene pretend.robot
         yield pretend.user('A').send 'foo'
         yield pretend.user('B').send 'bar'

@@ -47,20 +47,13 @@ describe 'Improv', ->
       improv.configure save: false
 
       # generate first response for mock events
-      pretend.user('tester', { room: 'testing' }).send('test').then =>
-        @res = pretend.responses.incoming.pop()
+      yield pretend.user('tester', { room: 'testing' }).send('test')
+      @res = pretend.responses.incoming.pop()
 
     afterEach ->
       pretend.shutdown()
       improv.reset()
 
-    it 'passes my funky string', ->
-      string = 'hey ${ this.user.name }, pay ${ this.product.price }'
-      console.log improv.parse [string], {
-        product: price: '$55'
-      }
-
-###
     describe '.use', ->
 
       it 'attaches response middleware to robot', ->
@@ -76,15 +69,24 @@ describe 'Improv', ->
     describe '.remember', ->
 
       it 'stores data at key in context', ->
-        improv.context.instance = name: 'Hub'
-        improv.remember 'instance', lang: 'en'
-        improv.context.should.eql instance:
+        improv.context.site = name: 'Hub'
+        improv.remember 'site', lang: 'en'
+        improv.context.should.eql site:
           lang: 'en'
 
       it 'stores data at path in context', ->
-        improv.context.instance = name: 'Hub'
-        improv.remember 'instance.lang', 'en'
-        improv.context.should.eql instance:
+        improv.context.site = name: 'Hub'
+        improv.remember 'site.lang', 'en'
+        improv.context.should.eql site:
+          name: 'Hub'
+          lang: 'en'
+
+    describe '.forget', ->
+
+      it 'removes data at path in context', ->
+        improv.context.site = name: 'Hub', lang: 'en'
+        improv.remember 'site.lang', 'en'
+        improv.context.should.eql site:
           name: 'Hub'
           lang: 'en'
 
@@ -93,22 +95,22 @@ describe 'Improv', ->
       context 'with data passed as option', ->
 
         it 'merges data with user data', ->
-          improv.remember 'instance', name: 'Hub'
+          improv.remember 'site', name: 'Hub'
           improv.mergeData @res.message.user
           .should.eql
             user: @res.message.user
-            instance: name: 'Hub'
+            site: name: 'Hub'
 
       context 'with data loaded from brain', ->
 
         it 'merges data with user data', ->
           improv.configure save: true
-          pretend.robot.brain.set 'improv', instance: owner: 'Hubot'
-          improv.remember 'instance.name', 'Hub'
+          pretend.robot.brain.set 'improv', site: owner: 'Hubot'
+          improv.remember 'site.name', 'Hub'
           .mergeData @res.message.user
           .should.eql
             user: @res.message.user
-            instance:
+            site:
               owner: 'Hubot'
               name: 'Hub'
 
@@ -133,59 +135,73 @@ describe 'Improv', ->
 
     describe '.parse', ->
 
-      context 'with empty data', ->
-
-        it 'uses fallback value', ->
-          improv.parse ['hey ${ user.name }, pay ${ product.price }'], {}
-          .should.eql ['hey unknown, pay unknown']
-
-      context 'with deep context object', ->
+      context 'with context object', ->
 
         it 'populates message template with data at path', ->
-          improv.parse ['welcome to ${ instance }'], instance: 'The Hub'
+          improv.parse ['welcome to ${ this.site }'], site: 'The Hub'
           .should.eql ['welcome to The Hub']
+
+      context 'without context', ->
+
+        it 'uses fallback value', ->
+          context = {}
+          string = 'hey ${ this.user.name }, pay ${ this.product.price }'
+          improv.parse [string], context
+          .should.eql ['hey unknown, pay unknown']
+
+      context 'with partial context', ->
+
+        it 'uses fallback for unknowns', ->
+          context = product: price: '$55'
+          string = 'hey ${ this.user.name }, pay ${ this.product.price }'
+          improv.parse [string], context
+          .should.eql ['hey unknown, pay $55']
+
+        it 'replaces entire string as configured', ->
+          improv.configure replacement: '¯\\_(ツ)_/¯'
+          context = product: price: '$55'
+          string = 'hey ${ this.user.name }, pay ${ this.product.price }'
+          improv.parse [string], context
+          .should.eql ['¯\\_(ツ)_/¯']
 
     describe '.middleware', ->
 
       beforeEach ->
-        improv.configure data: instance: name: 'The Hub'
+        improv.remember 'site.name', 'The Hub'
 
       context 'with series of hubot sends', ->
 
-        beforeEach ->
-          @res.reply 'hello you'
-          @res.reply 'hi ${ user.name }'
-          pretend.observer.next()
+        it 'rendered messages with context', ->
+          yield @res.send 'hello you'
+          yield @res.send 'hi ${ this.user.name }'
+          pretend.messages.should.eql [
+            [ 'testing', 'tester', 'test' ]
+            [ 'testing', 'hubot', 'hello you' ]
+            [ 'testing', 'hubot', 'hi tester' ]
+          ]
 
-        it 'gets called whenever robot sends', ->
-          @improv.middleware.should.have.calledTwice
+      context 'with multiple strings', ->
 
-      context 'when message has no tempalte tags', ->
-
-        beforeEach ->
-          @res.reply 'hello you'
-          wait = pretend.observer.next()
-
-        it 'does not parse strings', ->
-          @improv.parse.should.not.have.called
-
-      context 'when message has template tags', ->
-
-        beforeEach ->
-          @res.send 'testing'
-          , 'hi ${ user.name }'
-          , 'welcome to ${ instance.name }'
-
-        it 'parses strings', ->
-          @improv.parse.should.have.calledOnce
-
-        it 'merges data with user object', ->
-          @improv.mergeData.should.have.calledWith @res.message.user
-
-        it 'sends the merged strings to room', ->
-          pretend.messages.slice 2
-          .should.eql [
+        it 'renders each message with context', ->
+          yield @res.send 'testing'
+          , 'hi ${ this.user.name }'
+          , 'welcome to ${ this.site.name }'
+          pretend.messages.should.eql [
+            [ 'testing', 'tester', 'test' ]
+            [ 'testing', 'hubot', 'testing' ]
             [ 'testing', 'hubot', 'hi tester' ]
             [ 'testing', 'hubot', 'welcome to The Hub' ]
           ]
-###
+
+      # beforeEach ->
+      #   @middleware = sinon.spy improv.middleware
+      #   @parse = sinon.spy improv.parse
+
+      # TODO: Tests below fail because spied methods are just exported clones
+      # of the improv functions called by middleware (i think)
+
+      # it 'gets called whenever robot sends', ->
+      #   @middleware.should.have.calledTwice
+
+      # it 'only parses strings with expressions', ->
+      #   @parse.should.have.calledOnce

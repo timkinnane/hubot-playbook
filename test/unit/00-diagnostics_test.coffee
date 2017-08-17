@@ -84,9 +84,8 @@ describe 'Diagnostics', ->
   context 'user asks different ways if Hubot is listening', ->
 
     beforeEach ->
-      co =>
-        yield @user.send 'Are any Hubots listening?'
-        yield @user.send 'Is there a bot listening?'
+      yield @user.send 'Are any Hubots listening?'
+      yield @user.send 'Is there a bot listening?'
 
     it 'replies to each confirming Hubot listening', ->
       pretend.messages[1].should.eql pretend.messages[3]

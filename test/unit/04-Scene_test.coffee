@@ -250,9 +250,8 @@ describe 'Scene', ->
         @scene = new Scene pretend.robot
         @dialogue = @scene.enter @res
         @dialogue.addBranch /.*/, '' # match anything
-        co =>
-          yield @tester.send 'test'
-          yield @tester.send 'testing again'
+        yield @tester.send 'test'
+        yield @tester.send 'testing again'
 
       it 'calls .exit once only', ->
         @scene.exit.should.have.calledOnce

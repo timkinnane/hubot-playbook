@@ -15,7 +15,7 @@
     "compile:watch": "onchange 'src/**/*.js' -- npm run compile",
     "pretest": "npm run test:lint",
     "test:lint": "coffeelint ./test --quiet",
-    "test": "mocha test/modules/06-improv_test.coffee --bail",
+    "test": "mocha test/modules --bail",
     "test:watch": "onchange 'lib/**/*.js' 'test/**/*.coffee' -d  500 -- npm run test",
     "predocs": "rimraf docs",
     "docs": "run-s docs:jsDocs docs:api",

@@ -8,63 +8,66 @@ let instance, context, extensions
 
 /**
  * Parse message templates at runtime with context from user attributes,
- * pre-populated data (optionally persisted in brain) or from custom functions,
- * e.g. to query conversation history via a Transcript instance.
- *
- * Improv parses javascript template expressions, but *don't* use back-ticks
- * when declaring the string, or it will render immediately without context.
- *
- * Improv is initialised with a robot via `.use` and will throw otherwise.
+ * pre-populated data and/or custom functions.
  *
  * The context object is applied as 'this' in the scope where the template is
  * rendered, e.g. `"hello ${ this.user.name }"` will render with the value at
- * the _user.name_ path in the context object, which should be the current user
- * (unless its been overriden by configurable extensions).
+ * the _user.name_ path in the context object.
  *
- * Improv uses a singleton pattern, so templates are passed by a single
- * middleware. Re-using after initial setup will replace the robot but existing
- * context will persist. Calling `.reset()` will clear everything (for testing).
+ * *Don't* use back-ticks when declaring strings, or it will render immediately.
  *
- * @param {Robot} robot                  Hubot Robot instance
+ * Message strings containing expressions are automatically rendered by Improv
+ * using middleware and the user object is taken from the response object given
+ * to middleware, but can be overriden by extensions.
  */
 class Improv extends Base {
+  /**
+   * Improv uses a singleton pattern to parse templates from a central
+   * middleware. It should be initialised with a robot via `.use`.
+   * Calling `.reset()` will clear everything (for testing).
+   *
+   * @param {Robot} robot Hubot Robot instance
+   * @return {Improv}     New or prior existing (singleton) instance
+   */
   constructor (robot) {
     if (!instance) {
       super('improv', robot)
+      instance = this
       this.defaults({
         save: true,
         fallback: process.env.IMRPOV_FALLBACK || 'unknown',
-        replace: process.env.IMRPOV_REPLACE || null
+        replacement: process.env.IMRPOV_REPLACEMENT || null
       })
-      instance = this
     }
     return instance
   }
 }
 
 /**
- * Use a robot and setup improv context collection in the brain.
+ * Setup middleware and improv context collection in the brain.
  *
  * This is the main interface to get either a new or existing instance.
  * If the robot is new but an instance exists (e.g. in tests) then Improv will
  * attach the new robot but keep existing config and extensions.
  *
  * @param  {Robot} robot The robot to use, usually existing from constructor
- * @return {Improv}      The instance, for test access to base module properties
+ * @return {Improv}      The instance - really only accessed by tests
  * @todo Test persistant context save/load from brain with a data store.
  */
 function use (robot) {
   let improv = new Improv(robot)
-  if (!_.isEqual(improv.robot, robot)) {
+  let searchStack = (item) => _.isEqual(item.toString(), middleware.toString())
+  if (improv.robot == null ||
+  (_.findIndex(robot.middleware.response.stack, searchStack) < 0)) {
     if (!robot.brain.get('improv')) robot.brain.set('improv', {})
-    robot.responseMiddleware((c, n, d) => middleware(c, n, d))
+    robot.responseMiddleware(middleware)
     improv.robot = robot
   }
-  return instance
+  return improv
 }
 
 /**
- * Configure the Improv instance (pass options to base configure method).
+ * Configure the Improv instance
  *
  * @param {Object} [options]             Key/val options for config
  * @param {boolean} [options.save]       Keep context collection in hubot brain
@@ -72,7 +75,7 @@ function use (robot) {
  * @param {string} [options.replacement] Replace all messages containing unknowns, overrides fallback
  * @param {Object} [options.app]         Data object with app context attributes to merge into tempaltes
  * @param {array} [options.admins]       Array of usernames authorised to populate context data
- * @return {this}                        The exported module for chaining
+ * @return {Object}                        The module exports for chaining
  */
 function configure (options = {}) {
   if (!instance) throw new Error('Improv must be used with robot before configuring')
@@ -91,19 +94,12 @@ function configure (options = {}) {
  * @example <caption>extend context with user transcript history</caption>
  *
  * improv.use(robot)
- * let transcript = new Transcript(robot)
  * improv.extend((context) => {
- *   let colorMessageMatches = transcript.findIdMatches('fav-color', context.user.id)
- *   // ^ array of match objects from history of user supplying their favorite color
- *   if (colorMessageMatches) context.user.favColor = colorMessageMatches[0].pop()
- *   // ^ get the latest match and text from the capture group, add to context
+ *   context.user.favColor = 'always blue'
  *   return context
  * })
  * robot.send({ user: user }, 'I know your favorite color is ${ this.user.favColor }')
- * // ^ middleware will render template with the value in improv context
- *
- * @param  {Function} dataFunc Receives merge data, to more return data
- * @return {this}              The exported module for chaining
+ * // ^ middleware will render template with the values and user in context
 */
 function extend (dataFunc) {
   if (!instance) throw new Error('Improv must be used with robot before extended')
@@ -115,7 +111,7 @@ function extend (dataFunc) {
 }
 
 /**
- * Provdies current context to templates merged with any data reutrn by added
+ * Provdies current context to messages merged with any data reutrn by added
  * extensions and a user object (if provideed).
  *
  * @param  {Object} [user] User (usually from middleware context)
@@ -137,34 +133,30 @@ function mergeData (user = {}) {
 
 /**
  * Merge templated messages with context data (replace unknown as configured).
- * Used internally after context data gathered and possibly extended.
+ * Called by middleware after context data gathered and possibly extended.
  *
  * Pre-renders each expression individually to catch and replace any unknowns.
+ * Failed expressions will be replaced with fallback unless a full replacement
+ * is configured, to replace the entire string.
  *
  * @param {array}  strings One or more strings being posted
- * @param {Object} context Template data, called as 'this' for interpolation
+ * @param {Object} context Template data, reference as 'this' for interpolation
  * @return {array}         Strings populated with context values
- *
- * @todo use fallback/replace for unknowns
 */
 function parse (strings, data) {
   return _.map(strings, (string) => {
     let regex = new RegExp(/(?:\$\{\s?)(.*?)(?:\s?\})/)
     let match
-    console.log(data)
     while ((match = regex.exec(string)) !== null) {
       try {
         let template = new Function(`return \`${match[0]}\``) // eslint-disable-line
-        let rendered = template.call(data)
         // ⬆ StandardJS error: The Function constructor is eval
-        // ⬇ alternate version, using eval also gives StandardJS error - can't win!
-        // const template = (string) => eval(`\`${string}\``)
-        // let rendered = template.call(context, string)
-        console.log(rendered)
+        let rendered = template.call(data)
         string = string.replace(match[0], rendered)
       } catch (e) {
-        instance.log.error(`'${match[1]}' unknown in improv context for message: ${string}`)
-        string = string.replace(match[0], 'unknown')
+        instance.log.warning(`'${match[1]}' unknown in improv context for message: ${string}`)
+        if (instance.config.replacement !== null) return instance.config.replacement
+        else string = string.replace(match[0], instance.config.fallback)
       }
     }
     return string
@@ -179,12 +171,12 @@ function parse (strings, data) {
  * @param  {Function} done    - Initial (final) completion callback
 */
 function middleware (context, next, done) {
-  const hasTag = _.some(context.strings, str => str.match(/\${.*}/))
-  if (hasTag) {
-    const data = mergeData(context.response.message.user)
+  let hasExpression = _.some(context.strings, str => str.match(/\${.*}/))
+  if (hasExpression) {
+    let data = mergeData(context.response.message.user)
     context.strings = parse(context.strings, data)
   }
-  return next(done)
+  return next()
 }
 
 /**
@@ -195,11 +187,11 @@ function warn (unknowns) {}
 /**
  * Add data to context on the fly
  *
- * @param {array|string} path The path of the property to set
+ * @param {array/string} path The path of the property to set
  * @param {*} value           The value to set
- * @return {this}             The exported module for chaining
+ * @return {Object}             The module exports for chaining
  *
- * @todo Save to brain on update if configured
+ * @todo Save to brain on update if configured to save
  */
 function remember (path, value) {
   if (context == null) context = {}
@@ -210,10 +202,10 @@ function remember (path, value) {
 /**
  * Remove data from context on the fly
  *
- * @param {array|string} path The path of the property to unset
- * @return {this}             The exported module for chaining
+ * @param {array/string} path The path of the property to unset
+ * @return {Object}             The module exports for chaining
  *
- * @todo Clear from brain on update if configured
+ * @todo Clear from brain on update if configured to save
  */
 function forget (path) {
   if (context == null) context = {}

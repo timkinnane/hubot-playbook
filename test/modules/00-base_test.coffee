@@ -14,12 +14,12 @@ describe 'Base', ->
     pretend.start()
     pretend.log.level = 'silent'
     Object.getOwnPropertyNames(Base.prototype).map (key) ->
-      sinon.spy Base.prototype, key
+      sinon.spy Base.prototype, key if _.isFunction Base.prototype[key]
 
   afterEach ->
     pretend.shutdown()
     Object.getOwnPropertyNames(Base.prototype).map (key) ->
-      Base.prototype[key].restore()
+      Base.prototype[key].restore() if _.isFunction Base.prototype[key]
 
   describe '.constructor', ->
 

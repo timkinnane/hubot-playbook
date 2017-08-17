@@ -127,6 +127,7 @@ their key as a signature to ID which specific instance it was.</p>
 <ul>
 <li><a href="#Base">Base</a><ul>
 <li><a href="#new_Base_new">new Base(name, robot, [options], [key])</a></li>
+<li><a href="#Base+log">.log</a> ⇒ <code>Log</code></li>
 <li><a href="#Base+error">.error(err)</a></li>
 <li><a href="#Base+configure">.configure(options)</a> ⇒ <a href="#Base"><code>Base</code></a></li>
 <li><a href="#Base+defaults">.defaults(settings)</a> ⇒ <a href="#Base"><code>Base</code></a></li>
@@ -179,6 +180,11 @@ radOne = <span class="hljs-keyword">new</span> RadModule(robot, { <span class="h
 radOne.id <span class="hljs-comment">// == 'rad_1'</span>
 radOne.config.radness <span class="hljs-comment">// == 'high'</span>
 </code></pre>
+<hr>
+<p><a name="Base+log"></a></p>
+<h3 id="base-log-code-log-code-">base.log ⇒ <code>Log</code></h3>
+<p>Getter allows robot to be replaced at runtime without losing route to log</p>
+<p><strong>Kind</strong>: instance property of <a href="#Base"><code>Base</code></a><br><strong>Returns</strong>: <code>Log</code> - The robot’s log instance  </p>
 <hr>
 <p><a name="Base+error"></a></p>
 <h3 id="base-error-err-">base.error(err)</h3>

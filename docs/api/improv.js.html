@@ -115,38 +115,81 @@
 
       
         
-        <p><a name="Improv"></a></p>
+        <h2 id="classes">Classes</h2>
+<dl>
+<dt><a href="#Improv">Improv</a></dt>
+<dd><p>Parse message templates at runtime with context from user attributes,
+pre-populated data and/or custom functions.</p>
+<p>The context object is applied as &#39;this&#39; in the scope where the template is
+rendered, e.g. <code>&quot;hello ${ this.user.name }&quot;</code> will render with the value at
+the <em>user.name</em> path in the context object.</p>
+<p>Message strings containing expressions are automatically rendered by Improv
+using middleware and the user object is taken from the response object given
+to middleware, but can be overriden by extensions.</p>
+</dd>
+</dl>
+
+<h2 id="functions">Functions</h2>
+<dl>
+<dt><a href="#use">use(robot)</a> ⇒ <code><a href="#Improv">Improv</a></code></dt>
+<dd><p>Setup middleware and improv context collection in the brain.</p>
+<p>This is the main interface to get either a new or existing instance.
+If the robot is new but an instance exists (e.g. in tests) then Improv will
+attach the new robot but keep existing config and extensions.</p>
+</dd>
+<dt><a href="#configure">configure([options])</a> ⇒ <code>Object</code></dt>
+<dd><p>Configure the Improv instance</p>
+</dd>
+<dt><a href="#extend">extend(dataFunc)</a> ⇒ <code><a href="#Improv">Improv</a></code></dt>
+<dd><p>Add extra functions to provide further context. They are called with the
+current context whenever a template is rendered and should return extra
+key/values to merge with context and/or override keys of existing data.</p>
+</dd>
+<dt><a href="#mergeData">mergeData([user])</a> ⇒ <code>Object</code></dt>
+<dd><p>Provdies current context to messages merged with any data reutrn by added
+extensions and a user object (if provideed).</p>
+</dd>
+<dt><a href="#parse">parse(strings, context)</a> ⇒ <code>array</code></dt>
+<dd><p>Merge templated messages with context data (replace unknown as configured).
+Used internally after context data gathered and possibly extended.</p>
+<p><em>Don&#39;t</em> use back-ticks when declaring strings, or it will render immediately.</p>
+<p>Pre-renders each expression individually to catch and replace any unknowns.
+Failed expressions will be replaced with fallback unless a full replacement
+is configured, to replace the entire string.</p>
+</dd>
+<dt><a href="#middleware">middleware(context, next, done)</a></dt>
+<dd><p>Middleware checks for template tags and parses if required.</p>
+</dd>
+<dt><a href="#warn">warn()</a></dt>
+<dd></dd>
+<dt><a href="#remember">remember(path, value)</a> ⇒ <code>Object</code></dt>
+<dd><p>Add data to context on the fly</p>
+</dd>
+<dt><a href="#forget">forget(path)</a> ⇒ <code>Object</code></dt>
+<dd><p>Remove data from context on the fly</p>
+</dd>
+<dt><a href="#reset">reset()</a></dt>
+<dd><p>Wipte slate for tests to reinitialise without existing instance or context</p>
+</dd>
+</dl>
+
+<p><a name="Improv"></a></p>
 <h2 id="improv">Improv</h2>
-<p>Parse message templates with context from user attributes, pre-populated
-custom data (optionally persisted in brain) or from custom functions, e.g. to
-query conversation history via a Transcript instance.</p>
-<p>Improv will parse any strings containing javascript template expressions, but
-it is important NOT to use back-ticks when declaring the string, or they will
-be rendered immediately instead of at runtime with Improv’s context object.</p>
+<p>Parse message templates at runtime with context from user attributes,
+pre-populated data and/or custom functions.</p>
 <p>The context object is applied as ‘this’ in the scope where the template is
 rendered, e.g. <code>&quot;hello ${ this.user.name }&quot;</code> will render with the value at
-the <em>user.name</em> path in the context object, which should be the current user
-(unless its been overriden by configurable extensions).</p>
-<p>Improv uses singleton pattern, all templates are handled by one instance.
-If an instance exists and a new one is requested, new options will be applied
-to the original instance, which is returned by the constructor instead.</p>
+the <em>user.name</em> path in the context object.</p>
+<p>Message strings containing expressions are automatically rendered by Improv
+using middleware and the user object is taken from the response object given
+to middleware, but can be overriden by extensions.</p>
 <p><strong>Kind</strong>: global class  </p>
-<ul>
-<li><a href="#Improv">Improv</a><ul>
-<li><a href="#new_Improv_new">new Improv(robot, [options], [key])</a></li>
-<li><a href="#Improv+use">.use(robot)</a> ⇒ <a href="#Improv"><code>Improv</code></a></li>
-<li><a href="#Improv+extend">.extend(dataFunc, dataFunc)</a> ⇒ <a href="#Improv"><code>Improv</code></a> | <code>Self</code></li>
-<li><a href="#Improv+mergeData">.mergeData(user)</a> ⇒ <code>Object</code></li>
-<li><a href="#Improv+parse">.parse(strings, context)</a> ⇒ <code>array</code></li>
-<li><a href="#Improv+middleware">.middleware(context, next, done)</a></li>
-<li><a href="#Improv+reset">.reset()</a> ⇒ <code>Self</code></li>
-<li><a href="#Improv+destroy">.destroy()</a></li>
-</ul>
-</li>
-</ul>
 <hr>
 <p><a name="new_Improv_new"></a></p>
-<h3 id="new-improv-robot-options-key-">new Improv(robot, [options], [key])</h3>
+<h3 id="new-improv-robot-">new Improv(robot)</h3>
+<p>Improv uses a singleton pattern to parse templates from a central
+middleware. It should be initialised with a robot via <code>.use</code>.
+Calling <code>.reset()</code> will clear everything (for testing).</p>
 <table>
 <thead>
 <tr>
@@ -161,6 +204,49 @@ to the original instance, which is returned by the constructor instead.</p>
 <td><code>Robot</code></td>
 <td>Hubot Robot instance</td>
 </tr>
+</tbody>
+</table>
+<hr>
+<p><a name="use"></a></p>
+<h2 id="use-robot-code-improv-code-improv-">use(robot) ⇒ <a href="#Improv"><code>Improv</code></a></h2>
+<p>Setup middleware and improv context collection in the brain.</p>
+<p>This is the main interface to get either a new or existing instance.
+If the robot is new but an instance exists (e.g. in tests) then Improv will
+attach the new robot but keep existing config and extensions.</p>
+<p><strong>Kind</strong>: global function<br><strong>Returns</strong>: <a href="#Improv"><code>Improv</code></a> - The instance - really only accessed by tests<br><strong>Todo</strong></p>
+<ul>
+<li>[ ] Test persistant context save/load from brain with a data store.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>robot</td>
+<td><code>Robot</code></td>
+<td>The robot to use, usually existing from constructor</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><a name="configure"></a></p>
+<h2 id="configure-options-code-object-code-">configure([options]) ⇒ <code>Object</code></h2>
+<p>Configure the Improv instance</p>
+<p><strong>Kind</strong>: global function<br><strong>Returns</strong>: <code>Object</code> - The module exports for chaining  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
 <tr>
 <td>[options]</td>
 <td><code>Object</code></td>
@@ -191,42 +277,15 @@ to the original instance, which is returned by the constructor instead.</p>
 <td><code>array</code></td>
 <td>Array of usernames authorised to populate context data</td>
 </tr>
-<tr>
-<td>[key]</td>
-<td><code>string</code></td>
-<td>Key name for this instance</td>
-</tr>
 </tbody>
 </table>
 <hr>
-<p><a name="Improv+use"></a></p>
-<h3 id="improv-use-robot-code-improv-code-improv-">improv.use(robot) ⇒ <a href="#Improv"><code>Improv</code></a></h3>
-<p>Use a robot and get data from the brain. Separated from constructor for
-testing with reset robots.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Improv"><code>Improv</code></a><br><strong>Returns</strong>: <a href="#Improv"><code>Improv</code></a> - Self for chaining  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>robot</td>
-<td><code>Robot</code></td>
-<td>The robot to use, usually existing from constructor</td>
-</tr>
-</tbody>
-</table>
-<hr>
-<p><a name="Improv+extend"></a></p>
-<h3 id="improv-extend-datafunc-datafunc-code-improv-code-improv-code-self-code-">improv.extend(dataFunc, dataFunc) ⇒ <a href="#Improv"><code>Improv</code></a> | <code>Self</code></h3>
+<p><a name="extend"></a></p>
+<h2 id="extend-datafunc-code-improv-code-improv-">extend(dataFunc) ⇒ <a href="#Improv"><code>Improv</code></a></h2>
 <p>Add extra functions to provide further context. They are called with the
 current context whenever a template is rendered and should return extra
 key/values to merge with context and/or override keys of existing data.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Improv"><code>Improv</code></a><br><strong>Returns</strong>: <a href="#Improv"><code>Improv</code></a> - Self for chaining<code>Self</code> - - The instance for chaining  </p>
+<p><strong>Kind</strong>: global function<br><strong>Returns</strong>: <a href="#Improv"><code>Improv</code></a> - The instance for chaining  </p>
 <table>
 <thead>
 <tr>
@@ -241,31 +300,24 @@ key/values to merge with context and/or override keys of existing data.</p>
 <td><code>function</code></td>
 <td>Receives current context, to return more data</td>
 </tr>
-<tr>
-<td>dataFunc</td>
-<td><code>function</code></td>
-<td>Receives merge data, to more return data</td>
-</tr>
 </tbody>
 </table>
 <p><strong>Example</strong> <em>(extend context with user transcript history)</em>  </p>
 <pre><code class="lang-js">
-<span class="hljs-keyword">let</span> improv = <span class="hljs-keyword">new</span> Improv(robot)
-<span class="hljs-keyword">let</span> transcript = <span class="hljs-keyword">new</span> Transcript(robot)
-improv.extend(<span class="hljs-function">(<span class="hljs-params">data</span>) =&gt;</span> {
-  <span class="hljs-comment">// get array of match objects from history of user supplying their favorite color</span>
-  <span class="hljs-keyword">let</span> colorMessageMatches = transcript.findIdMatches(<span class="hljs-string">'fav-color'</span>, data.user.id)
-  <span class="hljs-comment">// if found, get the latest match and text from the capture group, add to context</span>
-  <span class="hljs-keyword">if</span> (colorMessageMatches) data.user.favColor = colorMessageMatches[<span class="hljs-number">0</span>].pop()
-  <span class="hljs-keyword">return</span> data
+improv.use(robot)
+improv.extend(<span class="hljs-function">(<span class="hljs-params">context</span>) =&gt;</span> {
+  context.user.favColor = <span class="hljs-string">'always blue'</span>
+  <span class="hljs-keyword">return</span> context
 })
+robot.send({ <span class="hljs-attr">user</span>: user }, <span class="hljs-string">'I know your favorite color is ${ this.user.favColor }'</span>)
+<span class="hljs-comment">// ^ middleware will render template with the values and user in context</span>
 </code></pre>
 <hr>
-<p><a name="Improv+mergeData"></a></p>
-<h3 id="improv-mergedata-user-code-object-code-">improv.mergeData(user) ⇒ <code>Object</code></h3>
-<p>Provdies current known user and app data for merging with tempalte.</p>
-<p>Runs any extension functions, e.g. to merge data from other sources.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Improv"><code>Improv</code></a><br><strong>Returns</strong>: <code>Object</code> - App and user (from brain) data, with any extras<br><strong>Todo</strong></p>
+<p><a name="mergeData"></a></p>
+<h2 id="mergedata-user-code-object-code-">mergeData([user]) ⇒ <code>Object</code></h2>
+<p>Provdies current context to messages merged with any data reutrn by added
+extensions and a user object (if provideed).</p>
+<p><strong>Kind</strong>: global function<br><strong>Returns</strong>: <code>Object</code> - Context and user data, with any extensions merged<br><strong>Todo</strong></p>
 <ul>
 <li>[ ] Allow tagging other user’s data by merge with robot.brain.userForId</li>
 </ul>
@@ -279,21 +331,22 @@ improv.extend(<span class="hljs-function">(<span class="hljs-params">data</span>
 </thead>
 <tbody>
 <tr>
-<td>user</td>
+<td>[user]</td>
 <td><code>Object</code></td>
 <td>User (usually from middleware context)</td>
 </tr>
 </tbody>
 </table>
 <hr>
-<p><a name="Improv+parse"></a></p>
-<h3 id="improv-parse-strings-context-code-array-code-">improv.parse(strings, context) ⇒ <code>array</code></h3>
+<p><a name="parse"></a></p>
+<h2 id="parse-strings-context-code-array-code-">parse(strings, context) ⇒ <code>array</code></h2>
 <p>Merge templated messages with context data (replace unknown as configured).
 Used internally after context data gathered and possibly extended.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Improv"><code>Improv</code></a><br><strong>Returns</strong>: <code>array</code> - Strings populated with context values<br><strong>Todo</strong></p>
-<ul>
-<li>[ ] use fallback/replace for unknowns</li>
-</ul>
+<p><em>Don’t</em> use back-ticks when declaring strings, or it will render immediately.</p>
+<p>Pre-renders each expression individually to catch and replace any unknowns.
+Failed expressions will be replaced with fallback unless a full replacement
+is configured, to replace the entire string.</p>
+<p><strong>Kind</strong>: global function<br><strong>Returns</strong>: <code>array</code> - Strings populated with context values  </p>
 <table>
 <thead>
 <tr>
@@ -311,15 +364,15 @@ Used internally after context data gathered and possibly extended.</p>
 <tr>
 <td>context</td>
 <td><code>Object</code></td>
-<td>Template data, called as ‘this’ for interpolation</td>
+<td>Template data, reference as ‘this’ for interpolation</td>
 </tr>
 </tbody>
 </table>
 <hr>
-<p><a name="Improv+middleware"></a></p>
-<h3 id="improv-middleware-context-next-done-">improv.middleware(context, next, done)</h3>
+<p><a name="middleware"></a></p>
+<h2 id="middleware-context-next-done-">middleware(context, next, done)</h2>
 <p>Middleware checks for template tags and parses if required.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Improv"><code>Improv</code></a>  </p>
+<p><strong>Kind</strong>: global function  </p>
 <table>
 <thead>
 <tr>
@@ -347,15 +400,70 @@ Used internally after context data gathered and possibly extended.</p>
 </tbody>
 </table>
 <hr>
-<p><a name="Improv+reset"></a></p>
-<h3 id="improv-reset-code-self-code-">improv.reset() ⇒ <code>Self</code></h3>
-<p>Shutdown and re-initialise instance (mostly for tests)</p>
-<p><strong>Kind</strong>: instance method of <a href="#Improv"><code>Improv</code></a><br><strong>Returns</strong>: <code>Self</code> - - The reset instance  </p>
+<p><a name="warn"></a></p>
+<h2 id="warn-">warn()</h2>
+<p><strong>Kind</strong>: global function<br><strong>Todo</strong></p>
+<ul>
+<li>[ ] ask configured admins to provide context for any unknowns</li>
+</ul>
 <hr>
-<p><a name="Improv+destroy"></a></p>
-<h3 id="improv-destroy-">improv.destroy()</h3>
-<p>Reset the singleton, for tests to get a real new instance</p>
-<p><strong>Kind</strong>: instance method of <a href="#Improv"><code>Improv</code></a>  </p>
+<p><a name="remember"></a></p>
+<h2 id="remember-path-value-code-object-code-">remember(path, value) ⇒ <code>Object</code></h2>
+<p>Add data to context on the fly</p>
+<p><strong>Kind</strong>: global function<br><strong>Returns</strong>: <code>Object</code> - The module exports for chaining<br><strong>Todo</strong></p>
+<ul>
+<li>[ ] Save to brain on update if configured to save</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>path</td>
+<td><code>array/string</code></td>
+<td>The path of the property to set</td>
+</tr>
+<tr>
+<td>value</td>
+<td><code>*</code></td>
+<td>The value to set</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><a name="forget"></a></p>
+<h2 id="forget-path-code-object-code-">forget(path) ⇒ <code>Object</code></h2>
+<p>Remove data from context on the fly</p>
+<p><strong>Kind</strong>: global function<br><strong>Returns</strong>: <code>Object</code> - The module exports for chaining<br><strong>Todo</strong></p>
+<ul>
+<li>[ ] Clear from brain on update if configured to save</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>path</td>
+<td><code>array/string</code></td>
+<td>The path of the property to unset</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><a name="reset"></a></p>
+<h2 id="reset-">reset()</h2>
+<p>Wipte slate for tests to reinitialise without existing instance or context</p>
+<p><strong>Kind</strong>: global function  </p>
 <hr>
 
         
