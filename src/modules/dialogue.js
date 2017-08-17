@@ -1,3 +1,5 @@
+'use strict'
+
 import _ from 'lodash'
 import Base from './base'
 import Path from './path'
@@ -58,15 +60,31 @@ class Dialogue extends Base {
    * Send or reply with message as configured (@user reply or send to room).
    *
    * @param {string} strings Message strings
-   * @return {Promise} From hubot async middleware (if supported)
-   * @todo update tests that wait for observer to use promise instead
+   * @return {Promise} Resolves with that
+   *
+   * @todo Update to yield res when Hubot robot send uses middleware #1233
+   * @todo Update tests that wait for observer to use promise instead
   */
   send (...strings) {
     let sent
     if (this.config.sendReplies) sent = this.res.reply(...strings)
     else sent = this.res.send(...strings)
-    this.emit('send', this.res, ...strings)
-    return sent
+    // if there was middleware to modify the sent string, we won't know here
+    return sent.then((result) => {
+      this.emit('send', result.response, {
+        strings: result.strings,
+        method: result.method,
+        received: this.res
+      })
+    })
+    /*
+    let sentRes = (function * (sendPromise) {
+      yield sendPromise
+      return sendPromise
+    }(sent))
+    this.emit('send', sentRes, ...strings)
+    return sentRes
+    */
   }
 
   /**

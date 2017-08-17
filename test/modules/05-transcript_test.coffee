@@ -1,5 +1,6 @@
 sinon = require 'sinon'
 chai = require 'chai'
+co = require 'co'
 should = chai.should()
 chai.use require 'sinon-chai'
 chai.use require 'chai-subset'
@@ -20,7 +21,6 @@ describe 'Transcript', ->
 
   beforeEach ->
     pretend.start()
-    # pretend.log.level = 'silent'
     @tester = pretend.user 'tester', room: 'testing'
     @clock = sinon.useFakeTimers()
     @now = _.now()
@@ -471,7 +471,7 @@ describe 'Transcript', ->
           else
             res.reply "I don't know!?"
 
-      it 'records and recalls favorite color if provided', ->
+      it 'records and recalls favorite color if provided', -> co ->
         yield pretend.user('tim').send('my favorite color is orange')
         yield pretend.user('tim').send('hubot what is my favorite color?')
         pretend.messages.should.eql [

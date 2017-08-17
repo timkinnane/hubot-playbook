@@ -1,3 +1,5 @@
+'use strict'
+
 import _ from 'lodash'
 import Base from './base'
 
@@ -92,17 +94,8 @@ class Transcript extends Base {
       record.message = _.pickHas(response.message, this.config.messageAtts)
     }
 
-    // TODO
-    // Strings are sent as additional args for sends, because dialogues can't get
-    // access to the generated response object without adding middleware, they
-    // only have the user's response being replied to, otherwise the robot's text
-    // is lost.
-    // Once middleware returns a promise, it should resolve with the new
-    // response object sent by the robot, then send should be emitted with that
-    // so keeping the strings as an additional property won't be required and the
-    // records will be more consistently structured for querying an interaction
     if (!_.isEmpty(args)) {
-      if (event === 'send') record.strings = args
+      if (event === 'send' && args[0].strings) record.strings = args[0].strings
       else record.other = args
     }
 

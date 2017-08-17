@@ -1,5 +1,6 @@
 sinon = require 'sinon'
 chai = require 'chai'
+co = require 'co'
 should = chai.should()
 chai.use require 'sinon-chai'
 
@@ -170,7 +171,7 @@ describe 'Path', ->
 
     context 'with string matching branch regex', ->
 
-      beforeEach ->
+      beforeEach -> co =>
         yield pretend.user('sam').send 'door 2'
         @res = pretend.responses.incoming[0]
         @branch = @path.match @res
@@ -186,7 +187,7 @@ describe 'Path', ->
 
     context 'with string matching multiple branches', ->
 
-      beforeEach ->
+      beforeEach -> co =>
         yield pretend.user('sam').send 'door 1 and door 2'
         @res = pretend.responses.incoming[0]
         @branch = @path.match @res
@@ -202,7 +203,7 @@ describe 'Path', ->
 
     context 'with string matching no branches', ->
 
-      beforeEach ->
+      beforeEach -> co =>
         yield pretend.user('sam').send 'door X'
         @res = pretend.responses.incoming[0]
         @branch = @path.match @res

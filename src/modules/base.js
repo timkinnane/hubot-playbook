@@ -1,3 +1,5 @@
+'use strict'
+
 import _ from 'lodash'
 
 /**
@@ -35,8 +37,15 @@ class Base {
     this.config = {}
     if (_.isObject(args[0])) this.configure(args.shift())
     if (_.isString(args[0])) this.key = args.shift()
-    this.log = this.robot.logger
     this.id = _.uniqueId(this.name)
+  }
+
+  /**
+   * Getter allows robot to be replaced at runtime without losing route to log
+   * @return {Log} The robot's log instance
+   */
+  get log () {
+    return this.robot.logger
   }
 
   /**

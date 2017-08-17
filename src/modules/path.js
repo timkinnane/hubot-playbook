@@ -1,3 +1,5 @@
+'use strict'
+
 import _ from 'lodash'
 import Base from './base'
 
@@ -121,7 +123,7 @@ class Path extends Base {
       res.match = text.match(branch.regex)
       return res.match
     }) // truthy / falsey
-    if (branch != null) { this.closed = true }
+    if (branch != null) this.closed = true
     return branch || this.catch()
   }
 }

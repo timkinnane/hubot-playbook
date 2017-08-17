@@ -1,5 +1,6 @@
 sinon = require 'sinon'
 chai = require 'chai'
+co = require 'co'
 should = chai.should()
 chai.use require 'sinon-chai'
 
@@ -22,8 +23,8 @@ describe 'Scene', ->
       sinon.spy Scene.prototype, key
 
     # generate a response object for starting dialogues
-    yield @tester.send('test')
-    @res = pretend.responses.incoming[0]
+    @tester.send('test')
+    .then => @res = pretend.responses.incoming[0]
 
   afterEach ->
     pretend.shutdown()
@@ -82,7 +83,7 @@ describe 'Scene', ->
       beforeEach ->
         @callback = sinon.spy()
         @scene.listen 'hear', /test/, @callback
-        yield @tester.send 'test'
+        @tester.send 'test'
 
       it 'registers a robot hear listener with scene as attribute', ->
         pretend.robot.hear.should.have.calledWithMatch sinon.match.regexp
@@ -100,7 +101,7 @@ describe 'Scene', ->
       beforeEach ->
         @callback = sinon.spy()
         @id = @scene.listen 'respond', /test/, @callback
-        yield @tester.send 'hubot test'
+        @tester.send 'hubot test'
 
       it 'registers a robot respond listener with scene as attribute', ->
         pretend.robot.respond.should.have.calledWithMatch sinon.match.regexp
@@ -250,8 +251,8 @@ describe 'Scene', ->
         @scene = new Scene pretend.robot
         @dialogue = @scene.enter @res
         @dialogue.addBranch /.*/, '' # match anything
-        yield @tester.send 'test'
-        yield @tester.send 'testing again'
+        @tester.send 'test'
+        @tester.send 'testing again'
 
       it 'calls .exit once only', ->
         @scene.exit.should.have.calledOnce
@@ -292,7 +293,7 @@ describe 'Scene', ->
         @dialogue.onTimeout @timeout
         @dialogue.receive = sinon.spy()
         @scene.exit @res, 'tester'
-        yield @tester.send 'test'
+        @tester.send 'test'
         @clock.tick 11
 
       it 'does not call onTimeout on dialogue', ->
@@ -338,7 +339,7 @@ describe 'Scene', ->
 
     context 'with two users in scene', ->
 
-      beforeEach ->
+      beforeEach -> co =>
         @scene = new Scene pretend.robot
         yield pretend.user('A').send 'foo'
         yield pretend.user('B').send 'bar'

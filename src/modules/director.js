@@ -1,3 +1,5 @@
+'use strict'
+
 import _ from 'lodash'
 import Base from './base'
 import hooker from 'hooker'

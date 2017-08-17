@@ -1,8 +1,5 @@
 --compilers coffee:coffee-script/register
 --require source-map-support
---require mocha-clean
---require mocha-co
 --require ./test/cover.js
 --recursive
---reporter spec
 --reporter-options output=./docs/test/index.html

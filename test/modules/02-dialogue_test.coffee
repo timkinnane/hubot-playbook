@@ -25,8 +25,8 @@ describe 'Dialogue', ->
       sinon.spy Dialogue.prototype, key
 
     # generate a response object for starting dialogues
-    yield pretend.user('tester').send 'test'
-    @res = pretend.responses.incoming[0]
+    pretend.user('tester').send 'test'
+    .then => @res = pretend.responses.incoming[0]
 
   afterEach ->
     pretend.shutdown()
@@ -134,17 +134,22 @@ describe 'Dialogue', ->
     context 'with config.sendReplies set to false', ->
 
       beforeEach ->
-        wait = pretend.observer.next()
         @send = sinon.spy()
         @dialogue.on 'send', @send
         @dialogue.send 'test'
-        yield wait
 
       it 'sends to the room from original res', ->
         pretend.messages.pop().should.eql [ 'hubot', 'test' ]
 
-      it 'emits send event with original response and sent strings', ->
-        @send.should.have.calledWith @dialogue, @res, 'test'
+      it 'emits send event with new response', ->
+        resKeys = ['robot', 'message', 'match', 'envelope']
+        @send.lastCall.args[1].should.have.all.keys resKeys...
+
+      it 'emits additional argument with strings, methdod and original res', ->
+        @send.lastCall.args[2].should.eql
+          strings: [ 'test' ]
+          method: 'send'
+          received: @res
 
     context 'with config.sendReplies set to true', ->
 
@@ -154,7 +159,7 @@ describe 'Dialogue', ->
         @dialogue.on 'send', @send
         @dialogue.config.sendReplies = true
         @dialogue.send 'test'
-        yield wait
+        wait
 
       it 'sends to the room from original res, responding to the @user', ->
         pretend.messages.pop().should.eql ['hubot', '@tester test' ]
@@ -168,7 +173,7 @@ describe 'Dialogue', ->
         @dialogue = new Dialogue @res, timeout: 1000
         @dialogue.startTimeout()
         @clock.tick 1001
-        yield wait
+        wait
 
       it 'sends timeout message to room', ->
         pretend.messages.pop().should.eql [
@@ -381,7 +386,7 @@ describe 'Dialogue', ->
 
       beforeEach ->
         @dialogue.end()
-        yield @tester.send '1'
+        @tester.send '1'
 
       it 'returns false', ->
         @dialogue.receive.returnValues[0].should.be.false
@@ -392,7 +397,7 @@ describe 'Dialogue', ->
     context 'on matching branch', ->
 
       beforeEach ->
-        yield @tester.send 'foo'
+        @tester.send 'foo'
 
       it 'clears timeout', ->
         @dialogue.clearTimeout.should.have.calledOnce
@@ -406,7 +411,7 @@ describe 'Dialogue', ->
     context 'on matching branch with message and handler', ->
 
       beforeEach ->
-        yield @tester.send '1'
+        @tester.send '1'
 
       it 'calls the created handler', ->
         @handler1.should.have.calledOnce
@@ -417,7 +422,7 @@ describe 'Dialogue', ->
     context 'on matching branch with just a handler', ->
 
       beforeEach ->
-        yield @tester.send '2'
+        @tester.send '2'
 
       it 'calls the custom handler', ->
         @handler2.should.have.calledOnce
@@ -428,7 +433,7 @@ describe 'Dialogue', ->
     context 'on matching branch with just a message', ->
 
       beforeEach ->
-        yield @tester.send '3'
+        @tester.send '3'
 
       it 'calls the default handler', ->
         @handler3.should.have.calledOnce
@@ -439,8 +444,8 @@ describe 'Dialogue', ->
     context 'on matching branches consecutively', ->
 
       beforeEach ->
-        yield @tester.send '1'
-        yield @tester.send '2'
+        @tester.send '1'
+        @tester.send '2'
 
       it 'only processes first match', ->
         @match.should.have.calledOnce
@@ -452,7 +457,7 @@ describe 'Dialogue', ->
 
       beforeEach ->
         @dialogue.path.config.catchMessage = 'huh?'
-        yield @tester.send '?'
+        @tester.send '?'
 
       it 'emits catch with self and res', ->
         @catch.should.have.calledWith @matchArgs...
@@ -469,7 +474,7 @@ describe 'Dialogue', ->
     context 'on mismatch without catch', ->
 
       beforeEach ->
-        yield @tester.send '?'
+        @tester.send '?'
 
       it 'emits mismatch with self and res', ->
         @mismatch.should.have.calledWith @matchArgs...
@@ -486,7 +491,7 @@ describe 'Dialogue', ->
         @dialogue.addBranch /more/, =>
           @dialogue.addBranch /4/, 'got 4'
           @dialogue.addBranch /5/, 'got 5'
-        yield @tester.send 'more'
+        @tester.send 'more'
 
       it 'added branches to current path', ->
         _.map @dialogue.path.branches, (branch) -> branch.regex
@@ -503,7 +508,7 @@ describe 'Dialogue', ->
             [ /1/, 'got 1' ]
             [ /2/, 'got 2' ]
           ]
-        yield @tester.send 'new'
+        @tester.send 'new'
 
       it 'added new branches to new path, overwrites prev path', ->
         _.map @dialogue.path.branches, (branch) -> branch.regex
