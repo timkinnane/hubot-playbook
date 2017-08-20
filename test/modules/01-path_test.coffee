@@ -103,13 +103,14 @@ describe 'Path', ->
       context 'when handler called', ->
 
         beforeEach ->
-          @path.branches[0].handler @mockRes, @mockDlg
+          @mockRes.dialogue = @mockDlg
+          @path.branches[0].handler @mockRes
 
         it 'sends the message with given dialogue', ->
           @mockDlg.send.should.have.calledWith 'foo'
 
         it 'calls the callback with response and dialogue', ->
-          @callback.should.have.calledWithExactly @mockRes, @mockDlg
+          @callback.should.have.calledWithExactly @mockRes
 
     context 'with invalid regex', ->
 
@@ -145,13 +146,14 @@ describe 'Path', ->
       context 'when handler called', ->
 
         beforeEach ->
-          @path.catch().handler @mockRes, @mockDlg
+          @mockRes.dialogue = @mockDlg
+          @path.catch().handler @mockRes
 
         it 'sends the message with given dialogue', ->
           @mockDlg.send.should.have.calledWith 'always be catching'
 
-        it 'calls the callback with response and dialogue', ->
-          @callback.should.have.calledWithExactly @mockRes, @mockDlg
+        it 'calls the callback with response', ->
+          @callback.should.have.calledWithExactly @mockRes
 
     context 'with no catch configured', ->
 

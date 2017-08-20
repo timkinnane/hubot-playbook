@@ -3021,6 +3021,10 @@ mkdirp@0.5.1, mkdirp@0.5.x, "mkdirp@>=0.5 0", mkdirp@^0.5.0, mkdirp@^0.5.1, mkdi
   dependencies:
     minimist "0.0.8"
 
+mocha-clean@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/mocha-clean/-/mocha-clean-1.0.0.tgz#7e769b16cb38745df62a28917077953b05fec064"
+
 mocha-co@^1.17.2:
   version "1.17.2"
   resolved "https://registry.yarnpkg.com/mocha-co/-/mocha-co-1.17.2.tgz#90cbd751251d90b01b59ed9db438249930b8c7b1"

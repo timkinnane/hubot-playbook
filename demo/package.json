@@ -16,10 +16,8 @@
   },
   "devDependencies": {
     "chai": "^3.5.0",
-    "co": "^4.6.0",
     "hubot-pretend": "^0.6.0",
     "mocha": "^3.3.0",
-    "mocha-clean": "^1.0.0",
     "sinon": "^1.17.7",
     "sinon-chai": "^2.8.0"
   },

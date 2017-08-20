@@ -95,7 +95,7 @@ class Base {
   /**
    * Emit events using robot's event emmitter, allows listening from any module.
    *
-   * Prepends instance's unique ID, so event listens can be implicitly targeted.
+   * Prepends the instance to event args, so listens can be implicitly targeted.
    *
    * @param {string} event Name of event
    * @param {...*} [args]  Arguments passed to event
@@ -112,7 +112,7 @@ class Base {
   */
   on (event, callback) {
     this.robot.on(event, (instance, ...args) => {
-      if (instance === this) callback(instance, ...args)
+      if (this === instance) callback(...args) // eslint-disable-line
     })
   }
 }

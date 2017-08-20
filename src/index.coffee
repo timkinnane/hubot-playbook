@@ -47,7 +47,7 @@ class PlaybookSingleton
 
     ###*
      * Create stand-alone dialogue (not within scene)
-     * @param  {Mixed} args - Dialogue constructor args
+     * @param  {*} args - Dialogue constructor args
      * @return {Scene}      - New Scene instance
     ###
     dialogue: (args...) ->
@@ -57,7 +57,7 @@ class PlaybookSingleton
 
     ###*
      * Create new Scene
-     * @param  {Mixed} args - Scene constructor args
+     * @param  {*} args - Scene constructor args
      * @return {Scene}      - New Scene instance
     ###
     scene: (args...) ->
@@ -68,7 +68,7 @@ class PlaybookSingleton
     ###*
      * Create and enter Scene
      * @param  {Response} res     - Response object from entering participant
-     * @param  {Mixed}   [args]   - Both Scene and Dialogue constructor options
+     * @param  {*}   [args]   - Both Scene and Dialogue constructor options
      * @return {Dialogue|Boolean} - Enter result, Dialogue or false if failed
     ###
     sceneEnter: (res, args...) ->
@@ -81,7 +81,7 @@ class PlaybookSingleton
      * Create scene and setup listener to enter
      * @param  {String}   type     - Robot listener type: hear|respond
      * @param  {RegExp}   regex    - Match pattern
-     * @param  {Mixed}    args     - Scene constructor args
+     * @param  {*}    args     - Scene constructor args
      * @param  {Function} callback - Callback to fire after entered
      * @return {Scene}             - New Scene instance
     ###
@@ -104,7 +104,7 @@ class PlaybookSingleton
 
     ###*
      * Create new Director
-     * @param  {Mixed} args - Constructor args
+     * @param  {*} args - Constructor args
      * @return {Director}   - New Director instance
     ###
     director: (args...) ->
@@ -114,7 +114,7 @@ class PlaybookSingleton
 
     ###*
      * Create a transcript with optional config to record events from modules
-     * @param  {Mixed}      args - Constructor args
+     * @param  {*}      args - Constructor args
      * @return {Transcript}      - The new transcript
     ###
     transcript: (args...) ->
@@ -125,8 +125,8 @@ class PlaybookSingleton
     ###*
      * Create transcript and record a given module in one step
      * TODO: allow passing instance key instead of object, to find from arrays
-     * @param  {Mixed}  instance - A Playbook module (dialogue, scene, director)
-     * @param  {Mixed}      args - Constructor args
+     * @param  {*}  instance - A Playbook module (dialogue, scene, director)
+     * @param  {*}      args - Constructor args
      * @return {Transcript}      - The new transcript
     ###
     transcribe: (instance, args...) ->

@@ -32,6 +32,7 @@ class Dialogue extends Base {
       timeoutText: process.env.DIALOGUE_TIMEOUT_TEXT ||
         'Timed out! Please start again.'
     })
+    res.dialogue = this
     this.res = res
     this.Path = Path
     this.path = null
@@ -140,7 +141,8 @@ class Dialogue extends Base {
    * @param {Object} [options]  Key/val options for path
    * @param {string} [key]      Key name for this path
    * @return {Path}             New path instance
-   * @todo when .send uses promise, return promise that resolves with this.path
+   *
+   * @todo return all sent promise, or yield until prompts sent
    *
    * @example
    * let dlg = new Dialogue(res)
@@ -184,6 +186,7 @@ class Dialogue extends Base {
    * @todo Test with handler using res.http/get to populate new path
   */
   receive (res) {
+    res.dialogue = this
     this.res = res
     if (this.ended || this.path == null) return false // dialogue is over, don't process
     this.log.debug(`Dialogue received ${this.res.message.text}`)
@@ -191,10 +194,10 @@ class Dialogue extends Base {
     if ((branch != null) && this.res.match) {
       this.clearTimeout()
       this.emit('match', this.res)
-      branch.handler(this.res, this)
+      branch.handler(this.res)
     } else if (branch != null) {
       this.emit('catch', this.res)
-      branch.handler(this.res, this)
+      branch.handler(this.res)
     } else {
       this.emit('mismatch', this.res)
     }

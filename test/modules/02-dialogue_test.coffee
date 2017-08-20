@@ -13,6 +13,11 @@ Timeout = setTimeout () ->
 , 0
 .constructor
 
+dialogueRes = (value) ->
+  responseKeys = [ 'robot', 'message', 'match', 'envelope', 'dialogue' ]
+  difference = _.difference responseKeys, _.keys value
+  difference.length == 0
+
 describe 'Dialogue', ->
 
   beforeEach ->
@@ -88,8 +93,8 @@ describe 'Dialogue', ->
       beforeEach ->
         @dialogue.end()
 
-      it 'emits end with self and initial response', ->
-        @end.should.have.calledWith @dialogue, @res
+      it 'emits end with initial response', ->
+        @end.should.have.calledWith @res
 
       it 'sets ended to true', ->
         @dialogue.ended.should.be.true
@@ -103,11 +108,8 @@ describe 'Dialogue', ->
         yield @tester.send 'foo'
         @dialogue.end()
 
-      it 'emits end with self and latest response', ->
-        @end.should.have.calledWith [
-          sinon.match.instanceOf Dialogue
-          sinon.match.instanceOf pretend.robot.Response
-        ]...
+      it 'emits end with latest response (containing dialogue)', ->
+        @end.should.have.calledWith sinon.match dialogueRes
 
     context 'when timeout is running', ->
 
@@ -145,27 +147,20 @@ describe 'Dialogue', ->
       it 'sends to the room from original res', ->
         pretend.messages.pop().should.eql [ 'hubot', 'test' ]
 
-      it 'emits send event with new response', ->
-        resKeys = ['robot', 'message', 'match', 'envelope']
-        @send.lastCall.args[1].should.have.all.keys resKeys...
+      it 'emits send event with new response (containing dialogue)', ->
+        @send.should.have.calledWith sinon.match dialogueRes
 
       it 'emits additional argument with strings, methdod and original res', ->
-        @send.lastCall.args[2].should.eql
+        @send.lastCall.args[1].should.eql
           strings: [ 'test' ]
           method: 'send'
           received: @res
 
     context 'with config.sendReplies set to true', ->
 
-      beforeEach ->
-        wait = pretend.observer.next()
-        @send = sinon.spy()
-        @dialogue.on 'send', @send
-        @dialogue.config.sendReplies = true
-        @dialogue.send 'test'
-        yield wait
-
       it 'sends to the room from original res, responding to the @user', ->
+        @dialogue.config.sendReplies = true
+        yield @dialogue.send 'test'
         pretend.messages.pop().should.eql ['hubot', '@tester test' ]
 
   describe '.onTimeout', ->
@@ -381,10 +376,12 @@ describe 'Dialogue', ->
       @dialogue.on 'match', @match
       @dialogue.on 'mismatch', @mismatch
       @dialogue.on 'catch', @catch
-      @matchArgs = [
-        sinon.match.instanceOf Dialogue
-        sinon.match.instanceOf pretend.robot.Response
-      ]
+
+    it 'stores the latest response object', ->
+      @dialogue.res.should.eql pretend.responses.incoming.pop()
+
+    it 'attaches itself to the response', ->
+      pretend.responses.incoming.pop().dialogue.should.eql @dialogue
 
     context 'when already ended', ->
 
@@ -406,8 +403,8 @@ describe 'Dialogue', ->
       it 'clears timeout', ->
         @dialogue.clearTimeout.should.have.calledOnce
 
-      it 'emits match with self and res', ->
-        @match.should.have.calledWith @matchArgs...
+      it 'emits match with res (containing dialogue)', ->
+        @match.should.have.calledWith sinon.match dialogueRes
 
       it 'ends dialogue', ->
         @dialogue.end.should.have.calledOnce
@@ -463,8 +460,8 @@ describe 'Dialogue', ->
         @dialogue.path.config.catchMessage = 'huh?'
         yield @tester.send '?'
 
-      it 'emits catch with self and res', ->
-        @catch.should.have.calledWith @matchArgs...
+      it 'emits catch with res (containing dialogue)', ->
+        @catch.should.have.calledWith sinon.match dialogueRes
 
       it 'sends the catch message', ->
         @dialogue.send.should.have.calledWith 'huh?'
@@ -480,8 +477,8 @@ describe 'Dialogue', ->
       beforeEach ->
         yield @tester.send '?'
 
-      it 'emits mismatch with self and res', ->
-        @mismatch.should.have.calledWith @matchArgs...
+      it 'emits mismatch with res (containing dialogue)', ->
+        @mismatch.should.have.calledWith sinon.match dialogueRes
 
       it 'does not clear timeout', ->
         @dialogue.clearTimeout.should.not.have.called

@@ -15,8 +15,6 @@ describe 'Scene', ->
     pretend.log.level = 'silent'
     @tester = pretend.user 'tester', id:'tester', room: 'testing'
     @clock = sinon.useFakeTimers()
-    @matchRes = sinon.match.instanceOf pretend.robot.Response
-    @matchDlg = sinon.match.instanceOf Dialogue
 
     Object.getOwnPropertyNames(Scene.prototype).map (key) ->
       sinon.spy Scene.prototype, key
@@ -93,7 +91,9 @@ describe 'Scene', ->
         @callback.should.have.calledOnce
 
       it 'callback should receive res and dialogue', ->
-        @callback.should.have.calledWith @matchRes, @matchDlg
+        matchRes = sinon.match.instanceOf pretend.robot.Response
+        .and sinon.match.has 'dialogue'
+        @callback.should.have.calledWith matchRes
 
     context 'with respond type and message matching regex', ->
 
@@ -111,7 +111,9 @@ describe 'Scene', ->
         @callback.should.have.calledOnce
 
       it 'callback should receive res and dialogue', ->
-        @callback.should.have.calledWith @matchRes, @matchDlg
+        matchRes = sinon.match.instanceOf pretend.robot.Response
+        .and sinon.match.has 'dialogue'
+        @callback.should.have.calledWith matchRes
 
     context 'with an invalid type', ->
 

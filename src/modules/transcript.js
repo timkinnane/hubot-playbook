@@ -73,7 +73,7 @@ class Transcript extends Base {
    * `recordDialogue`, `recordScene` or `recordDirector`
    *
    * @param  {string} event   The event name
-   * @param  {Mixed} args...  Args passed with the event, usually consists of:<br>
+   * @param  {*} args...  Args passed with the event, usually consists of:<br>
    *                          - Playbook module instance<br>
    *                          - Hubot response object<br>
    *                          - other additional (special context) arguments
@@ -132,7 +132,7 @@ class Transcript extends Base {
   recordDialogue (dialogue) {
     _.castArray(this.config.events).map((event) => {
       dialogue.on(event, (...args) => {
-        this.recordEvent(event, ...args)
+        this.recordEvent(event, dialogue, ...args)
       })
     })
   }
@@ -144,11 +144,11 @@ class Transcript extends Base {
    * @param {Scene} scene The Scnee instance
   */
   recordScene (scene) {
-    scene.on('enter', (scene, res, dialogue) => {
+    scene.on('enter', (res) => {
       this.recordEvent('enter', scene, res)
-      this.recordDialogue(dialogue)
+      this.recordDialogue(res.dialogue)
     })
-    scene.on('exit', (...args) => this.recordEvent('exit', ...args))
+    scene.on('exit', (...args) => this.recordEvent('exit', scene, ...args))
   }
 
   /**
@@ -158,8 +158,8 @@ class Transcript extends Base {
    * @param {Director} director The Director instance
   */
   recordDirector (director) {
-    director.on('allow', (...args) => this.recordEvent('allow', ...args))
-    director.on('deny', (...args) => this.recordEvent('deny', ...args))
+    director.on('allow', (...args) => this.recordEvent('allow', director, ...args))
+    director.on('deny', (...args) => this.recordEvent('deny', director, ...args))
   }
 
   /**

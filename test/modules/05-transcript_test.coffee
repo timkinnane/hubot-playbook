@@ -81,7 +81,7 @@ describe 'Transcript', ->
         @transcript = new Transcript pretend.robot, save: false
         @module = new Module pretend.robot, 'foo'
         @module.on 'mockEvent', (args...) =>
-          @transcript.recordEvent 'mockEvent', args...
+          @transcript.recordEvent 'mockEvent', @module, args...
 
       context 'with default config', ->
 

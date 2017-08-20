@@ -159,9 +159,9 @@ describe 'Base', ->
     beforeEach ->
       @mockEvent = sinon.spy()
 
-    it 'relays events from robot with instance as first arg', ->
+    it 'relays events from robot to instance', ->
       @base = new Base 'module', pretend.robot
       @mockEvent = sinon.spy()
       @base.on 'mockEvent', @mockEvent
       pretend.robot.emit 'mockEvent', @base, foo: 'bar'
-      @mockEvent.should.have.calledWith @base, foo: 'bar'
+      @mockEvent.should.have.calledWith foo: 'bar'
