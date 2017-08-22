@@ -77,10 +77,28 @@
               
                 
                 <li>
+                  <a class="source" href="outline.js.html">
+                    
+                    
+                    Outline
+                  </a>
+                </li>
+              
+                
+                <li>
                   <a class="source" href="path.js.html">
                     
                     
                     Path
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="playbook.js.html">
+                    
+                    
+                    Playbook
                   </a>
                 </li>
               
@@ -255,7 +273,7 @@ add dialogue branches or process response as required.</p>
 </table>
 <p><strong>Example</strong>  </p>
 <pre><code class="lang-js"><span class="hljs-keyword">let</span> scene = <span class="hljs-keyword">new</span> Scene(robot, { <span class="hljs-attr">scope</span>: <span class="hljs-string">'user'</span> })
-scene.listen(<span class="hljs-string">'respond'</span>, /hello/, (res, dlg) =&gt; {
+scene.listen(<span class="hljs-string">'respond'</span>, /hello/, (res) =&gt; {
   res.reply(<span class="hljs-string">'you are now in a scene'</span>)
   <span class="hljs-comment">// add dialogue branches now...</span>
 })
@@ -322,7 +340,7 @@ a scene unprompted.</p>
 </tr>
 <tr>
 <td>…args</td>
-<td><code>Mixed</code></td>
+<td><code>*</code></td>
 <td>Any additional args for Dialogue constructor</td>
 </tr>
 </tbody>

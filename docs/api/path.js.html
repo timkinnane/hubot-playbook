@@ -77,10 +77,28 @@
               
                 
                 <li>
+                  <a class="source" href="outline.js.html">
+                    
+                    
+                    Outline
+                  </a>
+                </li>
+              
+                
+                <li>
                   <a class="source" href="path.js.html">
                     
                     
                     Path
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="playbook.js.html">
+                    
+                    
+                    Playbook
                   </a>
                 </li>
               
@@ -155,12 +173,22 @@ without any new ones added.</p>
 <tr>
 <td>[branches]</td>
 <td><code>array</code></td>
-<td>Array of args for each branch, each containing:<br>                            - RegExp for listener<br>                            - String to send and/or<br>                            - Function to call on match</td>
+<td>Array of args for each branch, each containing:<br>                                         - RegExp for listener<br>                                         - String to send and/or<br>                                         - Function to call on match</td>
 </tr>
 <tr>
 <td>[options]</td>
 <td><code>Object</code></td>
 <td>Key/val options for config</td>
+</tr>
+<tr>
+<td>[options.catchMessage]</td>
+<td><code>Object</code></td>
+<td>Message to send via catch handler</td>
+</tr>
+<tr>
+<td>[options.catchCallback]</td>
+<td><code>Object</code></td>
+<td>Function to call within catch handler</td>
 </tr>
 <tr>
 <td>[key]</td>
@@ -220,12 +248,8 @@ without any new ones added.</p>
 <hr>
 <p><a name="Path+catch"></a></p>
 <h3 id="path-catch-code-object-code-">path.catch() ⇒ <code>Object</code></h3>
-<p>Called when nothing matches, behaviour depends on config:</p>
-<ul>
-<li>catchMessage: Message to send via handler</li>
-<li>catchCallback: Function to call within handler</li>
-</ul>
-<p>If neither is set, nothing happens.</p>
+<p>Called when nothing matches, behaviour depends on config.
+If neither is set, nothing happens.</p>
 <p><strong>Kind</strong>: instance method of <a href="#Path"><code>Path</code></a><br><strong>Returns</strong>: <code>Object</code> - Contains .handler (function) or null if not configured  </p>
 <hr>
 <p><a name="Path+match"></a></p>

@@ -1,5 +1,10 @@
 import _ from 'lodash'
-import { Dialogue, Scene, Director, Transcript, Outline, improv } from './modules'
+import Dialogue from './dialogue'
+import Scene from './scene'
+import Director from './director'
+import Transcript from './transcript'
+import Outline from './outline'
+import improv from './improv'
 
 let instance
 
@@ -44,7 +49,7 @@ class Playbook {
     this.robot.playbook = this
     this.log = this.robot.logger
     this.log.info(`Playbook using ${this.robot.name} bot`)
-    if (improvise) this.improv.use(this.robot)
+    if (improvise) this.improvise()
     return this
   }
 
@@ -171,7 +176,7 @@ class Playbook {
    * @return {Improv}          Improv interface
   */
   improvise (options) {
-    if (this.improv.instance == null) this.improv.use(this.robot)
+    this.improv.use(this.robot)
     this.improv.configure(options)
     return this.improv
   }
@@ -182,7 +187,7 @@ class Playbook {
    * TODO: detach listeners for scenes, directors, transcripts and improv
   */
   shutdown () {
-    this.log.info('Playbook shutting down')
+    if (this.log) this.log.info('Playbook shutting down')
     _.invokeMap(this.scenes, 'exitAll')
     _.invokeMap(this.dialogues, 'end')
   }
@@ -195,6 +200,7 @@ class Playbook {
   reset () {
     if (instance !== null) {
       instance.shutdown()
+      instance.improv.reset()
       instance = null
     }
     return new Playbook()

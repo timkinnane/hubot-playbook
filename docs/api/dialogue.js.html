@@ -77,10 +77,28 @@
               
                 
                 <li>
+                  <a class="source" href="outline.js.html">
+                    
+                    
+                    Outline
+                  </a>
+                </li>
+              
+                
+                <li>
                   <a class="source" href="path.js.html">
                     
                     
                     Path
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="playbook.js.html">
+                    
+                    
+                    Playbook
                   </a>
                 </li>
               
@@ -129,7 +147,7 @@ fire callbacks for the branches that match user messages.</p>
 <li><a href="#Dialogue+onTimeout">.onTimeout([override])</a></li>
 <li><a href="#Dialogue+clearTimeout">.clearTimeout()</a></li>
 <li><a href="#Dialogue+startTimeout">.startTimeout()</a></li>
-<li><a href="#Dialogue+addPath">.addPath([prompt], [branches], [options], [key])</a> ⇒ <code>Path</code></li>
+<li><a href="#Dialogue+addPath">.addPath([prompt], [branches], [options], [key])</a> ⇒ <code>Promise</code></li>
 <li><a href="#Dialogue+addBranch">.addBranch(regex, [message], [callback])</a></li>
 <li><a href="#Dialogue+receive">.receive(res)</a></li>
 </ul>
@@ -250,13 +268,10 @@ fire callbacks for the branches that match user messages.</p>
 <p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a>  </p>
 <hr>
 <p><a name="Dialogue+addPath"></a></p>
-<h3 id="dialogue-addpath-prompt-branches-options-key-code-path-code-">dialogue.addPath([prompt], [branches], [options], [key]) ⇒ <code>Path</code></h3>
+<h3 id="dialogue-addpath-prompt-branches-options-key-code-promise-code-">dialogue.addPath([prompt], [branches], [options], [key]) ⇒ <code>Promise</code></h3>
 <p>Add a dialogue path, with branches to follow and a prompt (optional).</p>
 <p>Any new path added overwrites the previous.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a><br><strong>Returns</strong>: <code>Path</code> - New path instance<br><strong>Todo</strong></p>
-<ul>
-<li>[ ] when .send uses promise, return promise that resolves with this.path</li>
-</ul>
+<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a><br><strong>Returns</strong>: <code>Promise</code> - Resolves when sends complete or immediately  </p>
 <table>
 <thead>
 <tr>
@@ -336,6 +351,7 @@ created if not.</p>
 <p>Overrides the original response with current one.</p>
 <p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a><br><strong>Todo</strong></p>
 <ul>
+<li>[ ] Move emitting into Path class, so each node can have a key</li>
 <li>[ ] Wrap handler in promise, don’t end() until it resolves</li>
 <li>[ ] Test with handler using res.http/get to populate new path</li>
 </ul>

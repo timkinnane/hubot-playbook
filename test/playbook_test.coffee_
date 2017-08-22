@@ -63,7 +63,7 @@ describe 'Playbook', ->
       sinon.spy playbook, key if _.isFunction val
 
     @tester.send 'test'
-    .then => @res = pretend.responses.incoming[0]
+    .then => @res = pretend.lastListen()
 
   afterEach ->
     pretend.shutdown()

@@ -77,10 +77,28 @@
               
                 
                 <li>
+                  <a class="source" href="outline.js.html">
+                    
+                    
+                    Outline
+                  </a>
+                </li>
+              
+                
+                <li>
                   <a class="source" href="path.js.html">
                     
                     
                     Path
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="playbook.js.html">
+                    
+                    
+                    Playbook
                   </a>
                 </li>
               
@@ -123,6 +141,7 @@ pre-populated data and/or custom functions.</p>
 <p>The context object is applied as &#39;this&#39; in the scope where the template is
 rendered, e.g. <code>&quot;hello ${ this.user.name }&quot;</code> will render with the value at
 the <em>user.name</em> path in the context object.</p>
+<p><em>Don&#39;t</em> use back-ticks when declaring strings, or it will render immediately.</p>
 <p>Message strings containing expressions are automatically rendered by Improv
 using middleware and the user object is taken from the response object given
 to middleware, but can be overriden by extensions.</p>
@@ -151,8 +170,7 @@ extensions and a user object (if provideed).</p>
 </dd>
 <dt><a href="#parse">parse(strings, context)</a> ⇒ <code>array</code></dt>
 <dd><p>Merge templated messages with context data (replace unknown as configured).
-Used internally after context data gathered and possibly extended.</p>
-<p><em>Don&#39;t</em> use back-ticks when declaring strings, or it will render immediately.</p>
+Called by middleware after context data gathered and possibly extended.</p>
 <p>Pre-renders each expression individually to catch and replace any unknowns.
 Failed expressions will be replaced with fallback unless a full replacement
 is configured, to replace the entire string.</p>
@@ -180,6 +198,7 @@ pre-populated data and/or custom functions.</p>
 <p>The context object is applied as ‘this’ in the scope where the template is
 rendered, e.g. <code>&quot;hello ${ this.user.name }&quot;</code> will render with the value at
 the <em>user.name</em> path in the context object.</p>
+<p><em>Don’t</em> use back-ticks when declaring strings, or it will render immediately.</p>
 <p>Message strings containing expressions are automatically rendered by Improv
 using middleware and the user object is taken from the response object given
 to middleware, but can be overriden by extensions.</p>
@@ -341,8 +360,7 @@ extensions and a user object (if provideed).</p>
 <p><a name="parse"></a></p>
 <h2 id="parse-strings-context-code-array-code-">parse(strings, context) ⇒ <code>array</code></h2>
 <p>Merge templated messages with context data (replace unknown as configured).
-Used internally after context data gathered and possibly extended.</p>
-<p><em>Don’t</em> use back-ticks when declaring strings, or it will render immediately.</p>
+Called by middleware after context data gathered and possibly extended.</p>
 <p>Pre-renders each expression individually to catch and replace any unknowns.
 Failed expressions will be replaced with fallback unless a full replacement
 is configured, to replace the entire string.</p>

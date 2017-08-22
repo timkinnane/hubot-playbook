@@ -2,7 +2,7 @@ sinon = require 'sinon'
 chai = require 'chai'
 should = chai.should()
 chai.use require 'sinon-chai'
-
+co = require 'co'
 _ = require 'lodash'
 pretend = require 'hubot-pretend'
 Dialogue = require '../../lib/modules/dialogue'
@@ -20,8 +20,9 @@ describe 'Scene', ->
       sinon.spy Scene.prototype, key
 
     # generate a response object for starting dialogues
-    yield @tester.send('test')
-    @res = pretend.responses.incoming[0]
+    pretend.robot.hear /test/, -> # listen to tests
+    pretend.user('tester').send 'test'
+    .then => @res = pretend.lastListen()
 
   afterEach ->
     pretend.shutdown()
@@ -80,7 +81,7 @@ describe 'Scene', ->
       beforeEach ->
         @callback = sinon.spy()
         @scene.listen 'hear', /test/, @callback
-        yield @tester.send 'test'
+        @tester.send 'test'
 
       it 'registers a robot hear listener with scene as attribute', ->
         pretend.robot.hear.should.have.calledWithMatch sinon.match.regexp
@@ -100,7 +101,7 @@ describe 'Scene', ->
       beforeEach ->
         @callback = sinon.spy()
         @id = @scene.listen 'respond', /test/, @callback
-        yield @tester.send 'hubot test'
+        @tester.send 'hubot test'
 
       it 'registers a robot respond listener with scene as attribute', ->
         pretend.robot.respond.should.have.calledWithMatch sinon.match.regexp
@@ -248,7 +249,7 @@ describe 'Scene', ->
 
     context 'dialogue completed (by message matching branch)', ->
 
-      beforeEach ->
+      beforeEach -> co =>
         @scene = new Scene pretend.robot
         @dialogue = @scene.enter @res
         @dialogue.addBranch /.*/, '' # match anything
@@ -340,12 +341,12 @@ describe 'Scene', ->
 
     context 'with two users in scene', ->
 
-      beforeEach ->
+      beforeEach -> co =>
         @scene = new Scene pretend.robot
-        yield pretend.user('A').send 'foo'
-        yield pretend.user('B').send 'bar'
-        @dialogueB = @scene.enter pretend.responses.incoming.pop()
-        @dialogueA = @scene.enter pretend.responses.incoming.pop()
+        yield pretend.user('A').send 'test'
+        @dialogueB = @scene.enter pretend.lastListen()
+        yield pretend.user('B').send 'test'
+        @dialogueA = @scene.enter pretend.lastListen()
         @dialogueA.clearTimeout = sinon.spy()
         @dialogueB.clearTimeout = sinon.spy()
         @scene.exitAll()

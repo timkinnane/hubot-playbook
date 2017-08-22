@@ -3,7 +3,7 @@ chai = require 'chai'
 should = chai.should()
 chai.use require 'sinon-chai'
 chai.use require 'chai-subset'
-
+co = require 'co'
 _ = require 'lodash'
 pretend = require 'hubot-pretend'
 Transcript = require '../../lib/modules/transcript'
@@ -28,8 +28,9 @@ describe 'Transcript', ->
       sinon.spy Transcript.prototype, key
 
     # generate first response for mock events
-    yield @tester.send('test')
-    @res = pretend.responses.incoming[0]
+    pretend.robot.hear /test/, -> # listen to tests
+    pretend.user('tester').send 'test'
+    .then => @res = pretend.lastListen()
 
   afterEach ->
     pretend.shutdown()
@@ -471,9 +472,9 @@ describe 'Transcript', ->
           else
             res.reply "I don't know!?"
 
-      it 'records and recalls favorite color if provided', ->
-        yield pretend.user('tim').send('my favorite color is orange')
-        yield pretend.user('tim').send('hubot what is my favorite color?')
+      it 'records and recalls favorite color if provided', -> co ->
+        yield pretend.user('tim').send 'my favorite color is orange'
+        yield pretend.user('tim').send 'hubot what is my favorite color?'
         pretend.messages.should.eql [
           [ 'testing', 'tester', 'test' ]
           [ 'tim', 'my favorite color is orange' ]

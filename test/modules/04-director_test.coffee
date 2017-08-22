@@ -2,7 +2,6 @@ sinon = require 'sinon'
 chai = require 'chai'
 should = chai.should()
 chai.use require 'sinon-chai'
-
 _ = require 'lodash'
 co = require 'co'
 pretend = require 'hubot-pretend'
@@ -21,8 +20,9 @@ describe 'Director', ->
       sinon.spy Director.prototype, key
 
     # generate first response for starting dialogues
-    yield @tester.send('test')
-    @res = pretend.responses.incoming[0]
+    pretend.robot.hear /test/, -> # listen to tests
+    pretend.user('tester').send 'test'
+    .then => @res = pretend.lastListen()
 
   afterEach ->
     pretend.shutdown()
@@ -388,7 +388,6 @@ describe 'Director', ->
   describe '.process', ->
 
     beforeEach ->
-      @reply = sinon.spy @res, 'reply'
       @director = new Director pretend.robot
       @scene = new Scene pretend.robot
 
@@ -409,7 +408,7 @@ describe 'Director', ->
         @result = @director.process @res
 
       it 'calls response method reply with reply value', ->
-        @reply.should.have.calledWith @director.config.deniedReply
+        @res.reply.should.have.calledWith @director.config.deniedReply
 
     context 'denied without denied reply value', ->
 
@@ -418,7 +417,7 @@ describe 'Director', ->
         @result = @director.process @res
 
       it 'does not call response reply method', ->
-        @reply.should.not.have.called
+        @res.reply.should.not.have.called
 
     context 'allowed user', ->
 
@@ -433,21 +432,21 @@ describe 'Director', ->
         @result.should.equal @director.isAllowed.returnValues.pop()
 
       it 'does not send denied reply', ->
-        @reply.should.not.have.called
+        @res.reply.should.not.have.called
 
   describe '.directMatch', ->
 
     beforeEach ->
       @director = new Director pretend.robot
       @callback = sinon.spy()
-      pretend.robot.hear /test/, @callback
-      @director.directMatch /test/
+      pretend.robot.hear /let me in/, @callback
+      @director.directMatch /let me in/
 
     context 'allowed user sending message matching directed match', ->
 
       beforeEach ->
         @director.names = ['tester']
-        yield @tester.send 'test'
+        @tester.send 'let me in'
 
       it 'calls .process with response to perform access checks and reply', ->
         @director.process.should.have.calledOnce
@@ -458,7 +457,7 @@ describe 'Director', ->
     context 'denied user sending message matching directed match', ->
 
       beforeEach ->
-        yield @tester.send 'test'
+        @tester.send 'let me in'
 
       it 'calls .process to perform access checks and reply', ->
         @director.process.should.have.calledOnce
@@ -469,7 +468,7 @@ describe 'Director', ->
     context 'denied user sending unmatched message', ->
 
       beforeEach ->
-        yield @tester.send 'foo'
+        @tester.send 'foo'
 
       it 'does not call .process because middleware did not match', ->
         @director.process.should.not.have.called
@@ -479,14 +478,14 @@ describe 'Director', ->
     beforeEach ->
       @director = new Director pretend.robot
       @callback = sinon.spy()
-      pretend.robot.hear /test/, id: 'testyMcTest', @callback
-      @director.directListener 'testyMcTest'
+      pretend.robot.hear /let me in/, id: 'entry-test', @callback
+      @director.directListener 'entry-test'
 
     context 'allowed user sending message matching directed listener id', ->
 
       beforeEach ->
         @director.names = ['tester']
-        yield @tester.send 'test'
+        @tester.send 'let me in'
 
       it 'calls .process with response to perform access checks and reply', ->
         @director.process.should.have.calledOnce
@@ -497,7 +496,7 @@ describe 'Director', ->
     context 'denied user sending message matching directed match', ->
 
       beforeEach ->
-        yield @tester.send 'test'
+        @tester.send 'let me in'
 
       it 'calls .process to perform access checks and reply', ->
         @director.process.should.have.calledOnce
@@ -508,7 +507,7 @@ describe 'Director', ->
     context 'denied user sending unmatched message', ->
 
       beforeEach ->
-        yield @tester.send 'foo'
+        @tester.send 'foo'
 
       it 'does not call .process because middleware did not match', ->
         @director.process.should.not.have.called
@@ -551,9 +550,9 @@ describe 'Director', ->
 
       beforeEach ->
         @callback = sinon.spy()
-        @scene.hear /test/, @callback
+        @scene.hear /let me in/, @callback
         @director.names = ['tester']
-        yield @tester.send 'test'
+        @tester.send 'let me in'
 
       it 'triggers the scene enter method', ->
         @enter.should.have.calledOnce
@@ -565,8 +564,8 @@ describe 'Director', ->
 
       beforeEach ->
         @callback = sinon.spy()
-        @scene.hear /test/, @callback
-        yield @tester.send 'test'
+        @scene.hear /let me in/, @callback
+        @tester.send 'let me in'
 
       it 'prevents the scene enter method', ->
         @enter.should.not.have.calledOnce

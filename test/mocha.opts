@@ -1,7 +1,6 @@
 --compilers coffee:coffee-script/register
 --require source-map-support
 --require mocha-clean
---require mocha-co
 --recursive
 --sort
 --use-strict

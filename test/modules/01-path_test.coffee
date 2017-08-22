@@ -2,7 +2,7 @@ sinon = require 'sinon'
 chai = require 'chai'
 should = chai.should()
 chai.use require 'sinon-chai'
-
+co = require 'co'
 _ = require 'lodash'
 pretend = require 'hubot-pretend'
 Path = require '../../lib/modules/path'
@@ -164,6 +164,7 @@ describe 'Path', ->
   describe '.match', ->
 
     beforeEach ->
+      pretend.robot.hear /door/, -> # listen to tests
       @path = new Path pretend.robot, [
         [ /door 1/, 'foo' ]
         [ /door 2/, 'bar' ]
@@ -172,9 +173,9 @@ describe 'Path', ->
 
     context 'with string matching branch regex', ->
 
-      beforeEach ->
+      beforeEach -> co =>
         yield pretend.user('sam').send 'door 2'
-        @res = pretend.responses.incoming[0]
+        @res = pretend.lastListen()
         @branch = @path.match @res
 
       it 'returns the matching branch', ->
@@ -188,9 +189,9 @@ describe 'Path', ->
 
     context 'with string matching multiple branches', ->
 
-      beforeEach ->
+      beforeEach -> co =>
         yield pretend.user('sam').send 'door 1 and door 2'
-        @res = pretend.responses.incoming[0]
+        @res = pretend.lastListen()
         @branch = @path.match @res
 
       it 'returns the first matching branch', ->
@@ -204,9 +205,9 @@ describe 'Path', ->
 
     context 'with string matching no branches', ->
 
-      beforeEach ->
+      beforeEach -> co =>
         yield pretend.user('sam').send 'door X'
-        @res = pretend.responses.incoming[0]
+        @res = pretend.lastListen()
         @branch = @path.match @res
 
       it 'returns undefined', ->

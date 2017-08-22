@@ -2,7 +2,7 @@ sinon = require 'sinon'
 chai = require 'chai'
 should = chai.should()
 chai.use require 'sinon-chai'
-
+co = require 'co'
 _ = require 'lodash'
 pretend = require 'hubot-pretend'
 Dialogue = require '../../lib/modules/dialogue'
@@ -30,8 +30,9 @@ describe 'Dialogue', ->
       sinon.spy Dialogue.prototype, key
 
     # generate a response object for starting dialogues
-    yield pretend.user('tester').send 'test'
-    @res = pretend.responses.incoming[0]
+    pretend.robot.hear /test/, -> # listen to tests
+    pretend.user('tester').send 'test'
+    .then => @res = pretend.lastListen()
 
   afterEach ->
     pretend.shutdown()
@@ -104,7 +105,7 @@ describe 'Dialogue', ->
 
     context 'after messages received', ->
 
-      beforeEach ->
+      beforeEach -> co =>
         yield @tester.send 'foo'
         @dialogue.end()
 
@@ -142,7 +143,7 @@ describe 'Dialogue', ->
       beforeEach ->
         @send = sinon.spy()
         @dialogue.on 'send', @send
-        yield @dialogue.send 'test'
+        @dialogue.send 'test'
 
       it 'sends to the room from original res', ->
         pretend.messages.pop().should.eql [ 'hubot', 'test' ]
@@ -158,7 +159,7 @@ describe 'Dialogue', ->
 
     context 'with config.sendReplies set to true', ->
 
-      it 'sends to the room from original res, responding to the @user', ->
+      it 'sends to room from original res, responding to the @user', -> co =>
         @dialogue.config.sendReplies = true
         yield @dialogue.send 'test'
         pretend.messages.pop().should.eql ['hubot', '@tester test' ]
@@ -172,7 +173,7 @@ describe 'Dialogue', ->
         @dialogue = new Dialogue @res, timeout: 1000
         @dialogue.startTimeout()
         @clock.tick 1001
-        yield wait
+        wait
 
       it 'sends timeout message to room', ->
         pretend.messages.pop().should.eql [
@@ -258,8 +259,8 @@ describe 'Dialogue', ->
 
     context 'with a prompt, branches and key', ->
 
-      beforeEach ->
-        @path = @dialogue.addPath 'Turn left or right?', [
+      beforeEach -> co =>
+        @path = yield @dialogue.addPath 'Turn left or right?', [
           [ /left/, 'Ok, going left!' ]
           [ /right/, 'Ok, going right!' ]
         ], 'which-way'
@@ -278,8 +279,8 @@ describe 'Dialogue', ->
 
     context 'with a prompt and branches (no options)', ->
 
-      beforeEach ->
-        @path = @dialogue.addPath 'Pick door 1 or 2?', [
+      beforeEach -> co =>
+        @path = yield @dialogue.addPath 'Pick door 1 or 2?', [
           [ /1/, 'You get cake!' ]
           [ /2/, 'You get cake!' ]
         ]
@@ -295,8 +296,8 @@ describe 'Dialogue', ->
 
     context 'with branches only', ->
 
-      beforeEach ->
-        @path = @dialogue.addPath [
+      beforeEach -> co =>
+        @path = yield @dialogue.addPath [
           [ /1/, 'You get cake!' ]
           [ /2/, 'You get cake!' ]
         ]
@@ -312,8 +313,8 @@ describe 'Dialogue', ->
 
     context 'without branches', ->
 
-      beforeEach ->
-        @path = @dialogue.addPath "Don't say nothing."
+      beforeEach -> co =>
+        @path = yield @dialogue.addPath "Don't say nothing."
 
       it 'returns new Path instance', ->
         @path.should.be.instanceof @dialogue.Path
@@ -378,16 +379,16 @@ describe 'Dialogue', ->
       @dialogue.on 'catch', @catch
 
     it 'stores the latest response object', ->
-      @dialogue.res.should.eql pretend.responses.incoming.pop()
+      @dialogue.res.should.eql pretend.lastListen()
 
     it 'attaches itself to the response', ->
-      pretend.responses.incoming.pop().dialogue.should.eql @dialogue
+      pretend.lastListen().dialogue.should.eql @dialogue
 
     context 'when already ended', ->
 
       beforeEach ->
         @dialogue.end()
-        yield @tester.send '1'
+        @tester.send '1'
 
       it 'returns false', ->
         @dialogue.receive.returnValues[0].should.be.false
@@ -398,7 +399,7 @@ describe 'Dialogue', ->
     context 'on matching branch', ->
 
       beforeEach ->
-        yield @tester.send 'foo'
+        @tester.send 'foo'
 
       it 'clears timeout', ->
         @dialogue.clearTimeout.should.have.calledOnce
@@ -412,7 +413,7 @@ describe 'Dialogue', ->
     context 'on matching branch with message and handler', ->
 
       beforeEach ->
-        yield @tester.send '1'
+        @tester.send '1'
 
       it 'calls the created handler', ->
         @handler1.should.have.calledOnce
@@ -423,7 +424,7 @@ describe 'Dialogue', ->
     context 'on matching branch with just a handler', ->
 
       beforeEach ->
-        yield @tester.send '2'
+        @tester.send '2'
 
       it 'calls the custom handler', ->
         @handler2.should.have.calledOnce
@@ -434,7 +435,7 @@ describe 'Dialogue', ->
     context 'on matching branch with just a message', ->
 
       beforeEach ->
-        yield @tester.send '3'
+        @tester.send '3'
 
       it 'calls the default handler', ->
         @handler3.should.have.calledOnce
@@ -444,7 +445,7 @@ describe 'Dialogue', ->
 
     context 'on matching branches consecutively', ->
 
-      beforeEach ->
+      beforeEach -> co =>
         yield @tester.send '1'
         yield @tester.send '2'
 
@@ -458,7 +459,7 @@ describe 'Dialogue', ->
 
       beforeEach ->
         @dialogue.path.config.catchMessage = 'huh?'
-        yield @tester.send '?'
+        @tester.send '?'
 
       it 'emits catch with res (containing dialogue)', ->
         @catch.should.have.calledWith sinon.match dialogueRes
@@ -475,7 +476,7 @@ describe 'Dialogue', ->
     context 'on mismatch without catch', ->
 
       beforeEach ->
-        yield @tester.send '?'
+        @tester.send '?'
 
       it 'emits mismatch with res (containing dialogue)', ->
         @mismatch.should.have.calledWith sinon.match dialogueRes
@@ -492,7 +493,7 @@ describe 'Dialogue', ->
         @dialogue.addBranch /more/, =>
           @dialogue.addBranch /4/, 'got 4'
           @dialogue.addBranch /5/, 'got 5'
-        yield @tester.send 'more'
+        @tester.send 'more'
 
       it 'added branches to current path', ->
         _.map @dialogue.path.branches, (branch) -> branch.regex
@@ -509,7 +510,7 @@ describe 'Dialogue', ->
             [ /1/, 'got 1' ]
             [ /2/, 'got 2' ]
           ]
-        yield @tester.send 'new'
+        @tester.send 'new'
 
       it 'added new branches to new path, overwrites prev path', ->
         _.map @dialogue.path.branches, (branch) -> branch.regex

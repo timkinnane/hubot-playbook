@@ -196,7 +196,7 @@ class Director extends Base {
    * @param  {Scene} scene The Scene instance
    * @return {Director}    Self, for chaining methods
    * @todo Replace hooker usage with custom middleware on scene enter.
-   *       e.g. https://gist.github.com/darrenscerri/5c3b3dcbe4d370435cfa
+   * e.g. https://gist.github.com/darrenscerri/5c3b3dcbe4d370435cfa
   */
   directScene (scene) {
     this.log.info(`${this.id} now controlling ${scene.id}`)

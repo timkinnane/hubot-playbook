@@ -3,7 +3,7 @@ chai = require 'chai'
 should = chai.should()
 chai.use require 'sinon-chai'
 chai.use require 'chai-subset'
-
+co = require 'co'
 _ = require 'lodash'
 pretend = require 'hubot-pretend'
 improv = require '../../lib/modules/improv'
@@ -46,9 +46,9 @@ describe 'Improv', ->
       improv.use pretend.robot
       improv.configure save: false
 
-      # generate first response for mock events
-      yield pretend.user('tester', { room: 'testing' }).send('test')
-      @res = pretend.responses.incoming.pop()
+      # generate first listen response
+      pretend.robot.hear /test/, -> # listen for tests
+      pretend.user('tester', { room: 'testing' }).send('test')
 
     afterEach ->
       pretend.shutdown()
@@ -96,9 +96,9 @@ describe 'Improv', ->
 
         it 'merges data with user data', ->
           improv.remember 'site', name: 'Hub'
-          improv.mergeData @res.message.user
+          improv.mergeData pretend.lastListen().message.user
           .should.eql
-            user: @res.message.user
+            user: pretend.lastListen().message.user
             site: name: 'Hub'
 
       context 'with data loaded from brain', ->
@@ -107,9 +107,9 @@ describe 'Improv', ->
           improv.configure save: true
           pretend.robot.brain.set 'improv', site: owner: 'Hubot'
           improv.remember 'site.name', 'Hub'
-          .mergeData @res.message.user
+          .mergeData pretend.lastListen().message.user
           .should.eql
-            user: @res.message.user
+            user: pretend.lastListen().message.user
             site:
               owner: 'Hubot'
               name: 'Hub'
@@ -120,18 +120,18 @@ describe 'Improv', ->
           improv
           .extend -> custom1: 'foo'
           .extend -> custom2: 'bar'
-          .mergeData @res.message.user
+          .mergeData pretend.lastListen().message.user
           .should.eql
-            user: @res.message.user
+            user: pretend.lastListen().message.user
             custom1: 'foo'
             custom2: 'bar'
 
         it 'deep merges existing data with extensions', ->
           improv
           .extend -> user: type: 'human'
-          .mergeData @res.message.user
+          .mergeData pretend.lastListen().message.user
           .should.eql
-            user: _.assignIn @res.message.user, type: 'human'
+            user: _.assignIn pretend.lastListen().message.user, type: 'human'
 
     describe '.parse', ->
 
@@ -171,9 +171,9 @@ describe 'Improv', ->
 
       context 'with series of hubot sends', ->
 
-        it 'rendered messages with context', ->
-          yield @res.send 'hello you'
-          yield @res.send 'hi ${ this.user.name }'
+        it 'rendered messages with context', -> co ->
+          yield pretend.lastListen().send 'hello you'
+          yield pretend.lastListen().send 'hi ${ this.user.name }'
           pretend.messages.should.eql [
             [ 'testing', 'tester', 'test' ]
             [ 'testing', 'hubot', 'hello you' ]
@@ -182,8 +182,8 @@ describe 'Improv', ->
 
       context 'with multiple strings', ->
 
-        it 'renders each message with context', ->
-          yield @res.send 'testing'
+        it 'renders each message with context', -> co ->
+          yield pretend.lastListen().send 'testing'
           , 'hi ${ this.user.name }'
           , 'welcome to ${ this.site.name }'
           pretend.messages.should.eql [

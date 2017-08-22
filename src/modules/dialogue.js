@@ -140,9 +140,7 @@ class Dialogue extends Base {
    *                            - Function to call on match
    * @param {Object} [options]  Key/val options for path
    * @param {string} [key]      Key name for this path
-   * @return {Path}             New path instance
-   *
-   * @todo return all sent promise, or yield until prompts sent
+   * @return {Promise}          Resolves when sends complete or immediately
    *
    * @example
    * let dlg = new Dialogue(res)
@@ -152,10 +150,11 @@ class Dialogue extends Base {
    * ], 'which-way')
   */
   addPath (...args) {
-    if (_.isString(args[0])) this.send(args.shift())
+    let result
+    if (_.isString(args[0])) result = this.send(args.shift())
     this.path = new this.Path(this.robot, ...args)
     if (this.path.branches.length) this.startTimeout()
-    return this.path
+    return Promise.resolve(result).then(() => this.path)
   }
 
   /**
@@ -182,6 +181,7 @@ class Dialogue extends Base {
    * Overrides the original response with current one.
    *
    * @param {Response} res Hubot Response object
+   * @todo Move emitting into Path class, so each node can have a key
    * @todo Wrap handler in promise, don't end() until it resolves
    * @todo Test with handler using res.http/get to populate new path
   */
