@@ -7,31 +7,33 @@ import Base from './Base'
 let instance, context, extensions
 
 /**
- * Parse message templates at runtime with context from user attributes,
- * pre-populated data and/or custom functions.
+ * Improv parses message templates at runtime with context from user attributes,
+ * pre-populated data and/or custom extensions.
  *
- * The context object is applied as 'this' in the scope where the template is
- * rendered, e.g. `"hello ${ this.user.name }"` will render with the value at
- * the _user.name_ path in the context object.
- *
- * *Don't* use back-ticks when declaring strings, or it will render immediately.
+ * e.g. "hello ${ this.user.name }" will render with the value at the user.name
+ * path in current context.
  *
  * Message strings containing expressions are automatically rendered by Improv
- * using middleware and the user object is taken from the response object given
- * to middleware, but can be overriden by extensions.
+ * middleware and can be merged with data from any source, including a
+ * Transcript search for instance.
+ *
+ * Note:
+ *
+ * - The context object is applied as 'this' in the scope where the template is
+ * rendered, e.g. `this.user.name` is the value at _user.name_ path.
+ * - *Don't* use back-ticks when declaring strings, or it will render
+ * immediately.
+ * - Improv uses a singleton pattern to parse templates from a central
+ * middleware. It should be initialised with a robot via `.use`.
+ * - Calling `.reset()` will clear everything (for testing).
+ *
+ * @param {Robot} robot Hubot Robot instance
+ * @return {Improv}     New or prior existing (singleton) instance
  */
 class Improv extends Base {
-  /**
-   * Improv uses a singleton pattern to parse templates from a central
-   * middleware. It should be initialised with a robot via `.use`.
-   * Calling `.reset()` will clear everything (for testing).
-   *
-   * @param {Robot} robot Hubot Robot instance
-   * @return {Improv}     New or prior existing (singleton) instance
-   */
   constructor (robot) {
+    super('improv', robot)
     if (!instance) {
-      super('improv', robot)
       instance = this
       this.defaults({
         save: true,

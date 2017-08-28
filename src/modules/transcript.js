@@ -11,17 +11,14 @@ _.mixin({
 })
 
 /**
- * Records conversation events, including meta about the user, message and
- * current module state. Instances are configurable to provide an overview or
- * drilled down analytics of specific interactions.
+ * Transcripts record conversation events, including meta about the user,
+ * message and current module.
  *
- * Transcripts are searchable, to provide context for interactions from
- * conversation history with a given user or any other attribute. If saving to
- * the hubot brain, they will also search from the brain's persisted transcript
- * history.
+ * Transcripts are searchable, to provide context from conversation history with
+ * a given user, or based on any other attribute, such as listener ID.
  *
- * It can record attributes from any robot event or just those originating from
- * a given Playbook module instance (using it's key).
+ * Different instances can be configured to record an overview or drilled down
+ * analytics for a specific module’s interactions using its key.
  *
  * @param {Robot}  robot                  Hubot Robot instance
  * @param {Object} [options]              Key/val options for config
@@ -72,11 +69,11 @@ class Transcript extends Base {
    * This is only called internally on watched events after running `recordAll`,
    * `recordDialogue`, `recordScene` or `recordDirector`
    *
-   * @param  {string} event   The event name
-   * @param  {*} args...  Args passed with the event, usually consists of:<br>
-   *                          - Playbook module instance<br>
-   *                          - Hubot response object<br>
-   *                          - other additional (special context) arguments
+   * @param {string} event The event name
+   * @param {*} args...    Args passed with the event, usually consists of:<br>
+   *                       - Playbook module instance<br>
+   *                       - Hubot response object<br>
+   *                       - other additional (special context) arguments
   */
   recordEvent (event, ...args) {
     let instance, response
@@ -125,30 +122,40 @@ class Transcript extends Base {
   */
 
   /**
-   * Record events emitted by a given dialogue.
+   * Record events emitted by a given dialogue and it's path/s.
+   *
+   * Whenever a path is added to a dialogue, event handlers are added on the
+   * path for the configured events.
    *
    * @param {Dialogue} dialogue The Dialogue instance
   */
   recordDialogue (dialogue) {
-    _.castArray(this.config.events).map((event) => {
-      dialogue.on(event, (...args) => {
-        this.recordEvent(event, dialogue, ...args)
+    let dialogueEvents = _.intersection(this.config.events, ['end', 'send', 'timeout', 'path'])
+    let pathEvents = _.intersection(this.config.events, ['match', 'catch', 'mismatch'])
+    dialogueEvents.map((event) => {
+      dialogue.on(event, (...args) => this.recordEvent(event, dialogue, ...args))
+    })
+    dialogue.on('path', (path) => {
+      pathEvents.map((event) => {
+        path.on(event, (...args) => this.recordEvent(event, path, ...args))
       })
     })
   }
 
   /**
    * Record events emitted by a given scene and any dialogue it enters, captures
-   * all events fromn the scene but only configured events from dialogue.
+   * configured events from scene and its created dialogues and paths.
    *
    * @param {Scene} scene The Scnee instance
   */
   recordScene (scene) {
     scene.on('enter', (res) => {
-      this.recordEvent('enter', scene, res)
+      if (_.includes(this.config.events, 'enter')) this.recordEvent('enter', scene, res)
       this.recordDialogue(res.dialogue)
     })
-    scene.on('exit', (...args) => this.recordEvent('exit', scene, ...args))
+    scene.on('exit', (...args) => {
+      if (_.includes(this.config.events, 'exit')) this.recordEvent('exit', scene, ...args)
+    })
   }
 
   /**

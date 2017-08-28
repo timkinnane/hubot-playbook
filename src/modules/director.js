@@ -5,16 +5,27 @@ import Base from './base'
 import hooker from 'hooker'
 
 /**
- * Provides conversation firewalls, allowing listed users or custom logic to
- * authorise or block users from entering interactions or following specific
- * paths.
+ * Directors provide conversation firewalls, allowing listed users to be
+ * authorised or blocked from entering scenes or preventing listeners from
+ * firing.
  *
- * Access is determined by blacklist or whitelist, or if defined a fallback
- * _authorise_ function to allow or deny anyone not on the list.
+ * Access is determined by blacklist or whitelist, or if defined, a custom
+ * fallback function can determine to allow or deny anyone not on the list.
  *
- * Authorise callback is given the user or room name (depending on the scope
+ * A director can be attached to whole scenes or dialogues, or even specific
+ * listeners.
+ *
+ * _Authorise_ function is given the user or room name (depending on the scope
  * configured for the direcrot) and response object. It must return a boolean to
  * determine access.
+ *
+ * `config.deniedReply` can be set globally with environment var `DENIED_REPLY`
+ *
+ * Environment vars can also provide global default lists:
+ * - `WHITELIST_USERNAMES` for whitelist type and username scope directors
+ * - `WHITELIST_ROOMS` for whitelist type and room scope directors
+ * - `BLACKLIST_USERNAMES` for blacklist type and username scope directors
+ * - `BLACKLIST_ROOMS` for blacklist type and room scope directors
  *
  * @param {Robot}    robot               Hubot Robot instance
  * @param {Function} [authorise]         Function to determine access (as fallback)
@@ -31,15 +42,6 @@ import hooker from 'hooker'
  * // ...when directing a scene, will only allow platform admins to enter.
 */
 class Director extends Base {
-  /**
-   * `config.deniedReply` can be set globally with environment var `DENIED_REPLY`
-   *
-   * Environment vars can also provide global default lists:
-   * - `WHITELIST_USERNAMES` for whitelist type and username scope directors
-   * - `WHITELIST_ROOMS` for whitelist type and room scope directors
-   * - `BLACKLIST_USERNAMES` for blacklist type and username scope directors
-   * - `BLACKLIST_ROOMS` for blacklist type and room scope directors
-   */
   constructor (robot, ...args) {
     let authArg = _.isFunction(args[0]) ? args.shift() : null
     super('director', robot, ...args)
@@ -50,8 +52,8 @@ class Director extends Base {
     })
     this.authorise = authArg
 
-    if (!['whitelist', 'blacklist'].includes(this.config.type)) this.error('Invalid type')
-    if (!['username', 'room'].includes(this.config.scope)) this.error('Invalid scope')
+    if (!_.includes(['whitelist', 'blacklist'], this.config.type)) this.error('Invalid type')
+    if (!_.includes(['username', 'room'], this.config.scope)) this.error('Invalid scope')
     this.log.info(`New ${this.config.scope} Director ${this.config.type}: ${this.id}`)
 
     const listEnv = this.config.type.toUpperCase()
@@ -113,10 +115,10 @@ class Director extends Base {
     }
 
     if (this.config.type === 'blacklist') {
-      if (this.names.includes(name)) return false
+      if (_.includes(this.names, name)) return false
       if (this.authorise == null) return true
     } else {
-      if (this.names.includes(name)) return true
+      if (_.includes(this.names, name)) return true
       if (this.authorise == null) return false
     }
     return this.authorise(name, res)
@@ -139,7 +141,7 @@ class Director extends Base {
     } else {
       this.log.info(`${this.id} denied ${user} on receiving: ${message}`)
       this.emit('deny', res)
-      if (!['', null].includes(this.config.deniedReply)) res.reply(this.config.deniedReply)
+      if (!_.includes(['', null], this.config.deniedReply)) res.reply(this.config.deniedReply)
       return false
     }
   }

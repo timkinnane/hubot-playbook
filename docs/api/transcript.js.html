@@ -135,15 +135,12 @@
         
         <p><a name="Transcript"></a></p>
 <h2 id="transcript">Transcript</h2>
-<p>Records conversation events, including meta about the user, message and
-current module state. Instances are configurable to provide an overview or
-drilled down analytics of specific interactions.</p>
-<p>Transcripts are searchable, to provide context for interactions from
-conversation history with a given user or any other attribute. If saving to
-the hubot brain, they will also search from the brain’s persisted transcript
-history.</p>
-<p>It can record attributes from any robot event or just those originating from
-a given Playbook module instance (using it’s key).</p>
+<p>Transcripts record conversation events, including meta about the user,
+message and current module.</p>
+<p>Transcripts are searchable, to provide context from conversation history with
+a given user, or based on any other attribute, such as listener ID.</p>
+<p>Different instances can be configured to record an overview or drilled down
+analytics for a specific module’s interactions using its key.</p>
 <p><strong>Kind</strong>: global class<br><strong>Todo</strong></p>
 <ul>
 <li>[ ] Add config to record response middleware context including listener ID</li>
@@ -243,7 +240,7 @@ matchRecordRooms.recordAll()
 <tr>
 <td>args…</td>
 <td><code>*</code></td>
-<td>Args passed with the event, usually consists of:<br>                          - Playbook module instance<br>                          - Hubot response object<br>                          - other additional (special context) arguments</td>
+<td>Args passed with the event, usually consists of:<br>                       - Playbook module instance<br>                       - Hubot response object<br>                       - other additional (special context) arguments</td>
 </tr>
 </tbody>
 </table>
@@ -256,7 +253,9 @@ matchRecordRooms.recordAll()
 <hr>
 <p><a name="Transcript+recordDialogue"></a></p>
 <h3 id="transcript-recorddialogue-dialogue-">transcript.recordDialogue(dialogue)</h3>
-<p>Record events emitted by a given dialogue.</p>
+<p>Record events emitted by a given dialogue and it’s path/s.</p>
+<p>Whenever a path is added to a dialogue, event handlers are added on the
+path for the configured events.</p>
 <p><strong>Kind</strong>: instance method of <a href="#Transcript"><code>Transcript</code></a>  </p>
 <table>
 <thead>
@@ -278,7 +277,7 @@ matchRecordRooms.recordAll()
 <p><a name="Transcript+recordScene"></a></p>
 <h3 id="transcript-recordscene-scene-">transcript.recordScene(scene)</h3>
 <p>Record events emitted by a given scene and any dialogue it enters, captures
-all events fromn the scene but only configured events from dialogue.</p>
+configured events from scene and its created dialogues and paths.</p>
 <p><strong>Kind</strong>: instance method of <a href="#Transcript"><code>Transcript</code></a>  </p>
 <table>
 <thead>

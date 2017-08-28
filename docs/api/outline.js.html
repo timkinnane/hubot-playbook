@@ -135,16 +135,14 @@
         
         <p><a name="Outline"></a></p>
 <h2 id="outline">Outline</h2>
-<p>Processes a conversation modelling schema, with attributes for conversation
-nodes (including scenes, dialogues, paths and directors) defined as <em>bits</em>.</p>
-<p>Outlines can be loaded from YAML files or passed directly as an array of
-objects, to initialise the listeners and callbacks to execute each bit.</p>
-<p>Bits can lead to consequitive bits, with branches to follow as responses
-are matched against the bit’s <code>condition</code>. Those with a <code>listen</code> attribute
-are effectively <em>global</em> entry points to a scene, where others are only
-accessesable in the scope of a parent scene.</p>
-<p>A subsequent bit can even lead back to it’s own parent or any other bit
-(<em>global</em> or not) but the scene scope can’t change once entered.</p>
+<p>Outlines are a conversation modelling schema / handler, with collections of
+attributes for setting up scenes, dialogues, paths and directors, for
+interactions defined as bits.</p>
+<p>Define a key and condition to execute each bit, either consecutively off a
+prior bit, or with a listen attribute to become effectively a global entry
+point to a scene.</p>
+<p>A subsequent bit can even lead back to it’s own parent or any other bit,
+creating a mesh of possible conversational pathways.</p>
 <p><strong>Kind</strong>: global class<br><strong>Todo</strong></p>
 <ul>
 <li>[ ] Add bit attribute for callback function as a key of extended response</li>
@@ -197,8 +195,7 @@ accessesable in the scope of a parent scene.</p>
 <tr>
 <td>[bits[].listen]</td>
 <td><code>string</code></td>
-<td>Type of listener (hear</td>
-<td>respond) for scene entry bit</td>
+<td>Type of listener (hear/respond) for scene entry bit</td>
 </tr>
 <tr>
 <td>[bits[].scene]</td>

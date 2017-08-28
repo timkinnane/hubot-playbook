@@ -106,32 +106,20 @@ describe 'Base', ->
 
   describe '.configure', ->
 
-    beforeEach ->
-      @base = new Base 'module', pretend.robot,
-        setting: true
-        deep:
-          foo: 'bar'
-          baz: false
-
     it 'saves new options', ->
-      @base.configure foo: true
-      @base.config.foo.should.be.true
+      base = new Base 'module', pretend.robot
+      base.configure foo: true
+      base.config.foo.should.be.true
 
     it 'overrides existing config', ->
-      @base.configure setting: false
-      @base.config.setting.should.be.false
-
-    it 'overrides deep attributes', ->
-      @base.configure deep: baz: true
-      @base.config.should.eql
-        setting: true
-        deep:
-          foo: 'bar'
-          baz: true
+      base = new Base 'module', pretend.robot, setting: true
+      base.configure setting: false
+      base.config.setting.should.be.false
 
     it 'throws when not given options', ->
-      try @base.configure 'not an object'
-      @base.configure.should.have.threw
+      base = new Base 'module', pretend.robot
+      try base.configure 'not an object'
+      base.configure.should.have.threw
 
   describe '.defaults', ->
 

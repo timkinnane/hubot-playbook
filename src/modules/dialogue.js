@@ -5,10 +5,12 @@ import Base from './base'
 import Path from './path'
 
 /**
- * Dialogues control which paths are available to which users in context.
+ * Dialogues control which paths are available and for how long. Passing
+ * messages into a dialogue will match against the current path and route any
+ * replies.
  *
- * They route messages to the right paths, manage timeouts, send replies and
- * fire callbacks for the branches that match user messages.
+ * Where paths are self-replicating steps, the dialogue persists along the
+ * journey.
  *
  * @param {Response} res                  Hubot Response object
  * @param {Object} [options]              Key/val options for config
@@ -61,31 +63,20 @@ class Dialogue extends Base {
    * Send or reply with message as configured (@user reply or send to room).
    *
    * @param {string} strings Message strings
-   * @return {Promise} Resolves with that
-   *
-   * @todo Update to yield res when Hubot robot send uses middleware #1233
-   * @todo Update tests that wait for observer to use promise instead
+   * @return {Promise} Resolves with result of send (respond middleware context)
   */
   send (...strings) {
     let sent
     if (this.config.sendReplies) sent = this.res.reply(...strings)
     else sent = this.res.send(...strings)
-    // if there was middleware to modify the sent string, we won't know here
     return sent.then((result) => {
       this.emit('send', result.response, {
         strings: result.strings,
         method: result.method,
         received: this.res
       })
+      return result
     })
-    /*
-    let sentRes = (function * (sendPromise) {
-      yield sendPromise
-      return sendPromise
-    }(sent))
-    this.emit('send', sentRes, ...strings)
-    return sentRes
-    */
   }
 
   /**
@@ -114,7 +105,7 @@ class Dialogue extends Base {
    * Catches the onTimeout method because it can be overriden and may throw.
   */
   startTimeout () {
-    if (this.countdown != null) { clearTimeout() }
+    if (this.countdown != null) clearTimeout()
     this.countdown = setTimeout(() => {
       this.emit('timeout', this.res)
       try {
@@ -131,7 +122,8 @@ class Dialogue extends Base {
   /**
    * Add a dialogue path, with branches to follow and a prompt (optional).
    *
-   * Any new path added overwrites the previous.
+   * Any new path added overwrites the previous. If a path isn't given a key but
+   * the parent dialogue has one, it will be given to the path.
    *
    * @param {string} [prompt]   To send on path setup (e.g. presenting options)
    * @param {array}  [branches] Array of args for each branch, each containing:<br>
@@ -153,6 +145,8 @@ class Dialogue extends Base {
     let result
     if (_.isString(args[0])) result = this.send(args.shift())
     this.path = new this.Path(this.robot, ...args)
+    if (!this.path.key && this.key) this.path.key = this.key
+    this.emit('path', this.path)
     if (this.path.branches.length) this.startTimeout()
     return Promise.resolve(result).then(() => this.path)
   }
@@ -174,34 +168,25 @@ class Dialogue extends Base {
   /**
    * Process incoming message for match against path branches.
    *
-   * If matched, fire handler, restart timeout.
+   * If matched, restart timeout. If no additional paths or branches added (by
+   * matching branch handler), end dialogue.
    *
-   * if no additional paths or branches added (by handler), end dialogue.
-   *
-   * Overrides the original response with current one.
+   * Overrides any prior response with current one.
    *
    * @param {Response} res Hubot Response object
-   * @todo Move emitting into Path class, so each node can have a key
-   * @todo Wrap handler in promise, don't end() until it resolves
+   * @return {Promise}     Resolves when matched/catch handler complete
+   *
    * @todo Test with handler using res.http/get to populate new path
   */
   receive (res) {
+    if (this.ended || this.path == null) return false // dialogue is over
+    this.log.debug(`Dialogue received ${this.res.message.text}`)
     res.dialogue = this
     this.res = res
-    if (this.ended || this.path == null) return false // dialogue is over, don't process
-    this.log.debug(`Dialogue received ${this.res.message.text}`)
-    const branch = this.path.match(this.res)
-    if ((branch != null) && this.res.match) {
-      this.clearTimeout()
-      this.emit('match', this.res)
-      branch.handler(this.res)
-    } else if (branch != null) {
-      this.emit('catch', this.res)
-      branch.handler(this.res)
-    } else {
-      this.emit('mismatch', this.res)
-    }
+    let handlerResult = this.path.match(res)
+    if (this.res.match) this.clearTimeout()
     if (this.path.closed) this.end()
+    return handlerResult
   }
 }
 

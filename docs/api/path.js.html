@@ -135,21 +135,20 @@
         
         <p><a name="Path"></a></p>
 <h2 id="path">Path</h2>
-<p>Paths and their child branches are the smallest and most essential node for
-conversations. Instead of listening for all triggers at all times, paths
-allow matching multiple choices in a tightly scoped context.</p>
-<p>A path usually contains one or more <em>branches</em> to follow when matched.</p>
-<p>A path is <em>opened</em> when branches added and <em>closed</em> when a branch is
-matched (unless more are added). Using brnach callbacks, the path can keep
-laying new branches to remain open, until finally a branch is matched
-without any new ones added.</p>
+<p>Paths are the smallest and most essential node for conversations. They allow
+matching message text against multiple branches in a tightly scoped context.</p>
+<p>A path is open when branches are added and closed when a branch is matched.
+While open, it can process incoming messages against the possible branches.</p>
+<p>A matched branch can respond to the user and lay more branches to keep the
+path open, until finally a branch is matched without any new ones added.</p>
 <p><strong>Kind</strong>: global class  </p>
 <ul>
 <li><a href="#Path">Path</a><ul>
 <li><a href="#new_Path_new">new Path(robot, [branches], [options], [key])</a></li>
-<li><a href="#Path+addBranch">.addBranch(regex, [message], [callback])</a></li>
-<li><a href="#Path+catch">.catch()</a> ⇒ <code>Object</code></li>
-<li><a href="#Path+match">.match(res)</a> ⇒ <code>Object</code> | <code>undefined</code></li>
+<li><a href="#Path+addBranch">.addBranch(regex, [strings], [callback])</a></li>
+<li><a href="#Path+getHandler">.getHandler(strings, callback)</a> ⇒ <code>function</code></li>
+<li><a href="#Path+catchHandler">.catchHandler()</a> ⇒ <code>function</code></li>
+<li><a href="#Path+match">.match(res)</a> ⇒ <code>Promise</code></li>
 </ul>
 </li>
 </ul>
@@ -197,7 +196,7 @@ without any new ones added.</p>
 </tr>
 </tbody>
 </table>
-<p><strong>Example</strong> <em>(with an array of text responses)</em>  </p>
+<p><strong>Example</strong> <em>(showing branch argument variations)</em>  </p>
 <pre><code class="lang-js"><span class="hljs-keyword">let</span> choice = <span class="hljs-keyword">new</span> Path(robot, [
   [ <span class="hljs-regexp">/door 1/</span>, <span class="hljs-string">'foo'</span> ]
   [ <span class="hljs-regexp">/door 2/</span>, <span class="hljs-string">'bar'</span>, () =&gt; bar() ]
@@ -212,9 +211,12 @@ without any new ones added.</p>
 </code></pre>
 <hr>
 <p><a name="Path+addBranch"></a></p>
-<h3 id="path-addbranch-regex-message-callback-">path.addBranch(regex, [message], [callback])</h3>
-<p>Add a branch (matching expression and handler) for optional dialogue input.</p>
-<p>On match, handler either fires callback, sends a message or both.</p>
+<h3 id="path-addbranch-regex-strings-callback-">path.addBranch(regex, [strings], [callback])</h3>
+<p>Add an optional dialogue branch.</p>
+<p>Each branch is assigned a handler to call on match, which can sends a
+message and/or fire a given callback.</p>
+<p>Branch handlers are called by <code>.match</code>, if input matches a branch, which
+then returns the matched handler’s return value.</p>
 <p><strong>Kind</strong>: instance method of <a href="#Path"><code>Path</code></a>  </p>
 <table>
 <thead>
@@ -231,8 +233,8 @@ without any new ones added.</p>
 <td>Matching pattern</td>
 </tr>
 <tr>
-<td>[message]</td>
-<td><code>string</code></td>
+<td>[strings]</td>
+<td><code>string/array</code></td>
 <td>Message text for response on match</td>
 </tr>
 <tr>
@@ -246,19 +248,52 @@ without any new ones added.</p>
 <pre><code class="lang-js">path.addBranch(<span class="hljs-regexp">/hello/i</span>, <span class="hljs-string">'hello there'</span>, helloCallback)
 </code></pre>
 <hr>
-<p><a name="Path+catch"></a></p>
-<h3 id="path-catch-code-object-code-">path.catch() ⇒ <code>Object</code></h3>
-<p>Called when nothing matches, behaviour depends on config.
-If neither is set, nothing happens.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Path"><code>Path</code></a><br><strong>Returns</strong>: <code>Object</code> - Contains .handler (function) or null if not configured  </p>
+<p><a name="Path+getHandler"></a></p>
+<h3 id="path-gethandler-strings-callback-code-function-code-">path.getHandler(strings, callback) ⇒ <code>function</code></h3>
+<p>Ready a function to call on a match or catch, sending stirngs and/or doing
+a callback.</p>
+<p>Handlers return a promise that resolves with a merged object containing the
+conext returned by send middleware if strings were sent, and the return
+value of the callback if there was one.</p>
+<p>Either may return a promise so the result is wrapped to resolve both.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Path"><code>Path</code></a><br><strong>Returns</strong>: <code>function</code> - The handler  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>strings</td>
+<td><code>string/array</code></td>
+<td>Message text to send on match</td>
+</tr>
+<tr>
+<td>callback</td>
+<td><code>function</code></td>
+<td>Function to call on match</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><a name="Path+catchHandler"></a></p>
+<h3 id="path-catchhandler-code-function-code-">path.catchHandler() ⇒ <code>function</code></h3>
+<p>Get handler for when nothing matches, if configured.</p>
+<p>If neither <code>catchMessage</code> or <code>catchCallback</code> is set, nothing happens.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Path"><code>Path</code></a><br><strong>Returns</strong>: <code>function</code> - Handler (or undefined)  </p>
 <hr>
 <p><a name="Path+match"></a></p>
-<h3 id="path-match-res-code-object-code-code-undefined-code-">path.match(res) ⇒ <code>Object</code> | <code>undefined</code></h3>
-<p>Attempt to match an incoming response object.</p>
-<p>Overrides the response match (from dialogue listener) even if null match.</p>
-<p>Matching closes the path, but the handler may add branches, re-opening it.</p>
-<p>Without match, will attempt catch (which may also return null).</p>
-<p><strong>Kind</strong>: instance method of <a href="#Path"><code>Path</code></a><br><strong>Returns</strong>: <code>Object</code> | <code>undefined</code> - Matched branch with regex and handler  </p>
+<h3 id="path-match-res-code-promise-code-">path.match(res) ⇒ <code>Promise</code></h3>
+<p>Attempt to match an incoming response object. Overrides the response match
+(from the more general dialogue listener) even if null.</p>
+<p>Matching closes the path and fires the handler which may add branches,
+re-opening it. Without a match, it will attempt to use a catch handler
+(which may be null). The matched branch or catch handler method may return
+a promise or not, the response is returned wrapped in a promise either way.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Path"><code>Path</code></a><br><strong>Returns</strong>: <code>Promise</code> - Resolves with matched/catch branch handler result  </p>
 <table>
 <thead>
 <tr>
@@ -276,10 +311,10 @@ If neither is set, nothing happens.</p>
 </tbody>
 </table>
 <p><strong>Example</strong>  </p>
-<pre><code class="lang-js"><span class="hljs-keyword">let</span> choice = <span class="hljs-keyword">new</span> Path(robot, [
-  [ <span class="hljs-regexp">/door 1/</span>, <span class="hljs-string">'foo'</span> ]
-  [ <span class="hljs-regexp">/door 2/</span>, <span class="hljs-string">'bar'</span>, () =&gt; bar() ]
-  [ <span class="hljs-regexp">/door 3/</span>, () =&gt; baz() ]
+<pre><code class="lang-js">listener matching against possible branches
+<span class="hljs-keyword">let</span> choice = <span class="hljs-keyword">new</span> Path(robot, [
+  [ <span class="hljs-regexp">/door 1/</span>, <span class="hljs-string">'pies'</span> ]
+  [ <span class="hljs-regexp">/door 2/</span>, <span class="hljs-string">'lies'</span> ]
 ])
 robot.hear(<span class="hljs-regexp">/door/</span>, (res) =&gt; choice.match(res))
 </code></pre>

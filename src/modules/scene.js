@@ -5,16 +5,16 @@ import Base from './base'
 import Dialogue from './dialogue'
 
 /**
- * Scenes conduct participantion in dialogues with the bot. They use listeners
- * to enter an audience into a new dialogue. They can handle multiple concurrent
- * users and rooms in either isolated or group dialogues as required.
+ * Scenes conduct participation in dialogue. They use listeners to enter an
+ * audience into a new dialogue with the bot.
  *
- * Once entered into a scene, the audience is _engaged_ and the bot will only
- * respond to dialogue choices defined by that scene. The type of audience is
- * determined by the scene's scope:
- * - entering a _user_ scene will engage the user (in any room)
- * - entering a _room_ scene will engage the whole room
- * - entering a _direct_ scene will engage the user in that room only
+ * Once entered into a scene, the audience is engaged and isolated from global
+ * listeners. The bot will only respond to branches defined by dialogue in that
+ * scene. The scope of audience can be:
+ *
+ * - user - engage the user (in any room)
+ * - room - engage the whole room
+ * - direct - engage the user in that room only
  *
  * @param {Robot} robot                   Hubot Robot instance
  * @param {Object} [options]              Key/val options for config
@@ -34,7 +34,7 @@ class Scene extends Base {
     if (this.config.scope === 'room') this.defaults({ sendReplies: true })
 
     const validTypes = [ 'room', 'user', 'direct' ]
-    if (!validTypes.includes(this.config.scope)) this.error('invalid scene scope')
+    if (!_.includes(validTypes, this.config.scope)) this.error('invalid scene scope')
 
     this.engaged = {}
     this.robot.receiveMiddleware((c, n, d) => this.middleware(c, n, d))
@@ -79,7 +79,7 @@ class Scene extends Base {
    * })
   */
   listen (type, regex, callback) {
-    if (!['hear', 'respond'].includes(type)) this.error('Invalid listener type')
+    if (!_.includes(['hear', 'respond'], type)) this.error('Invalid listener type')
     if (!_.isRegExp(regex)) this.error('Invalid regex for listener')
     if (!_.isFunction(callback)) this.error('Invalid callback for listener')
 
@@ -139,6 +139,7 @@ class Scene extends Base {
     options = _.defaults({}, this.config, options)
     const dialogue = new Dialogue(res, options, ...args)
     dialogue.scene = this
+    if (!dialogue.key && this.key) dialogue.key = this.key
     dialogue.on('timeout', (lastRes, other) => {
       return this.exit(lastRes, 'timeout')
     })
@@ -198,7 +199,7 @@ class Scene extends Base {
    * @return {boolean}             Is engaged status
   */
   inDialogue (participants) {
-    return (_.keys(this.engaged).includes(participants))
+    return (_.includes(_.keys(this.engaged), participants))
   }
 }
 

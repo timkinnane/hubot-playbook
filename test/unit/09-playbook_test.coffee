@@ -215,6 +215,7 @@ describe 'Playbook', ->
         dialogue = playbook.dialogue pretend.lastListen()
         clock = sinon.useFakeTimers()
         config =
+          events: ['enter', 'send']
           instanceAtts: 'name'
           responseAtts: null
           messageAtts: null

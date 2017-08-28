@@ -4,25 +4,22 @@ import yaml from 'yamljs'
 import Base from './base'
 
 /**
- * Processes a conversation modelling schema, with attributes for conversation
- * nodes (including scenes, dialogues, paths and directors) defined as _bits_.
+ * Outlines are a conversation modelling schema / handler, with collections of
+ * attributes for setting up scenes, dialogues, paths and directors, for
+ * interactions defined as bits.
  *
- * Outlines can be loaded from YAML files or passed directly as an array of
- * objects, to initialise the listeners and callbacks to execute each bit.
+ * Define a key and condition to execute each bit, either consecutively off a
+ * prior bit, or with a listen attribute to become effectively a global entry
+ * point to a scene.
  *
- * Bits can lead to consequitive bits, with branches to follow as responses
- * are matched against the bit's `condition`. Those with a `listen` attribute
- * are effectively _global_ entry points to a scene, where others are only
- * accessesable in the scope of a parent scene.
- *
- * A subsequent bit can even lead back to it's own parent or any other bit
- * (_global_ or not) but the scene scope can't change once entered.
+ * A subsequent bit can even lead back to it’s own parent or any other bit,
+ * creating a mesh of possible conversational pathways.
  *
  * @param {string/Object[]} bits      Attributes to setup bits (accepts YAML file path)
  * @param {array}  bits[].send        String/s to send when doing bit (minimum requirement)
  * @param {string} [bits[].catch]     To send if response unmatched by listeners
  * @param {string} [bits[].condition] Converted to regex for listener to trigger bit
- * @param {string} [bits[].listen]    Type of listener (hear|respond) for scene entry bit
+ * @param {string} [bits[].listen]    Type of listener (hear/respond) for scene entry bit
  * @param {string} [bits[].scene]     Scope for the scene (only used if it has a listen type)
  * @param {string} [bits[].key]       Key for scene and/or dialogue running the bit
  * @param {Object} [bits[].options]   Key/val options for scene and/or dialogue config

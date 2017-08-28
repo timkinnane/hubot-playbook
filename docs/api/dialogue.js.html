@@ -135,9 +135,11 @@
         
         <p><a name="Dialogue"></a></p>
 <h2 id="dialogue">Dialogue</h2>
-<p>Dialogues control which paths are available to which users in context.</p>
-<p>They route messages to the right paths, manage timeouts, send replies and
-fire callbacks for the branches that match user messages.</p>
+<p>Dialogues control which paths are available and for how long. Passing
+messages into a dialogue will match against the current path and route any
+replies.</p>
+<p>Where paths are self-replicating steps, the dialogue persists along the
+journey.</p>
 <p><strong>Kind</strong>: global class  </p>
 <ul>
 <li><a href="#Dialogue">Dialogue</a><ul>
@@ -149,7 +151,7 @@ fire callbacks for the branches that match user messages.</p>
 <li><a href="#Dialogue+startTimeout">.startTimeout()</a></li>
 <li><a href="#Dialogue+addPath">.addPath([prompt], [branches], [options], [key])</a> ⇒ <code>Promise</code></li>
 <li><a href="#Dialogue+addBranch">.addBranch(regex, [message], [callback])</a></li>
-<li><a href="#Dialogue+receive">.receive(res)</a></li>
+<li><a href="#Dialogue+receive">.receive(res)</a> ⇒ <code>Promise</code></li>
 </ul>
 </li>
 </ul>
@@ -212,11 +214,7 @@ fire callbacks for the branches that match user messages.</p>
 <p><a name="Dialogue+send"></a></p>
 <h3 id="dialogue-send-strings-code-promise-code-">dialogue.send(…strings) ⇒ <code>Promise</code></h3>
 <p>Send or reply with message as configured (@user reply or send to room).</p>
-<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a><br><strong>Returns</strong>: <code>Promise</code> - Resolves with that<br><strong>Todo</strong></p>
-<ul>
-<li>[ ] Update to yield res when Hubot robot send uses middleware #1233</li>
-<li>[ ] Update tests that wait for observer to use promise instead</li>
-</ul>
+<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a><br><strong>Returns</strong>: <code>Promise</code> - Resolves with result of send (respond middleware context)  </p>
 <table>
 <thead>
 <tr>
@@ -270,7 +268,8 @@ fire callbacks for the branches that match user messages.</p>
 <p><a name="Dialogue+addPath"></a></p>
 <h3 id="dialogue-addpath-prompt-branches-options-key-code-promise-code-">dialogue.addPath([prompt], [branches], [options], [key]) ⇒ <code>Promise</code></h3>
 <p>Add a dialogue path, with branches to follow and a prompt (optional).</p>
-<p>Any new path added overwrites the previous.</p>
+<p>Any new path added overwrites the previous. If a path isn’t given a key but
+the parent dialogue has one, it will be given to the path.</p>
 <p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a><br><strong>Returns</strong>: <code>Promise</code> - Resolves when sends complete or immediately  </p>
 <table>
 <thead>
@@ -344,15 +343,13 @@ created if not.</p>
 </table>
 <hr>
 <p><a name="Dialogue+receive"></a></p>
-<h3 id="dialogue-receive-res-">dialogue.receive(res)</h3>
+<h3 id="dialogue-receive-res-code-promise-code-">dialogue.receive(res) ⇒ <code>Promise</code></h3>
 <p>Process incoming message for match against path branches.</p>
-<p>If matched, fire handler, restart timeout.</p>
-<p>if no additional paths or branches added (by handler), end dialogue.</p>
-<p>Overrides the original response with current one.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a><br><strong>Todo</strong></p>
+<p>If matched, restart timeout. If no additional paths or branches added (by
+matching branch handler), end dialogue.</p>
+<p>Overrides any prior response with current one.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a><br><strong>Returns</strong>: <code>Promise</code> - Resolves when matched/catch handler complete<br><strong>Todo</strong></p>
 <ul>
-<li>[ ] Move emitting into Path class, so each node can have a key</li>
-<li>[ ] Wrap handler in promise, don’t end() until it resolves</li>
 <li>[ ] Test with handler using res.http/get to populate new path</li>
 </ul>
 <table>

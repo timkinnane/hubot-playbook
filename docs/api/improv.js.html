@@ -136,15 +136,23 @@
         <h2 id="classes">Classes</h2>
 <dl>
 <dt><a href="#Improv">Improv</a></dt>
-<dd><p>Parse message templates at runtime with context from user attributes,
-pre-populated data and/or custom functions.</p>
-<p>The context object is applied as &#39;this&#39; in the scope where the template is
-rendered, e.g. <code>&quot;hello ${ this.user.name }&quot;</code> will render with the value at
-the <em>user.name</em> path in the context object.</p>
-<p><em>Don&#39;t</em> use back-ticks when declaring strings, or it will render immediately.</p>
+<dd><p>Improv parses message templates at runtime with context from user attributes,
+pre-populated data and/or custom extensions.</p>
+<p>e.g. &quot;hello ${ this.user.name }&quot; will render with the value at the user.name
+path in current context.</p>
 <p>Message strings containing expressions are automatically rendered by Improv
-using middleware and the user object is taken from the response object given
-to middleware, but can be overriden by extensions.</p>
+middleware and can be merged with data from any source, including a
+Transcript search for instance.</p>
+<p>Note:</p>
+<ul>
+<li>The context object is applied as &#39;this&#39; in the scope where the template is
+rendered, e.g. <code>this.user.name</code> is the value at <em>user.name</em> path.</li>
+<li><em>Don&#39;t</em> use back-ticks when declaring strings, or it will render
+immediately.</li>
+<li>Improv uses a singleton pattern to parse templates from a central
+middleware. It should be initialised with a robot via <code>.use</code>.</li>
+<li>Calling <code>.reset()</code> will clear everything (for testing).</li>
+</ul>
 </dd>
 </dl>
 
@@ -193,22 +201,28 @@ is configured, to replace the entire string.</p>
 
 <p><a name="Improv"></a></p>
 <h2 id="improv">Improv</h2>
-<p>Parse message templates at runtime with context from user attributes,
-pre-populated data and/or custom functions.</p>
-<p>The context object is applied as ‘this’ in the scope where the template is
-rendered, e.g. <code>&quot;hello ${ this.user.name }&quot;</code> will render with the value at
-the <em>user.name</em> path in the context object.</p>
-<p><em>Don’t</em> use back-ticks when declaring strings, or it will render immediately.</p>
+<p>Improv parses message templates at runtime with context from user attributes,
+pre-populated data and/or custom extensions.</p>
+<p>e.g. “hello ${ this.user.name }” will render with the value at the user.name
+path in current context.</p>
 <p>Message strings containing expressions are automatically rendered by Improv
-using middleware and the user object is taken from the response object given
-to middleware, but can be overriden by extensions.</p>
+middleware and can be merged with data from any source, including a
+Transcript search for instance.</p>
+<p>Note:</p>
+<ul>
+<li>The context object is applied as ‘this’ in the scope where the template is
+rendered, e.g. <code>this.user.name</code> is the value at <em>user.name</em> path.</li>
+<li><em>Don’t</em> use back-ticks when declaring strings, or it will render
+immediately.</li>
+<li>Improv uses a singleton pattern to parse templates from a central
+middleware. It should be initialised with a robot via <code>.use</code>.</li>
+<li>Calling <code>.reset()</code> will clear everything (for testing).</li>
+</ul>
 <p><strong>Kind</strong>: global class  </p>
 <hr>
 <p><a name="new_Improv_new"></a></p>
 <h3 id="new-improv-robot-">new Improv(robot)</h3>
-<p>Improv uses a singleton pattern to parse templates from a central
-middleware. It should be initialised with a robot via <code>.use</code>.
-Calling <code>.reset()</code> will clear everything (for testing).</p>
+<p><strong>Returns</strong>: <a href="#Improv"><code>Improv</code></a> - New or prior existing (singleton) instance  </p>
 <table>
 <thead>
 <tr>

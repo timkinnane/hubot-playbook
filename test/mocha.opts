@@ -1,4 +1,5 @@
 --compilers coffee:coffee-script/register
+--require babel-register
 --require source-map-support
 --require mocha-clean
 --recursive

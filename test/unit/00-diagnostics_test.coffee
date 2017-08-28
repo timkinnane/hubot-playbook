@@ -4,6 +4,7 @@ chai = require 'chai'
 should = chai.should()
 co = require 'co'
 chai.use require 'sinon-chai'
+require('events').EventEmitter.defaultMaxListeners = 100
 pretend = require 'hubot-pretend'
 
 # Tests for unaltered hubot and its listeners.
@@ -72,28 +73,21 @@ describe 'Diagnostics', ->
 
   context 'bot responds to its alias', ->
 
-    # rerun module (recreating bot and listeners) with bot alias
-    beforeEach ->
-      pretend.startup alias: 'buddy'
-      @cb = sinon.spy pretend.robot.listeners[0], 'callback'
-      pretend.user('jimbo').send 'buddy which version'
-
-    it 'calls callback with response', ->
-      @cb.should.have.calledWithMatch sinon.match matchRes
+    it 'calls callback with response', -> co ->
+      pretend.start alias: 'buddy'
+      cb = sinon.spy pretend.robot.listeners[0], 'callback'
+      yield pretend.user('jimbo').send 'buddy which version'
+      cb.should.have.calledWithMatch sinon.match matchRes
 
   context 'user asks for version number', ->
 
-    beforeEach ->
-      pretend.user('jimbo').send 'hubot which version are you on?'
-
-    it 'replies to tester with a version number', ->
+    it 'replies to tester with a version number', -> co ->
+      yield pretend.user('jimbo').send 'hubot which version are you on?'
       pretend.messages[1][1].should.match /jimbo .*\d+.\d+.\d+/
 
   context 'user asks different ways if Hubot is listening', ->
 
-    beforeEach -> co ->
+    it 'replies to each confirming Hubot listening', -> co ->
       yield pretend.user('jimbo').send 'Are any Hubots listening?'
       yield pretend.user('jimbo').send 'Is there a bot listening?'
-
-    it 'replies to each confirming Hubot listening', ->
       pretend.messages[1].should.eql pretend.messages[3]

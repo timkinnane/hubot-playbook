@@ -135,16 +135,15 @@
         
         <p><a name="Scene"></a></p>
 <h2 id="scene">Scene</h2>
-<p>Scenes conduct participantion in dialogues with the bot. They use listeners
-to enter an audience into a new dialogue. They can handle multiple concurrent
-users and rooms in either isolated or group dialogues as required.</p>
-<p>Once entered into a scene, the audience is <em>engaged</em> and the bot will only
-respond to dialogue choices defined by that scene. The type of audience is
-determined by the scene’s scope:</p>
+<p>Scenes conduct participation in dialogue. They use listeners to enter an
+audience into a new dialogue with the bot.</p>
+<p>Once entered into a scene, the audience is engaged and isolated from global
+listeners. The bot will only respond to branches defined by dialogue in that
+scene. The scope of audience can be:</p>
 <ul>
-<li>entering a <em>user</em> scene will engage the user (in any room)</li>
-<li>entering a <em>room</em> scene will engage the whole room</li>
-<li>entering a <em>direct</em> scene will engage the user in that room only</li>
+<li>user - engage the user (in any room)</li>
+<li>room - engage the whole room</li>
+<li>direct - engage the user in that room only</li>
 </ul>
 <p><strong>Kind</strong>: global class  </p>
 <ul>

@@ -135,14 +135,24 @@
         
         <p><a name="Director"></a></p>
 <h2 id="director">Director</h2>
-<p>Provides conversation firewalls, allowing listed users or custom logic to
-authorise or block users from entering interactions or following specific
-paths.</p>
-<p>Access is determined by blacklist or whitelist, or if defined a fallback
-<em>authorise</em> function to allow or deny anyone not on the list.</p>
-<p>Authorise callback is given the user or room name (depending on the scope
+<p>Directors provide conversation firewalls, allowing listed users to be
+authorised or blocked from entering scenes or preventing listeners from
+firing.</p>
+<p>Access is determined by blacklist or whitelist, or if defined, a custom
+fallback function can determine to allow or deny anyone not on the list.</p>
+<p>A director can be attached to whole scenes or dialogues, or even specific
+listeners.</p>
+<p><em>Authorise</em> function is given the user or room name (depending on the scope
 configured for the direcrot) and response object. It must return a boolean to
 determine access.</p>
+<p><code>config.deniedReply</code> can be set globally with environment var <code>DENIED_REPLY</code></p>
+<p>Environment vars can also provide global default lists:</p>
+<ul>
+<li><code>WHITELIST_USERNAMES</code> for whitelist type and username scope directors</li>
+<li><code>WHITELIST_ROOMS</code> for whitelist type and room scope directors</li>
+<li><code>BLACKLIST_USERNAMES</code> for blacklist type and username scope directors</li>
+<li><code>BLACKLIST_ROOMS</code> for blacklist type and room scope directors</li>
+</ul>
 <p><strong>Kind</strong>: global class  </p>
 <ul>
 <li><a href="#Director">Director</a><ul>
@@ -160,14 +170,6 @@ determine access.</p>
 <hr>
 <p><a name="new_Director_new"></a></p>
 <h3 id="new-director-robot-authorise-options-key-">new Director(robot, [authorise], [options], [key])</h3>
-<p><code>config.deniedReply</code> can be set globally with environment var <code>DENIED_REPLY</code></p>
-<p>Environment vars can also provide global default lists:</p>
-<ul>
-<li><code>WHITELIST_USERNAMES</code> for whitelist type and username scope directors</li>
-<li><code>WHITELIST_ROOMS</code> for whitelist type and room scope directors</li>
-<li><code>BLACKLIST_USERNAMES</code> for blacklist type and username scope directors</li>
-<li><code>BLACKLIST_ROOMS</code> for blacklist type and room scope directors</li>
-</ul>
 <table>
 <thead>
 <tr>

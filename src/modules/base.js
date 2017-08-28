@@ -3,19 +3,22 @@
 import _ from 'lodash'
 
 /**
- * Provides common structure and behaviour inherited by all Playbook modules.
+ * Base is the parent class of every Playbook module, providing consistent
+ * structure and behaviour.
  *
- * Includes unique ID, error handling, event routing and accepts options and
- * named key as final arguments (inherited config is merged with options).
+ * Every module built on Base can emit events, handle errors and call methods
+ * through the bot.
  *
- * The named key allows modules to be identified outside of functional logic,
- * for instance if they create listeners or logs or DB entries, they will attach
- * their key as a signature to ID which specific instance it was.
+ * Helpers are provided to accept options and merge with class defaults to
+ * configure the instance.
+ *
+ * All instances get a unique ID and can be given a named key so any interaction
+ * or event can be queried and recorded against its source.
  *
  * @param {string} name      The module/class name
  * @param {Robot}  robot     Robot instance
  * @param {Object} [options] Key/val options for config
- * @param {string} [key]     Key name for instance
+ * @param {string} [key]     Key name for instance (provided to events)
  *
  * @example
  * class RadModule extends Base {
@@ -41,8 +44,9 @@ class Base {
   }
 
   /**
-   * Getter allows robot to be replaced at runtime without losing route to log
-   * @return {Log} The robot's log instance
+   * Getter allows robot to be replaced at runtime without losing route to log.
+   *
+   * @return {Object} The robot's log instance
    */
   get log () {
     return this.robot ? this.robot.logger : null
@@ -73,7 +77,7 @@ class Base {
   */
   configure (options) {
     if (!_.isObject(options)) this.error('Non-object received for config')
-    this.config = _.defaultsDeep({}, options, this.config)
+    this.config = _.defaults({}, options, this.config)
     return this
   }
 
@@ -88,7 +92,7 @@ class Base {
    */
   defaults (settings) {
     if (!_.isObject(settings)) this.error('Non-object received for defaults')
-    this.config = _.defaultsDeep({}, this.config, settings)
+    this.config = _.defaults({}, this.config, settings)
     return this
   }
 

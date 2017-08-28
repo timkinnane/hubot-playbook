@@ -16,25 +16,20 @@ Module = require '../../lib/utils/module'
 # helper clears existing listeners to check specific listeners are added
 removeListeners = (robot) -> robot.events.removeAllListeners.apply robot
 
+clock = null
+
 describe 'Transcript', ->
 
   beforeEach ->
     pretend.start()
-    @tester = pretend.user 'tester', room: 'testing'
-    @clock = sinon.useFakeTimers()
-    @now = _.now()
+    clock = sinon.useFakeTimers()
 
     Object.getOwnPropertyNames(Transcript.prototype).map (key) ->
       sinon.spy Transcript.prototype, key
 
-    # generate first response for mock events
-    pretend.robot.hear /test/, -> # listen to tests
-    pretend.user('tester').send 'test'
-    .then => @res = pretend.lastListen()
-
   afterEach ->
     pretend.shutdown()
-    @clock.restore()
+    clock.restore()
 
     Object.getOwnPropertyNames(Transcript.prototype).map (key) ->
       Transcript.prototype[key].restore()
@@ -44,16 +39,16 @@ describe 'Transcript', ->
     context 'with saving enabled (default)', ->
 
       beforeEach ->
-        pretend.robot.brain.set 'transcripts', [ time: @now, event: 'test' ]
+        pretend.robot.brain.set 'transcripts', [ time: 0, event: 'test' ]
         @transcript = new Transcript pretend.robot
 
       it 'uses brain for record keeping', ->
-        @transcript.records.should.eql [ time: @now, event: 'test' ]
+        @transcript.records.should.eql [ time: 0, event: 'test' ]
 
     context 'with saving disabled', ->
 
       beforeEach ->
-        pretend.robot.brain.set 'transcripts', [ time: @now, event: 'test' ]
+        pretend.robot.brain.set 'transcripts', [ time: 0, event: 'test' ]
         @transcript = new Transcript pretend.robot, save: false
 
       it 'keeps records in a new empty array', ->
@@ -71,7 +66,7 @@ describe 'Transcript', ->
 
       it 'records event "other" data', ->
         @transcript.records.should.eql [
-          time: @now
+          time: 0
           event: 'mockEvent'
           other: [ test: 'data' ]
         ]
@@ -93,31 +88,33 @@ describe 'Transcript', ->
               key: @module.key
               id: @module.id
             done()
-          @module.emit 'mockEvent', @res
+          @module.emit 'mockEvent', pretend.response 'tester', 'test'
 
         it 'records default response attributes', (done) ->
+          res = pretend.response 'tester', 'test'
           @transcript.on 'record', =>
             @transcript.records[0].should.containSubset response:
-              match: @res.match
+              match: res.match
             done()
-          @module.emit 'mockEvent', @res
+          @module.emit 'mockEvent', res
 
         it 'records default message attributes', (done) ->
+          res = pretend.response 'tester', 'test', 'testing'
           @transcript.on 'record', =>
             @transcript.records[0].should.containSubset message:
               user:
-                id: @res.message.user.id
-                name: @res.message.user.name
-              room: @res.message.room
-              text: @res.message.text
+                id: res.message.user.id
+                name: res.message.user.name
+              room: res.message.room
+              text: res.message.text
             done()
-          @module.emit 'mockEvent', @res
+          @module.emit 'mockEvent', pretend.response 'tester', 'test'
 
       context 'with transcript key', ->
 
         beforeEach ->
           @transcript.key = 'test-key'
-          @module.emit 'mockEvent', @res
+          @module.emit 'mockEvent', pretend.response 'tester', 'test'
 
         it 'records event with key property', ->
           @transcript.records[0].should.have.property 'key', 'test-key'
@@ -127,7 +124,7 @@ describe 'Transcript', ->
         beforeEach ->
           @transcript.config.instanceAtts = ['name', 'config.scope']
           @module.config.scope = 'whitelist' # act like a director for this one
-          @module.emit 'mockEvent', @res
+          @module.emit 'mockEvent', pretend.response 'tester', 'test'
 
         it 'records custom instance attributes', ->
           @transcript.records[0].should.containSubset instance:
@@ -138,7 +135,7 @@ describe 'Transcript', ->
 
         beforeEach ->
           @transcript.config.responseAtts = ['message.room']
-          @module.emit 'mockEvent', @res
+          @module.emit 'mockEvent', pretend.response 'tester', 'test', 'testing'
 
         it 'records custom response attributes', ->
           @transcript.records[0].should.containSubset response:
@@ -148,7 +145,7 @@ describe 'Transcript', ->
 
         beforeEach ->
           @transcript.config.messageAtts = 'room'
-          @module.emit 'mockEvent', @res
+          @module.emit 'mockEvent', pretend.response 'tester', 'test', 'testing'
 
         it 'records custom message attributes', ->
           @transcript.records[0].should.containSubset message:
@@ -161,7 +158,7 @@ describe 'Transcript', ->
 
         it 'records event without response or other attributes', ->
           @transcript.records.should.eql [
-            time: @now
+            time: 0
             event: 'mockEvent'
             instance:
               name: @module.name
@@ -177,7 +174,7 @@ describe 'Transcript', ->
 
         it 'records event without response attributes', ->
           @transcript.records.should.eql [
-            time: @now
+            time: 0
             event: 'mockEvent'
             instance:
               name: @module.name
@@ -219,78 +216,81 @@ describe 'Transcript', ->
         pretend.robot.emit 'bar'
 
       it 'records custom events only', ->
-        @transcript.recordEvent.args.should.eql [
-          ['foo'], ['bar']
-        ]
+        @transcript.recordEvent.args.should.eql [ ['foo'], ['bar'] ]
 
   describe '.recordDialogue', ->
 
     beforeEach ->
       @transcript = new Transcript pretend.robot, save: false
-      @dialogue = new Dialogue @res
+      @dialogue = new Dialogue pretend.response 'tester', 'test'
 
     context 'with default event set', ->
 
       beforeEach (done) ->
         removeListeners pretend.robot
         @transcript.recordDialogue @dialogue
-        @dialogue.on 'match', -> done()
-        @dialogue.emit 'match'
+        @dialogue.addPath [ [ /test/, -> ] ]
+        @dialogue.path.on 'match', -> done()
+        @dialogue.path.emit 'match'
 
-      it 'attached listener for default events from dialogue', ->
+      it 'attached listener for default events from dialogue and path', ->
+        expectedEvents = @transcript.config.events
+        expectedEvents.push 'path' # path event always added by recordDialogue
         _.keys pretend.robot._events
-        .should.eql @transcript.config.events
+        .should.have.members expectedEvents
 
-      it 'calls the listener when event emmited from dialogue', ->
-        @transcript.recordEvent.should.have.calledWith 'match', @dialogue
+      it 'calls the listener when event emited from dialogue path', ->
+        @transcript.recordEvent.should.have.calledWith 'match', @dialogue.path
 
     context 'with custom event set', ->
 
       beforeEach (done) ->
         removeListeners pretend.robot
-        @transcript.config.events = ['match', 'mismatch']
+        @transcript.config.events = ['match', 'mismatch', 'end']
         @transcript.recordDialogue @dialogue
+        @dialogue.addPath [ [ /test/, -> ] ]
         @dialogue.emit 'send'
-        @dialogue.on 'match', -> done()
-        @dialogue.emit 'match'
+        @dialogue.emit 'end'
+        @dialogue.path.on 'match', -> done()
+        @dialogue.path.emit 'match'
 
-      it 'attached listener for default events from dialogue', ->
+      it 'attached listener for default events from dialogue and path', ->
         _.keys pretend.robot._events
-        .should.eql ['match', 'mismatch']
+        .should.have.members ['match', 'mismatch', 'end', 'path']
 
-      it 'calls the listener when event emmited from dialogue', ->
-        @transcript.recordEvent.should.have.calledWith 'match', @dialogue
+      it 'calls the listener when event emited from dialogue', ->
+        @transcript.recordEvent.should.have.calledWith 'end', @dialogue
+
+      it 'calls the listener when event emited from path', ->
+        @transcript.recordEvent.should.have.calledWith 'match', @dialogue.path
 
       it 'does not call with any unconfigured events', ->
         @transcript.recordEvent.should.not.have.calledWith 'send', @dialogue
 
   describe '.recordScene', ->
 
-    beforeEach (done) ->
+    it 'records events emitted by scene, its dialogues and paths', -> co ->
+      res = pretend.response 'tester', 'test'
       removeListeners pretend.robot
-      @transcript = new Transcript pretend.robot,
-        save: false
-        events: ['match']
-      @scene = new Scene pretend.robot
-      @transcript.recordScene @scene
-      @dialogue = @scene.enter @res
-      @dialogue.addBranch /.*/, -> done()
-      @dialogue.receive @res
-
-    it 'attached listener for scene and dialogue events', ->
-      _.keys pretend.robot._events
-      .should.containSubset ['enter', 'exit', 'match']
-      # subset checked because scene enter adds its own listeners
-
-    it 'records events emitted by scene and its dialogues', ->
-      @transcript.recordEvent.args.should.eql [
-        [ 'enter', @scene, @res ]
-        [ 'match', @dialogue, @res ]
+      transcript = new Transcript pretend.robot,
+        save: false,
+        events: [ 'enter', 'match', 'send' ]
+      scene = new Scene pretend.robot
+      transcript.recordScene scene
+      dialogue = scene.enter res
+      dialogue.addBranch /test/, 'response'
+      yield dialogue.receive res
+      records = transcript.recordEvent.args.map((record) -> _.take(record, 2))
+      records.should.eql [
+        [ 'enter', scene ]
+        [ 'match', dialogue.path ]
+        [ 'send', dialogue ]
       ]
 
   describe '.recordDirector', ->
 
     beforeEach (done) ->
+      @res = pretend.response 'tester', 'test'
       removeListeners pretend.robot
       @transcript = new Transcript pretend.robot, save: false
       @director = new Director pretend.robot, type: 'blacklist'
@@ -449,36 +449,83 @@ describe 'Transcript', ->
       it 'returns the answers matching the key for the user', ->
         @transcript.findIdMatches('aaa', '111', 0)
         .should.eql ['blue']
-  ###
 
   describe 'Usage', ->
 
+    context 'record scene with one specific path key', ->
+
+      it 'uses scene key for dialogue and all paths except one', -> co ->
+        transcript = new Transcript pretend.robot, save: false
+        transcript.configure
+          events: [ 'match', 'catch' ]
+          instanceAtts: [ 'key' ]
+          responseAtts: null
+        scene = new Scene pretend.robot, 'looking-for-treasure'
+        transcript.recordScene scene, scope: 'direct'
+        scene.hear /enter/, (res) ->
+          res.dialogue.addPath 'You\'re in! Pick door 1, 2 or 3', [
+            [ /door 1/, 'You lose - bad luck!' ]
+            [ /door 2/, 'You lose - bad luck!' ]
+            [ /door 3/, (res) ->
+              res.dialogue.addPath 'OK, upstairs or downstairs?', [
+                [ /upstairs/, 'You lose - bad luck!' ]
+                [ /downstairs/, (res) ->
+                  res.dialogue.addPath 'Last question, left or right?', [
+                    [ /left/, 'You found the treasure - well done!' ]
+                    [ /right/, 'You lose - bad luck!' ]
+                  ], 'final-room'
+                ]
+              ]
+            ]
+          ], catchMessage: 'Pick "door 1", "door 2" or "door 3"'
+        # ... run contestants
+        yield pretend.user('frodo').send 'enter'
+        yield pretend.user('bilbo').send 'enter'
+        yield pretend.user('frodo').send 'how?'
+        yield pretend.user('frodo').send 'door 1'
+        yield pretend.user('gimli').send 'enter'
+        yield pretend.user('gimli').send 'door 3'
+        yield pretend.user('gimli').send 'downstairs'
+        yield pretend.user('gimli').send 'left'
+        # .. compile report
+        steps = transcript.records.map (record) -> [
+          record.event
+          record.instance.key
+          record.message.user.name
+          record.message.text
+        ]
+        steps.should.eql [
+          [ 'catch', 'looking-for-treasure', 'frodo', 'how?' ],
+          [ 'match', 'looking-for-treasure', 'frodo', 'door 1' ],
+          [ 'match', 'looking-for-treasure', 'gimli', 'door 3' ],
+          [ 'match', 'looking-for-treasure', 'gimli', 'downstairs' ],
+          [ 'match', 'final-room', 'gimli', 'left' ]
+        ]
+
     context 'docs example for .findKeyMatches', ->
 
-      beforeEach ->
-        @transcript = new Transcript pretend.robot, save: false
-        pretend.robot.hear /color/, (res) =>
-          favColor = new Dialogue res, 'fav-color'
-          @transcript.recordDialogue favColor
-          favColor.addPath [
-            [ /my favorite color is (.*)/, 'duly noted' ]
-          ]
-          favColor.receive res
-        pretend.robot.respond /what is my favorite color/, (res) =>
-          colorMatches = @transcript.findKeyMatches 'fav-color', 1
-          # ^ word we're looking for from capture group is at index: 1
+      it 'records and recalls favorite color if provided', -> co ->
+        transcript = new Transcript pretend.robot, save: false
+        pretend.robot.respond /what is my favorite color/, (res) ->
+          colorMatches = transcript.findKeyMatches 'fav-color', 1
           if colorMatches.length
             res.reply "I remember, it's #{ colorMatches.pop() }"
           else
             res.reply "I don't know!?"
 
-      it 'records and recalls favorite color if provided', -> co ->
+        dialogue = new Dialogue pretend.response 'tester', 'test'
+        transcript.recordDialogue dialogue
+        dialogue.addPath [
+          [ /my favorite color is (.*)/, 'duly noted' ]
+        ], 'fav-color'
+        dialogue.receive pretend.response 'tim', 'my favorite color is orange'
+
         yield pretend.user('tim').send 'my favorite color is orange'
         yield pretend.user('tim').send 'hubot what is my favorite color?'
         pretend.messages.should.eql [
-          [ 'testing', 'tester', 'test' ]
           [ 'tim', 'my favorite color is orange' ]
           [ 'hubot', 'duly noted' ]
           [ 'tim', 'hubot what is my favorite color?' ]
           [ 'hubot', '@tim I remember, it\'s orange' ]
         ]
+###
