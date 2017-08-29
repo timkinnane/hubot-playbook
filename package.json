@@ -11,7 +11,7 @@
   "scripts": {
     "dev": "run-s compile test",
     "dev:watch": "run-p compile:watch test:watch",
-    "build": "run-s compile test integration docs",
+    "build": "run-s compile test:coverage integration docs",
     "precompile": "npm run compile:lint && rimraf lib",
     "compile:lint": "standard src/**/*.js | snazzy",
     "compile": "babel src --source-maps --out-dir lib",

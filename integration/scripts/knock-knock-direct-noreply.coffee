@@ -17,7 +17,7 @@
 #
 
 module.exports = (robot) ->
-  require '../../lib'
+  require '../../lib/index.js'
   .use robot
   .sceneHear /knock/, scope: 'direct', (res) ->
     res.dialogue.addPath "Who's there?", [ /.*/, (res) ->

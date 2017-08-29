@@ -5,7 +5,7 @@ chai.use require 'sinon-chai'
 co = require 'co'
 _ = require 'lodash'
 pretend = require 'hubot-pretend'
-Path = require '../../lib/modules/path'
+Path = require '../../lib/modules/path.js'
 
 resMatch = (value) ->
   responseKeys = [ 'robot', 'message', 'match', 'envelope' ]
