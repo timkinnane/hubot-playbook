@@ -14,8 +14,8 @@ Context and branching for chatbot conversations (with Hubot).
 
 ## Important
 
-Playbook works best with a custom fork of hubot that adds promises to middleware
-- [hubot async](https://github.com/timkinnane/hubot-async) - which allows async
+Playbook works best with a custom fork of hubot that adds promises to middleware -
+[hubot async](https://github.com/timkinnane/hubot-async) - which allows async
 features. Hopefully in later versions of hubot, async will be supported and
 Playbook can be used with any version from then on.
 

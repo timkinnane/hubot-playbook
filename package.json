@@ -2,20 +2,24 @@
   "name": "hubot-playbook",
   "description": "Conversation branching library for Hubots.",
   "main": "lib/",
-  "files": ["lib/"],
-  "engines": {"node": "^4.4.x"},
+  "files": [
+    "lib/"
+  ],
+  "engines": {
+    "node": "^4.4.x"
+  },
   "scripts": {
     "dev": "run-s compile test",
     "dev:watch": "run-p compile:watch test:watch",
-    "build": "run-s test compile integration docs",
+    "build": "run-s compile test integration docs",
     "pretest": "npm run test:lint",
-    "test:lint": "coffeelint ./test --quiet",
-    "test": "cross-env NODE_ENV=test nyc mocha test/unit",
-    "test:watch": "onchange 'lib/**/*.js' 'test/**/*.coffee' -d  500 -- npm run test",
     "precompile": "npm run compile:lint && rimraf lib",
     "compile:lint": "standard src/**/*.js | snazzy",
     "compile": "babel src --source-maps --out-dir lib",
     "compile:watch": "onchange 'src/**/*.js' -- npm run compile",
+    "test:lint": "coffeelint ./test --quiet",
+    "test": "nyc mocha test/unit",
+    "test:watch": "onchange 'lib/**/*.js' 'test/**/*.coffee' -d  500 -- npm run test",
     "preintegration": "rimraf ./integration/node_modules",
     "integration": "cd integration && npm test",
     "predocs": "rimraf docs/*",
@@ -52,12 +56,13 @@
   },
   "homepage": "https://github.com/timkinnane/hubot-playbook#readme",
   "nyc": {
-    "require": ["babel-register"],
-    "sourceMap": false,
-    "instrument": false,
-    "reporter": ["lcovonly","text"],
-    "include": ["src"],
-    "exclude": ["src/utils"]
+    "reporter": [
+      "lcovonly",
+      "text"
+    ],
+    "exclude": [
+      "lib/utils"
+    ]
   },
   "dependencies": {
     "hooker": "^0.2.3",
@@ -95,6 +100,7 @@
     "sinon": "^2.2.0",
     "sinon-chai": "^2.10.0",
     "snazzy": "^7.0.0",
+    "source-map-support": "^0.4.16",
     "standard": "^10.0.3",
     "validate-commit-msg": "^2.12.0"
   }
