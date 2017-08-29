@@ -6,10 +6,10 @@ chai.use require 'chai-subset'
 co = require 'co'
 _ = require 'lodash'
 pretend = require 'hubot-pretend'
-improv = require '../../lib/modules/improv.js'
-Transcript = require '../../lib/modules/transcript.js'
-Director = require '../../lib/modules/director.js'
-Dialogue = require '../../lib/modules/dialogue.js'
+improv = require '../../lib/modules/improv'
+Transcript = require '../../lib/modules/transcript'
+Director = require '../../lib/modules/director'
+Dialogue = require '../../lib/modules/dialogue'
 
 describe 'Improv', ->
   context 'singleton', ->

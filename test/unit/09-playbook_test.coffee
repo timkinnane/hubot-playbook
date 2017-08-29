@@ -12,23 +12,23 @@ playbook = null
 describe 'Playbook - singleton', ->
 
   beforeEach ->
-    playbook = require '../../lib/index.js'
+    playbook = require '../../lib'
 
   it 'require returns instance', ->
     playbook.constructor.name.should.equal 'Playbook'
 
   it 'instance contains modules', ->
     playbook.should.containSubset
-      Dialogue: require '../../lib/modules/dialogue.js'
-      Scene: require '../../lib/modules/scene.js'
-      Director: require '../../lib/modules/director.js'
-      Transcript: require '../../lib/modules/transcript.js'
-      Outline: require '../../lib/modules/outline.js'
-      improv: require '../../lib/modules/improv.js'
+      Dialogue: require '../../lib/modules/dialogue'
+      Scene: require '../../lib/modules/scene'
+      Director: require '../../lib/modules/director'
+      Transcript: require '../../lib/modules/transcript'
+      Outline: require '../../lib/modules/outline'
+      improv: require '../../lib/modules/improv'
 
   it 're-require returns the same instance', ->
     playbook.foo = 'bar'
-    playbook = require '../../lib/index.js'
+    playbook = require '../../lib'
     playbook.foo.should.equal 'bar'
 
   describe '.reset', ->
@@ -56,7 +56,7 @@ describe 'Playbook - singleton', ->
 describe 'Playbook', ->
 
   before ->
-    playbook = require '../../lib/index.js'
+    playbook = require '../../lib'
 
   beforeEach ->
     pretend.start()

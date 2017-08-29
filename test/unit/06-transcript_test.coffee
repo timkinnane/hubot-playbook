@@ -6,12 +6,12 @@ chai.use require 'chai-subset'
 co = require 'co'
 _ = require 'lodash'
 pretend = require 'hubot-pretend'
-Transcript = require '../../lib/modules/transcript.js'
-Director = require '../../lib/modules/director.js'
-Scene = require '../../lib/modules/scene.js'
-Dialogue = require '../../lib/modules/dialogue.js'
-Base = require '../../lib/modules/base.js'
-Module = require '../../lib/utils/module.js'
+Transcript = require '../../lib/modules/transcript'
+Director = require '../../lib/modules/director'
+Scene = require '../../lib/modules/scene'
+Dialogue = require '../../lib/modules/dialogue'
+Base = require '../../lib/modules/base'
+Module = require '../../lib/utils/module'
 
 # helper clears existing listeners to check specific listeners are added
 removeListeners = (robot) -> robot.events.removeAllListeners.apply robot
