@@ -2,7 +2,7 @@
 
 <html>
 <head>
-  <title>base.js.md</title>
+  <title>README.md</title>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
   <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
   <link rel="stylesheet" media="all" href="public/stylesheets/normalize.css" />
@@ -14,11 +14,10 @@
 
       <div class="header">
         <nav role="menubar">
-          <!-- <a href="https://propertyux.github.io/hubot-pretend/index.html">Documentation</a>
-          <a href="https://propertyux.github.io/hubot-pretend/usage/00-setup_test.html">Usage</a>
-          <a href="https://propertyux.github.io/hubot-pretend/api/pretend.js.html">API</a>
-          <a href="https://propertyux.github.io/hubot-pretend/source/pretend.html">Source</a>
-          <a href="https://github.com/propertyux/hubot-pretend">GitHub</a> -->
+          <a href="index.html">Project</a>
+          <a href="base.js.html">Documentation</a>
+          <a href="tests.html">Tests</a>
+          <a href="https://github.com/timkinnane/hubot-playbook">Source</a>
         </nav>
 
         <div class="playbook-logo">
@@ -35,299 +34,72 @@
         </div>
 
         
-          <div class="toc">
-            <h3>Table of Contents</h3>
-            <ol>
-              
-                
-                <li>
-                  <a class="source" href="base.js.html">
-                    
-                    
-                    Base
-                  </a>
-                </li>
-              
-                
-                <li>
-                  <a class="source" href="dialogue.js.html">
-                    
-                    
-                    Dialogue
-                  </a>
-                </li>
-              
-                
-                <li>
-                  <a class="source" href="director.js.html">
-                    
-                    
-                    Director
-                  </a>
-                </li>
-              
-                
-                <li>
-                  <a class="source" href="improv.js.html">
-                    
-                    
-                    Improv
-                  </a>
-                </li>
-              
-                
-                <li>
-                  <a class="source" href="outline.js.html">
-                    
-                    
-                    Outline
-                  </a>
-                </li>
-              
-                
-                <li>
-                  <a class="source" href="path.js.html">
-                    
-                    
-                    Path
-                  </a>
-                </li>
-              
-                
-                <li>
-                  <a class="source" href="playbook.js.html">
-                    
-                    
-                    Playbook
-                  </a>
-                </li>
-              
-                
-                <li>
-                  <a class="source" href="scene.js.html">
-                    
-                    
-                    Scene
-                  </a>
-                </li>
-              
-                
-                <li>
-                  <a class="source" href="transcript.js.html">
-                    
-                    
-                    Transcript
-                  </a>
-                </li>
-              
-            </ol>
-          </div>
-        
 
         
           
           
-          <h1>Base</h1>
+          <h1>README</h1>
         
       </div>
 
       
         
-        <p><a name="Base"></a></p>
-<h2 id="base">Base</h2>
-<p>Base is the parent class of every Playbook module, providing consistent
-structure and behaviour.</p>
-<p>Every module built on Base can emit events, handle errors and call methods
-through the bot.</p>
-<p>Helpers are provided to accept options and merge with class defaults to
-configure the instance.</p>
-<p>All instances get a unique ID and can be given a named key so any interaction
-or event can be queried and recorded against its source.</p>
-<p><strong>Kind</strong>: global class  </p>
+        <p>Context and branching for chatbot conversations (with Hubot).</p>
+<p><a href="https://www.npmjs.com/package/hubot-playbook"><img src="https://img.shields.io/npm/v/hubot-playbook.svg?style=flat" alt="npm version"></a>
+<a href="https://travis-ci.org/timkinnane/hubot-playbook"><img src="https://travis-ci.org/timkinnane/hubot-playbook.svg?branch=master" alt="Build Status"></a>
+<a href="https://coveralls.io/github/timkinnane/hubot-playbook?branch=master"><img src="https://coveralls.io/repos/github/timkinnane/hubot-playbook/badge.svg?branch=master" alt="Coverage Status"></a>
+<a href="https://david-dm.org/timkinnane/hubot-playbook"><img src="https://david-dm.org/timkinnane/hubot-playbook/status.svg" alt="dependencies Status"></a>
+<a href="https://david-dm.org/timkinnane/hubot-playbook?type=dev"><img src="https://david-dm.org/timkinnane/hubot-playbook/dev-status.svg" alt="devDependencies Status"></a></p>
+<p><a href="https://github.com/semantic-release/semantic-release"><img src="https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg" alt="semantic-release"></a>
+<a href="http://commitizen.github.io/cz-cli/"><img src="https://img.shields.io/badge/commitizen-friendly-brightgreen.svg" alt="Commitizen friendly"></a>
+<a href="https://standardjs.com"><img src="https://img.shields.io/badge/code_style-standard-brightgreen.svg" alt="JavaScript Style Guide"></a>
+<a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+<a href="https://gitter.im/hubot-playbook/Lobby?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge"><img src="https://img.shields.io/gitter/room/nwjs/nw.js.svg" alt="Join the chat at https://gitter.im/hubot-playbook/Lobby"></a></p>
+<h2 id="important">Important</h2>
+<p>Playbook works best with a custom fork of hubot that adds promises to middleware</p>
 <ul>
-<li><a href="#Base">Base</a><ul>
-<li><a href="#new_Base_new">new Base(name, robot, [options], [key])</a></li>
-<li><a href="#Base+log">.log</a> ⇒ <code>Object</code></li>
-<li><a href="#Base+error">.error(err)</a></li>
-<li><a href="#Base+configure">.configure(options)</a> ⇒ <a href="#Base"><code>Base</code></a></li>
-<li><a href="#Base+defaults">.defaults(settings)</a> ⇒ <a href="#Base"><code>Base</code></a></li>
-<li><a href="#Base+emit">.emit(event, […args])</a></li>
-<li><a href="#Base+on">.on(event, callback)</a></li>
+<li><a href="https://github.com/timkinnane/hubot-async">hubot async</a> - which allows async
+features. Hopefully in later versions of hubot, async will be supported and
+Playbook can be used with any version from then on.</li>
 </ul>
+<h2 id="usage-development">Usage &amp; Development</h2>
+<ol>
+<li><p><a href="https://timkinnane.github.io/hubot-playbook">Read the docs</a> to get an understanding of Playbook modules and their methods.</p>
 </li>
+<li><p><a href="https://github.com/timkinnane/hubot-playbook/tree/master/integration/scripts">See basic examples</a> in the integration scripts, <a href="https://github.com/timkinnane/hubot-playbook/blob/master/integration/test/Usage_test.coffee">the outcomes of are tested here</a>.</p>
+</li>
+<li><p><a href="https://github.com/timkinnane/hubot-playbook/tree/master/test/unit/09-playbook_test.coffee">See advanced examples</a> in the main Playbook module tests here.</p>
+</li>
+</ol>
+<p>Tests are run with <a href="https://propertyux.github.io/hubot-pretend">Hubot Pretend</a></p>
+<h2 id="todo">TODO</h2>
+<h3 id="fixes">Fixes</h3>
+<ul>
+<li>Write tests for Outline module</li>
+<li>Replace hoooker package with middleware pattern for scene enter etc</li>
+<li>Queue dialogue.receive calls to ensure messages process synchronously</li>
+<li>Optional config for send middleware to throttle hearing consecutive res</li>
+<li>Display “thinking” ellipses (emit event for use by adapters)</li>
 </ul>
-<hr>
-<p><a name="new_Base_new"></a></p>
-<h3 id="new-base-name-robot-options-key-">new Base(name, robot, [options], [key])</h3>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>name</td>
-<td><code>string</code></td>
-<td>The module/class name</td>
-</tr>
-<tr>
-<td>robot</td>
-<td><code>Robot</code></td>
-<td>Robot instance</td>
-</tr>
-<tr>
-<td>[options]</td>
-<td><code>Object</code></td>
-<td>Key/val options for config</td>
-</tr>
-<tr>
-<td>[key]</td>
-<td><code>string</code></td>
-<td>Key name for instance (provided to events)</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Example</strong>  </p>
-<pre><code class="lang-js"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">RadModule</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Base</span> </span>{
-  <span class="hljs-keyword">constructor</span> (robot, args...) {
-    <span class="hljs-keyword">super</span>(<span class="hljs-string">'rad'</span>, robot, args...)
-  }
-}
-radOne = <span class="hljs-keyword">new</span> RadModule(robot, { <span class="hljs-attr">radness</span>: <span class="hljs-string">'high'</span> })
-radOne.id <span class="hljs-comment">// == 'rad_1'</span>
-radOne.config.radness <span class="hljs-comment">// == 'high'</span>
-</code></pre>
-<hr>
-<p><a name="Base+log"></a></p>
-<h3 id="base-log-code-object-code-">base.log ⇒ <code>Object</code></h3>
-<p>Getter allows robot to be replaced at runtime without losing route to log.</p>
-<p><strong>Kind</strong>: instance property of <a href="#Base"><code>Base</code></a><br><strong>Returns</strong>: <code>Object</code> - The robot’s log instance  </p>
-<hr>
-<p><a name="Base+error"></a></p>
-<h3 id="base-error-err-">base.error(err)</h3>
-<p>Generic error handling, logs and emits event before throwing.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Base"><code>Base</code></a>  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>err</td>
-<td><code>Error/string</code></td>
-<td>Error object or description of error</td>
-</tr>
-</tbody>
-</table>
-<hr>
-<p><a name="Base+configure"></a></p>
-<h3 id="base-configure-options-code-base-code-base-">base.configure(options) ⇒ <a href="#Base"><code>Base</code></a></h3>
-<p>Merge-in passed options, override any that exist in config.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Base"><code>Base</code></a><br><strong>Returns</strong>: <a href="#Base"><code>Base</code></a> - Self for chaining  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>options</td>
-<td><code>Object</code></td>
-<td>Key/vals to merge with existing config</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Example</strong>  </p>
-<pre><code class="lang-js">radOne.configure({ <span class="hljs-attr">radness</span>: <span class="hljs-string">'overload'</span> }) <span class="hljs-comment">// overwrites initial config</span>
-</code></pre>
-<hr>
-<p><a name="Base+defaults"></a></p>
-<h3 id="base-defaults-settings-code-base-code-base-">base.defaults(settings) ⇒ <a href="#Base"><code>Base</code></a></h3>
-<p>Fill any missing settings without overriding any existing in config.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Base"><code>Base</code></a><br><strong>Returns</strong>: <a href="#Base"><code>Base</code></a> - Self for chaining  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>settings</td>
-<td><code>Object</code></td>
-<td>Key/vals to use as config fallbacks</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Example</strong>  </p>
-<pre><code class="lang-js">radOne.defaults({ <span class="hljs-attr">radness</span>: <span class="hljs-string">'meh'</span> }) <span class="hljs-comment">// applies unless configured otherwise</span>
-</code></pre>
-<hr>
-<p><a name="Base+emit"></a></p>
-<h3 id="base-emit-event-args-">base.emit(event, […args])</h3>
-<p>Emit events using robot’s event emmitter, allows listening from any module.</p>
-<p>Prepends the instance to event args, so listens can be implicitly targeted.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Base"><code>Base</code></a>  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>event</td>
-<td><code>string</code></td>
-<td>Name of event</td>
-</tr>
-<tr>
-<td>[…args]</td>
-<td><code>*</code></td>
-<td>Arguments passed to event</td>
-</tr>
-</tbody>
-</table>
-<hr>
-<p><a name="Base+on"></a></p>
-<h3 id="base-on-event-callback-">base.on(event, callback)</h3>
-<p>Fire callback on robot events if event ID arguement matches this instance.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Base"><code>Base</code></a>  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>event</td>
-<td><code>string</code></td>
-<td>Name of event</td>
-</tr>
-<tr>
-<td>callback</td>
-<td><code>function</code></td>
-<td>Function to call</td>
-</tr>
-</tbody>
-</table>
-<hr>
+<h3 id="docs">Docs</h3>
+<ul>
+<li>Update integration tests to with unique listeners so all can be loaded at once</li>
+<li>Write usage examples as integration tests, with inline doc comments</li>
+<li>Generate usage guide docs from integration tests with annotated source</li>
+<li>Example setup steps for a Playbook bot without development requirements</li>
+<li>Add npm script to start a hubot and interact with usage examples in shell</li>
+<li>Contributor docs with npm script examples and commitizen ettiquite</li>
+<li>Make interactive demo bots, illustrating features and data inspection</li>
+</ul>
+<h3 id="features">Features</h3>
+<ul>
+<li>Add timing module to rate limit and schedule sends</li>
+<li>Integrate enter/path/branch listeners with Conditioner for semantic matchers</li>
+<li>Add integration tests with external-scripts and adapters (e.g. shell/irc)</li>
+<li>Helpers for adapter UI payloads, for buttons and cards in messenger etc</li>
+<li>NLP for path matching on intent params with rasa.ai</li>
+<li>Translate sent strings and match terms with i18n-node</li>
+</ul>
 
         
       

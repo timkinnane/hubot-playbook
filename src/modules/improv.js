@@ -1,7 +1,7 @@
 'use strict'
 
 import _ from 'lodash'
-import Base from './Base'
+import Base from './base'
 
 // init vars
 let instance, context, extensions
@@ -244,5 +244,5 @@ export default {
     if (extensions == null) extensions = []
     return extensions
   },
-  get config () { return instance.config }
+  get config () { if (instance) return instance.config }
 }

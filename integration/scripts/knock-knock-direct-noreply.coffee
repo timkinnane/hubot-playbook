@@ -1,13 +1,13 @@
 # Description:
 #   Tell Hubot a knock knock joke - it is guaranteed to laugh
-#   Uses inline path declarations, with branches separate (is a little cleaner)
+#   Uses inline declarations, single branch path with prompt (very compact)
 #
 # Dependencies:
 #   hubot-playbook
 #
 # Configuration:
 #   Playbook direct scene responds to a single user and room
-#   sendReplies: ture (false by default) - Hubot will reply to the user
+#   sendReplies: false by default - Hubot will send to room not reply to user
 #
 # Commands:
 #   knock - it will say "Who's there", then "{your answer} who?", then "lol"
@@ -19,8 +19,7 @@
 module.exports = (robot) ->
   require '../../lib'
   .use robot
-  .sceneHear /knock/, scope: 'direct', sendReplies: true, (res, dlg) ->
-    dlg.addPath "Who's there?"
-    dlg.addBranch /.*/, (res) ->
-      dlg.addPath "#{ res.match[0] } who?"
-      dlg.addBranch /.*/, "lol"
+  .sceneHear /knock/, scope: 'direct', (res) ->
+    res.dialogue.addPath "Who's there?", [ /.*/, (res) ->
+      res.dialogue.addPath "#{ res.match[0] } who?", [ /.*/, "lol" ]
+    ]

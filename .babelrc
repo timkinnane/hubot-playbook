@@ -1,5 +1,10 @@
 {
   "presets": ["es2015"],
   "plugins": ["add-module-exports"],
-  "retainLines": true
+  "retainLines": true,
+  "env": {
+    "test": {
+      "plugins": ["istanbul"]
+    }
+  }
 }

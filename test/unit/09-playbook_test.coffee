@@ -12,23 +12,23 @@ playbook = null
 describe 'Playbook - singleton', ->
 
   beforeEach ->
-    playbook = require '../../lib'
+    playbook = require '../../src'
 
   it 'require returns instance', ->
     playbook.constructor.name.should.equal 'Playbook'
 
   it 'instance contains modules', ->
     playbook.should.containSubset
-      Dialogue: require '../../lib/modules/dialogue'
-      Scene: require '../../lib/modules/scene'
-      Director: require '../../lib/modules/director'
-      Transcript: require '../../lib/modules/transcript'
-      Outline: require '../../lib/modules/outline'
-      improv: require '../../lib/modules/improv'
+      Dialogue: require '../../src/modules/dialogue'
+      Scene: require '../../src/modules/scene'
+      Director: require '../../src/modules/director'
+      Transcript: require '../../src/modules/transcript'
+      Outline: require '../../src/modules/outline'
+      improv: require '../../src/modules/improv'
 
   it 're-require returns the same instance', ->
     playbook.foo = 'bar'
-    playbook = require '../../lib'
+    playbook = require '../../src'
     playbook.foo.should.equal 'bar'
 
   describe '.reset', ->
@@ -56,13 +56,11 @@ describe 'Playbook - singleton', ->
 describe 'Playbook', ->
 
   before ->
-    playbook = require '../../lib'
+    playbook = require '../../src'
 
   beforeEach ->
     pretend.start()
     playbook.use pretend.robot
-    pretend.robot.hear /test/, -> # listen to tests
-    pretend.user('tester', room: 'testing').send 'test' # start with res
 
   afterEach ->
     pretend.shutdown()
@@ -71,11 +69,11 @@ describe 'Playbook', ->
   describe 'dialogue', ->
 
     it 'creates Dialogue instance', ->
-      playbook.dialogue pretend.lastListen()
+      playbook.dialogue pretend.response 'tester', 'test'
       .should.be.instanceof playbook.Dialogue
 
     it 'stores it in the dialogues array', ->
-      dialogue = playbook.dialogue pretend.lastListen()
+      dialogue = playbook.dialogue pretend.response 'tester', 'test'
       playbook.dialogues[0].should.eql dialogue
 
   describe 'scene', ->
@@ -93,27 +91,29 @@ describe 'Playbook', ->
     context 'without type or args (other than response)', ->
 
       it 'makes scene with default user type', ->
-        playbook.sceneEnter pretend.lastListen()
+        playbook.sceneEnter pretend.response 'tester', 'test', 'testing'
         playbook.scenes[0].should.be.instanceof playbook.Scene
 
       it 'returns a dialogue', ->
-        playbook.sceneEnter pretend.lastListen()
+        playbook.sceneEnter pretend.response 'tester', 'test'
         .should.be.instanceof playbook.Dialogue
 
       it 'enters scene, engaging user (stores against id)', ->
-        dialogue = playbook.sceneEnter pretend.lastListen()
+        dialogue = playbook.sceneEnter pretend.response 'tester', 'test'
         playbook.scenes[0].engaged[pretend.users.tester.id].should.eql dialogue
 
     context 'with type and options args', ->
 
       it 'used the given room type', ->
-        playbook.sceneEnter pretend.lastListen(),
+        res = pretend.response 'tester', 'test', 'testing'
+        playbook.sceneEnter res,
           scope: 'room'
           sendReplies: false
         playbook.scenes[0].config.scope.should.equal 'room'
 
       it 'passed the scene options to dialogue', -> co ->
-        dialogue = playbook.sceneEnter pretend.lastListen(),
+        res = pretend.response 'tester', 'test', 'testing'
+        dialogue = playbook.sceneEnter res,
           scope: 'room'
           sendReplies: false
         dialogue.config.sendReplies.should.equal false
@@ -210,9 +210,10 @@ describe 'Playbook', ->
       sinon.spy playbook, 'transcript'
       pretend.user('tester').send 'test'
       .then ->
+        res = pretend.response 'tester', 'test'
         director = playbook.director()
         scene = playbook.scene()
-        dialogue = playbook.dialogue pretend.lastListen()
+        dialogue = playbook.dialogue res
         clock = sinon.useFakeTimers()
         config =
           events: ['enter', 'send']
@@ -222,8 +223,8 @@ describe 'Playbook', ->
         playbook.transcribe director, config
         playbook.transcribe scene, config
         playbook.transcribe dialogue, config
-        director.process pretend.lastListen()
-        scene.enter pretend.lastListen()
+        director.process res
+        scene.enter res
         dialogue.send 'test'
 
     it 'creates transcripts for each module', ->
@@ -255,52 +256,72 @@ describe 'Playbook', ->
 
       beforeEach ->
         pretend.start()
-        pretend.robot.hear /test/, -> # new bot, new listener
         playbook = playbook.reset()
         playbook.use pretend.robot, false
-        pretend.user('tester').send 'test'
 
       it 'does not parse messages', -> co ->
-        yield pretend.lastListen().send 'hello ${this.user.name}'
+        res = pretend.response 'tester', 'test'
+        yield res.send 'hello ${this.user.name}'
         pretend.messages.pop().should.eql [ 'hubot', 'hello ${this.user.name}' ]
 
       it 'parses after called', -> co ->
+        res = pretend.response 'tester', 'test'
         playbook.improvise()
-        yield pretend.lastListen().send 'hello ${ this.user.name }'
+        yield res.send 'hello ${ this.user.name }'
         pretend.messages.pop().should.eql [ 'hubot', 'hello tester' ]
 
     context 'using custom data transforms', ->
 
       it 'parses messages with extended context', -> co ->
+        res = pretend.response 'tester', 'test'
         playbook.improv.extend (data) ->
           data.user.name = data.user.name.toUpperCase()
           return data
-        yield pretend.lastListen().send 'hello ${ this.user.name }'
-        pretend.messages.pop().should.eql [ 'testing', 'hubot', 'hello TESTER' ]
+        yield res.send 'hello ${ this.user.name }'
+        pretend.messages.pop().should.eql [ 'hubot', 'hello TESTER' ]
 
     context 'extended using transcript reocrds', ->
 
-      # TODO fix this one
+      it 'merge the recorded answers with attribute tags', -> co ->
+        dialogue = playbook.sceneEnter res = pretend.response 'tester', 'test'
+        transcript = playbook.transcribe dialogue, events: ['match']
+        playbook.improv.extend (data) ->
+          userId = data.user.id
+          userColors = transcript.findKeyMatches 'fav-color', data.user.id, 0
+          user: favColor: userColors.pop() if userColors.length
+        # ...
+        yield dialogue.addPath 'what is your favourite colour?', [
+          [ /.*/, 'nice! mine is ${ this.user.favColor } too!' ]
+        ], 'fav-color'
+        # ...
+        yield pretend.user('tester').send 'orange'
+        pretend.messages.should.eql [
+          [ 'hubot', 'what is your favourite colour?' ],
+          [ 'tester', 'orange' ],
+          [ 'hubot', 'nice! mine is orange too!' ]
+        ]
 
-      # it 'merge the recorded answers with attribute tags', -> co ->
-      #   playbook.improv.extend (data) ->
-      #     console.log data.user.id
-      #     console.log transcript.records
-      #     console.log transcript.findKeyMatches 'fav-color', data.user.id, 0
-      #     userId = data.user.id
-      #     userColors = transcript.findKeyMatches 'fav-color', userId, 0
-      #     user: favColor: userColors.pop() if userColors.length
-      #   dialogue = playbook.sceneEnter pretend.lastListen()
-      #   transcript = playbook.transcribe dialogue, events: 'match'
-      #   yield dialogue.addPath 'what is your favourite colour?', [
-      #     [ /.*/, 'nice!' ]
-      #   ], 'fav-color'
-      #   yield pretend.user('tester').send 'orange'
-      #   yield pretend.lastReceive().send 'mine is ${this.user.favColor} too!'
-      #   pretend.messages.should.eql [
-      #     [ 'testing', 'tester', 'test' ],
-      #     [ 'testing', 'hubot', 'what is your favourite colour?' ],
-      #     [ 'testing', 'tester', 'orange' ],
-      #     [ 'testing', 'hubot', 'nice!' ],
-      #     [ 'testing', 'hubot', 'mine is orange too!' ]
-      #   ]
+  describe '.shutdown', ->
+
+    it 'calls .exitAll on scenes', ->
+      scene = playbook.scene()
+      exit = sinon.spy scene, 'exitAll'
+      playbook.shutdown()
+      exit.should.have.calledOnce
+
+    it 'calls .end on dialogues', ->
+      dialogue = playbook.dialogue pretend.response 'tester', 'test'
+      end = sinon.spy dialogue, 'end'
+      playbook.shutdown()
+      end.should.have.calledOnce
+
+  describe '.reset', ->
+
+    it 'shuts down', ->
+      sinon.spy playbook, 'shutdown'
+      playbook.reset()
+      playbook.shutdown.should.have.calledOnce
+
+    it 'returns re-initialised instance', ->
+      playbook = playbook.reset()
+      should.not.exist playbook.robot

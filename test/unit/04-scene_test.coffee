@@ -5,8 +5,8 @@ chai.use require 'sinon-chai'
 co = require 'co'
 _ = require 'lodash'
 pretend = require 'hubot-pretend'
-Dialogue = require '../../lib/modules/dialogue'
-Scene = require '../../lib/modules/scene'
+Dialogue = require '../../src/modules/dialogue'
+Scene = require '../../src/modules/scene'
 
 describe 'Scene', ->
 

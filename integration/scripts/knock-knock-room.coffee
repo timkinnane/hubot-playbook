@@ -14,14 +14,18 @@
 # Author:
 #   Tim Kinnane
 #
-{playbook} = require '../../lib'
+playbook = require '../../lib'
 
 module.exports = (robot) ->
 
   steps =
-    who1: (res, dlg) -> dlg.addPath "Who's there?", [/.*/, steps.who2]
-    who2: (res, dlg) -> dlg.addPath "#{ res.match[0] } who?", [/.*/, steps.lol]
-    lol: (res, dlg) -> dlg.send "lol"
+    who1: (res) -> res.dialogue.addPath "Who's there?", [
+      [ /.*/, steps.who2 ]
+    ]
+    who2: (res) -> res.dialogue.addPath "#{ res.match[0] } who?", [
+      [ /.*/, steps.lol ]
+    ]
+    lol: (res) -> res.dialogue.send "lol"
 
   playbook.use robot
   .sceneHear /knock/, scope: 'room', steps.who1

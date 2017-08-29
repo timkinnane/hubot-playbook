@@ -5,9 +5,9 @@ chai.use require 'sinon-chai'
 _ = require 'lodash'
 co = require 'co'
 pretend = require 'hubot-pretend'
-Dialogue = require '../../lib/modules/dialogue'
-Scene = require '../../lib/modules/scene'
-Director = require '../../lib/modules/director'
+Dialogue = require '../../src/modules/dialogue'
+Scene = require '../../src/modules/scene'
+Director = require '../../src/modules/director'
 
 describe 'Director', ->
 

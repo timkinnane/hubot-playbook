@@ -5,8 +5,8 @@ chai.use require 'sinon-chai'
 
 _ = require 'lodash'
 pretend = require 'hubot-pretend'
-Base = require '../../lib/modules/base'
-Module = require '../../lib/utils/module'
+Base = require '../../src/modules/base'
+Module = require '../../src/utils/module'
 
 describe 'Base', ->
 
@@ -46,7 +46,7 @@ describe 'Base', ->
         try @base = new Base 'newclass'
 
       it 'runs error handler', ->
-        Base::error.should.have.calledOnce
+        Base.prototype.error.should.have.calledOnce
 
     context 'without name', ->
 
@@ -54,7 +54,7 @@ describe 'Base', ->
         try @base = new Base()
 
       it 'runs error handler', ->
-        Base::error.should.have.calledOnce
+        Base.prototype.error.should.have.calledOnce
 
   describe '.error', ->
 
@@ -99,7 +99,7 @@ describe 'Base', ->
         try @module.error 'Throw me an error'
 
       it 'calls inherited method', ->
-        Base::error.should.have.calledWith 'Throw me an error'
+        Base.prototype.error.should.have.calledWith 'Throw me an error'
 
       it 'threw', ->
         @module.error.should.have.threw

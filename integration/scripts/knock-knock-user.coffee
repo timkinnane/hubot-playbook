@@ -14,15 +14,15 @@
 # Author:
 #   Tim Kinnane
 #
-{playbook} = require '../../lib'
+playbook = require '../../lib'
 
 module.exports = (robot) ->
 
   playbook.use robot
-  .sceneHear /knock/, scope: 'user', (res, dlg) ->
-    dlg.addPath "Who's there?", [
-      /.*/, (res, dlg) ->
-        dlg.addPath "#{ res.match[0] } who?", [
+  .sceneHear /knock/, scope: 'user', (res) ->
+    res.dialogue.addPath "Who's there?", [
+      /.*/, (res) ->
+        res.dialogue.addPath "#{ res.match[0] } who?", [
           /.*/, "lol"
         ]
     ]

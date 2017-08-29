@@ -141,7 +141,7 @@ class Path extends Base {
    * robot.hear(/door/, (res) => choice.match(res))
   */
   match (res) {
-    let event, handler, handled
+    let handler, handled
     const catchHandler = this.catchHandler()
     const matchedBranch = _.find(this.branches, function (branch) {
       res.match = res.message.text.match(branch.regex)
@@ -150,15 +150,14 @@ class Path extends Base {
     if (matchedBranch) handler = matchedBranch.handler
     if (handler) {
       this.closed = true
-      event = 'match'
+      this.emit('match', res)
       handled = handler(res)
     } else if (catchHandler) {
-      event = 'catch'
+      this.emit('catch', res)
       handled = catchHandler(res)
     } else {
-      event = 'mismatch'
+      this.emit('mismatch', res)
     }
-    this.emit(event, res, handled)
     return Promise.resolve(handled)
   }
 }

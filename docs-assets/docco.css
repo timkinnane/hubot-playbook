@@ -11,7 +11,6 @@ body {
 
 nav {
   display: block;
-  margin: 0 auto;
 }
 nav a {
   display: inline-block;
@@ -20,12 +19,13 @@ nav a {
   background: white;
   border: 1px solid #A473FF;
   border-radius: 4px;
-  padding: 0.4em 0.7em;
-  color: #373643;
+  padding: 0.1em 0.5em;
+  color: #A473FF;
   letter-spacing: 0.5pt;
+  font-size: 0.8rem;
 }
 nav a:hover {
-  background: #373643;
+  background: #A473FF;
   color: white;
 }
 

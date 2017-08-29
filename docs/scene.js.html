@@ -2,7 +2,7 @@
 
 <html>
 <head>
-  <title>outline.js.md</title>
+  <title>scene.js.md</title>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
   <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
   <link rel="stylesheet" media="all" href="public/stylesheets/normalize.css" />
@@ -14,11 +14,10 @@
 
       <div class="header">
         <nav role="menubar">
-          <!-- <a href="https://propertyux.github.io/hubot-pretend/index.html">Documentation</a>
-          <a href="https://propertyux.github.io/hubot-pretend/usage/00-setup_test.html">Usage</a>
-          <a href="https://propertyux.github.io/hubot-pretend/api/pretend.js.html">API</a>
-          <a href="https://propertyux.github.io/hubot-pretend/source/pretend.html">Source</a>
-          <a href="https://github.com/propertyux/hubot-pretend">GitHub</a> -->
+          <a href="index.html">Project</a>
+          <a href="base.js.html">Documentation</a>
+          <a href="tests.html">Tests</a>
+          <a href="https://github.com/timkinnane/hubot-playbook">Source</a>
         </nav>
 
         <div class="playbook-logo">
@@ -127,42 +126,44 @@
         
           
           
-          <h1>Outline</h1>
+          <h1>Scene</h1>
         
       </div>
 
       
         
-        <p><a name="Outline"></a></p>
-<h2 id="outline">Outline</h2>
-<p>Outlines are a conversation modelling schema / handler, with collections of
-attributes for setting up scenes, dialogues, paths and directors, for
-interactions defined as bits.</p>
-<p>Define a key and condition to execute each bit, either consecutively off a
-prior bit, or with a listen attribute to become effectively a global entry
-point to a scene.</p>
-<p>A subsequent bit can even lead back to it’s own parent or any other bit,
-creating a mesh of possible conversational pathways.</p>
-<p><strong>Kind</strong>: global class<br><strong>Todo</strong></p>
+        <p><a name="Scene"></a></p>
+<h2 id="scene">Scene</h2>
+<p>Scenes conduct participation in dialogue. They use listeners to enter an
+audience into a new dialogue with the bot.</p>
+<p>Once entered into a scene, the audience is engaged and isolated from global
+listeners. The bot will only respond to branches defined by dialogue in that
+scene. The scope of audience can be:</p>
 <ul>
-<li>[ ] Add bit attribute for callback function as a key of extended response</li>
-<li>[ ] Add bit attribute for director whitelist/blacklist names and/or auth function</li>
+<li>user - engage the user (in any room)</li>
+<li>room - engage the whole room</li>
+<li>direct - engage the user in that room only</li>
 </ul>
+<p><strong>Kind</strong>: global class  </p>
 <ul>
-<li><a href="#Outline">Outline</a><ul>
-<li><a href="#new_Outline_new">new Outline(bits, [options], [key])</a></li>
-<li><a href="#Outline+doBit">.doBit(res, key)</a></li>
-<li><a href="#Outline+setupScene">.setupScene(bit)</a></li>
-<li><a href="#Outline+getSceneArgs">.getSceneArgs()</a> ⇒ <code>array</code></li>
-<li><a href="#Outline+setupDialogue">.setupDialogue(res)</a></li>
-<li><a href="#Outline+setupPath">.setupPath(res)</a></li>
-<li><a href="#Outline+bitCondition">.bitCondition(key)</a> ⇒ <code>RegExp</code></li>
+<li><a href="#Scene">Scene</a><ul>
+<li><a href="#new_Scene_new">new Scene(robot, [options], [key])</a></li>
+<li><a href="#Scene+middleware">.middleware(context, next, done)</a></li>
+<li><a href="#Scene+listen">.listen(type, regex, callback)</a></li>
+<li><a href="#Scene+hear">.hear()</a></li>
+<li><a href="#Scene+respond">.respond()</a></li>
+<li><a href="#Scene+whoSpeaks">.whoSpeaks(res)</a> ⇒ <code>string</code></li>
+<li><a href="#Scene+enter">.enter(res, [options], …args)</a> ⇒ <code>Dialogue</code></li>
+<li><a href="#Scene+exit">.exit(res, [status])</a> ⇒ <code>boolean</code></li>
+<li><a href="#Scene+exitAll">.exitAll()</a></li>
+<li><a href="#Scene+getDialogue">.getDialogue(participants)</a> ⇒ <code>Dialogue</code></li>
+<li><a href="#Scene+inDialogue">.inDialogue(participants)</a> ⇒ <code>boolean</code></li>
 </ul>
 </li>
 </ul>
 <hr>
-<p><a name="new_Outline_new"></a></p>
-<h3 id="new-outline-bits-options-key-">new Outline(bits, [options], [key])</h3>
+<p><a name="new_Scene_new"></a></p>
+<h3 id="new-scene-robot-options-key-">new Scene(robot, [options], [key])</h3>
 <table>
 <thead>
 <tr>
@@ -173,54 +174,26 @@ creating a mesh of possible conversational pathways.</p>
 </thead>
 <tbody>
 <tr>
-<td>bits</td>
-<td><code>Array.&lt;string/Object&gt;</code></td>
-<td>Attributes to setup bits (accepts YAML file path)</td>
-</tr>
-<tr>
-<td>bits[].send</td>
-<td><code>array</code></td>
-<td>String/s to send when doing bit (minimum requirement)</td>
-</tr>
-<tr>
-<td>[bits[].catch]</td>
-<td><code>string</code></td>
-<td>To send if response unmatched by listeners</td>
-</tr>
-<tr>
-<td>[bits[].condition]</td>
-<td><code>string</code></td>
-<td>Converted to regex for listener to trigger bit</td>
-</tr>
-<tr>
-<td>[bits[].listen]</td>
-<td><code>string</code></td>
-<td>Type of listener (hear/respond) for scene entry bit</td>
-</tr>
-<tr>
-<td>[bits[].scene]</td>
-<td><code>string</code></td>
-<td>Scope for the scene (only used if it has a listen type)</td>
-</tr>
-<tr>
-<td>[bits[].key]</td>
-<td><code>string</code></td>
-<td>Key for scene and/or dialogue running the bit</td>
-</tr>
-<tr>
-<td>[bits[].options]</td>
-<td><code>Object</code></td>
-<td>Key/val options for scene and/or dialogue config</td>
-</tr>
-<tr>
-<td>[bits[].next]</td>
-<td><code>array</code></td>
-<td>Key/s (strings) for consequitive bits</td>
+<td>robot</td>
+<td><code>Robot</code></td>
+<td>Hubot Robot instance</td>
 </tr>
 <tr>
 <td>[options]</td>
 <td><code>Object</code></td>
-<td>Key/val options for outline config</td>
+<td>Key/val options for config</td>
+</tr>
+<tr>
+<td>[options.scope]</td>
+<td><code>string</code></td>
+<td>How to address participants: user(default)</td>
+<td>room</td>
+<td>direct</td>
+</tr>
+<tr>
+<td>[options.sendReplies]</td>
+<td><code>boolean</code></td>
+<td>Toggle replying/sending (prefix message with “@user”)</td>
 </tr>
 <tr>
 <td>[key]</td>
@@ -229,13 +202,14 @@ creating a mesh of possible conversational pathways.</p>
 </tr>
 </tbody>
 </table>
+<p><strong>Example</strong>  </p>
+<pre><code class="lang-js"><span class="hljs-keyword">let</span> roomScene = <span class="hljs-keyword">new</span> Scene(robot, { <span class="hljs-attr">scope</span>: <span class="hljs-string">'room'</span> })
+</code></pre>
 <hr>
-<p><a name="Outline+doBit"></a></p>
-<h3 id="outline-dobit-res-key-">outline.doBit(res, key)</h3>
-<p>Send messages and setup any following listeners for a bit.</p>
-<p>Called in an open dialogue, as a callback on entering the scene or
-continuing from a prior bit. Adds the bit as a property of the response.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Outline"><code>Outline</code></a>  </p>
+<p><a name="Scene+middleware"></a></p>
+<h3 id="scene-middleware-context-next-done-">scene.middleware(context, next, done)</h3>
+<p>Process incoming messages, re-route to dialogue for engaged participants.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a>  </p>
 <table>
 <thead>
 <tr>
@@ -246,62 +220,77 @@ continuing from a prior bit. Adds the bit as a property of the response.</p>
 </thead>
 <tbody>
 <tr>
-<td>res</td>
-<td><code>Response</code></td>
-<td>Hubot Response object</td>
-</tr>
-<tr>
-<td>key</td>
-<td><code>string</code></td>
-<td>The key for a loaded bit</td>
-</tr>
-</tbody>
-</table>
-<hr>
-<p><a name="Outline+setupScene"></a></p>
-<h3 id="outline-setupscene-bit-">outline.setupScene(bit)</h3>
-<p>Prepare the arguments required to add listener for a scene entering bit.</p>
-<p>Only applicable to bits with a <code>listen</code> attribute (hear or respond).
-Subsequent bits will play out within the same scene so their listen type is
-irrelevant because all responses from an engaged audience will be routed
-through the current dialogue.</p>
-<p>Bits only require a <code>.listen</code> and <code>.condition</code> property to setup a scene
-listener and will use defaults if <code>.scope</code> and <code>.options</code> are null.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Outline"><code>Outline</code></a>  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>bit</td>
+<td>context</td>
 <td><code>Object</code></td>
-<td>Attributes to setup scene for entry to bit</td>
+<td>Passed through the middleware stack, with res</td>
+</tr>
+<tr>
+<td>next</td>
+<td><code>function</code></td>
+<td>Called when all middleware is complete</td>
+</tr>
+<tr>
+<td>done</td>
+<td><code>function</code></td>
+<td>Initial (final) completion callback</td>
 </tr>
 </tbody>
 </table>
 <hr>
-<p><a name="Outline+getSceneArgs"></a></p>
-<h3 id="outline-getsceneargs-code-array-code-">outline.getSceneArgs() ⇒ <code>array</code></h3>
-<p>Get arguments to pass into scene listeners for <em>global</em> bits.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Outline"><code>Outline</code></a><br><strong>Returns</strong>: <code>array</code> - Items contain required arguments (call with spread syntax)<br><strong>Example</strong> <em>(The hard way)</em>  </p>
-<pre><code class="lang-js"><span class="hljs-keyword">const</span> scene = <span class="hljs-keyword">new</span> Scene(robot)
-<span class="hljs-keyword">const</span> outline = <span class="hljs-keyword">new</span> Outline(<span class="hljs-string">'./conversation.yml'</span>)
-outline.getSceneArgs().map(<span class="hljs-function">(<span class="hljs-params">args</span>) =&gt;</span> scene.listen(...args)
-</code></pre>
-<p><strong>Example</strong> <em>(The easy way)</em>  </p>
-<pre><code class="lang-js"><span class="hljs-keyword">const</span> pb = <span class="hljs-keyword">new</span> Playbook(robot).outline(<span class="hljs-string">'./conversation.yml'</span>)
-<span class="hljs-comment">// ^ playbook helper creates outline and sets up scenes</span>
+<p><a name="Scene+listen"></a></p>
+<h3 id="scene-listen-type-regex-callback-">scene.listen(type, regex, callback)</h3>
+<p>Add listener that enters the audience into the scene with callback, to then
+add dialogue branches or process response as required.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a>  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>type</td>
+<td><code>String</code></td>
+<td>The listener type: hear</td>
+<td>respond</td>
+</tr>
+<tr>
+<td>regex</td>
+<td><code>RegExp</code></td>
+<td>Matcher for listener</td>
+</tr>
+<tr>
+<td>callback</td>
+<td><code>function</code></td>
+<td>Called when matched, with Response and Dialogue as arguments</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example</strong>  </p>
+<pre><code class="lang-js"><span class="hljs-keyword">let</span> scene = <span class="hljs-keyword">new</span> Scene(robot, { <span class="hljs-attr">scope</span>: <span class="hljs-string">'user'</span> })
+scene.listen(<span class="hljs-string">'respond'</span>, /hello/, (res) =&gt; {
+  res.reply(<span class="hljs-string">'you are now in a scene'</span>)
+  <span class="hljs-comment">// add dialogue branches now...</span>
+})
 </code></pre>
 <hr>
-<p><a name="Outline+setupDialogue"></a></p>
-<h3 id="outline-setupdialogue-res-">outline.setupDialogue(res)</h3>
-<p>Dialogue is already open from the scene being triggered.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Outline"><code>Outline</code></a>  </p>
+<p><a name="Scene+hear"></a></p>
+<h3 id="scene-hear-">scene.hear()</h3>
+<p>Alias of Scene.listen with <code>hear</code> as specified type.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a>  </p>
+<hr>
+<p><a name="Scene+respond"></a></p>
+<h3 id="scene-respond-">scene.respond()</h3>
+<p>Alias of Scene.listen with <code>respond</code> as specified type.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a>  </p>
+<hr>
+<p><a name="Scene+whoSpeaks"></a></p>
+<h3 id="scene-whospeaks-res-code-string-code-">scene.whoSpeaks(res) ⇒ <code>string</code></h3>
+<p>Identify the source of a message relative to the scene scope.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a><br><strong>Returns</strong>: <code>string</code> - ID of room, user or composite  </p>
 <table>
 <thead>
 <tr>
@@ -319,10 +308,15 @@ outline.getSceneArgs().map(<span class="hljs-function">(<span class="hljs-params
 </tbody>
 </table>
 <hr>
-<p><a name="Outline+setupPath"></a></p>
-<h3 id="outline-setuppath-res-">outline.setupPath(res)</h3>
-<p>Add path options and branches to</p>
-<p><strong>Kind</strong>: instance method of <a href="#Outline"><code>Outline</code></a>  </p>
+<p><a name="Scene+enter"></a></p>
+<h3 id="scene-enter-res-options-args-code-dialogue-code-">scene.enter(res, [options], …args) ⇒ <code>Dialogue</code></h3>
+<p>Engage the participants in dialogue. A new Dialogue instance is created and
+all further messages from the audience in this scene’s scope will be passed
+to that dialogue, untill they are exited from the scene.</p>
+<p>Would usually be invoked by a listener, using the Scene <code>.listen</code>, <code>.hear</code>
+or <code>respond</code> methods, but could be called directly to force audience into
+a scene unprompted.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a><br><strong>Returns</strong>: <code>Dialogue</code> - The started dialogue  </p>
 <table>
 <thead>
 <tr>
@@ -337,29 +331,91 @@ outline.getSceneArgs().map(<span class="hljs-function">(<span class="hljs-params
 <td><code>Response</code></td>
 <td>Hubot Response object</td>
 </tr>
+<tr>
+<td>[options]</td>
+<td><code>Object</code></td>
+<td>Dialogue options merged with scene config</td>
+</tr>
+<tr>
+<td>…args</td>
+<td><code>*</code></td>
+<td>Any additional args for Dialogue constructor</td>
+</tr>
 </tbody>
 </table>
 <hr>
-<p><a name="Outline+bitCondition"></a></p>
-<h3 id="outline-bitcondition-key-code-regexp-code-">outline.bitCondition(key) ⇒ <code>RegExp</code></h3>
-<p>Convert a bit’s condition attribute into a regex.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Outline"><code>Outline</code></a><br><strong>Returns</strong>: <code>RegExp</code> - The pattern for the bit’s listener<br><strong>Todo</strong></p>
-<ul>
-<li>[ ] Use <code>conditioner-regex</code> to convert array of conditions to pattern</li>
-</ul>
+<p><a name="Scene+exit"></a></p>
+<h3 id="scene-exit-res-status-code-boolean-code-">scene.exit(res, [status]) ⇒ <code>boolean</code></h3>
+<p>Disengage participants from dialogue e.g. in case of timeout or error.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a><br><strong>Returns</strong>: <code>boolean</code> - Exit success (may fail if already disengaged)  </p>
 <table>
 <thead>
 <tr>
 <th>Param</th>
 <th>Type</th>
+<th>Default</th>
 <th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>key</td>
+<td>res</td>
+<td><code>Response</code></td>
+<td></td>
+<td>Hubot Response object</td>
+</tr>
+<tr>
+<td>[status]</td>
 <td><code>string</code></td>
-<td>The key for a loaded bit</td>
+<td><code>&quot;unknown&quot;</code></td>
+<td>Some context, for logs</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><a name="Scene+exitAll"></a></p>
+<h3 id="scene-exitall-">scene.exitAll()</h3>
+<p>End all engaged dialogues.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a>  </p>
+<hr>
+<p><a name="Scene+getDialogue"></a></p>
+<h3 id="scene-getdialogue-participants-code-dialogue-code-">scene.getDialogue(participants) ⇒ <code>Dialogue</code></h3>
+<p>Get the dialogue for engaged participants (relative to scene scope).</p>
+<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a><br><strong>Returns</strong>: <code>Dialogue</code> - Engaged dialogue instance  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>participants</td>
+<td><code>string</code></td>
+<td>ID of user, room or composite</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><a name="Scene+inDialogue"></a></p>
+<h3 id="scene-indialogue-participants-code-boolean-code-">scene.inDialogue(participants) ⇒ <code>boolean</code></h3>
+<p>Get the engaged status for participants.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a><br><strong>Returns</strong>: <code>boolean</code> - Is engaged status  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>participants</td>
+<td><code>string</code></td>
+<td>ID of user, room or composite</td>
 </tr>
 </tbody>
 </table>

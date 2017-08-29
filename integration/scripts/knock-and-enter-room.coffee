@@ -9,7 +9,7 @@
 #   sendReplies: true - Hubot will reply to the user
 #   deniedReply: Hubot's response when denying a user
 #   type: whitelist by default
-#   scope: user by default
+#   scope: room
 #
 # Commands:
 #   knock - it will say "Who's there", then "{your answer} who?", then "lol"
@@ -25,29 +25,32 @@ module.exports = (robot) ->
   .use robot
 
   # knock to enter
-  enterScene = pb.sceneHear /knock/, sendReplies: true, (res, dlg) ->
-    dlg.send "You may enter!"
+  enterScene = pb.sceneHear /knock/,
+    scope: 'direct',
+    sendReplies: true
+  , (res) -> res.dialogue.send "You may enter!"
 
   # scene resposne adds a whitelist director to another scene
   whitelistScene = pb.sceneHear /allow (.*)/, (res) ->
-    user = res.match[1]
-    # @send "OK, allowing #{user}" #TODO fix after dialogue send fixed
-    enterDirector = pb.director deniedReply: "Sorry, #{user}'s only."
-    enterDirector.add user
-    enterDirector.directScene enterScene
+    room = res.match[1]
+    roomDirector = pb.director
+      deniedReply: "Sorry, #{room} users only."
+      scope: 'room'
+    roomDirector.add room
+    roomDirector.directScene enterScene
 
   # scene resposne adds a blacklist director to another scene
   blacklistScene = pb.sceneHear /deny (.*)/, (res) ->
-    user = res.match[1]
-    # @send "OK, denying #{user}" #TODO fix after dialogue send fixed
-    enterDirector = pb.director
-      type: 'blacklist',
-      deniedReply: "Sorry, no #{user}'s."
-    enterDirector.add user
-    enterDirector.directScene enterScene
+    room = res.match[1]
+    roomDirector = pb.director
+      deniedReply: "Sorry, no #{room} users."
+      type: 'blacklist'
+      scope: 'room'
+    roomDirector.add room
+    roomDirector.directScene enterScene
 
   # only 'director' user can configure whitelist/blacklist
   director = pb.director deniedReply: null
-    .add 'director'
+  director.add 'director'
   director.directScene whitelistScene
   director.directScene blacklistScene

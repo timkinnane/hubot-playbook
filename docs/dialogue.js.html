@@ -2,7 +2,7 @@
 
 <html>
 <head>
-  <title>improv.js.md</title>
+  <title>dialogue.js.md</title>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
   <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
   <link rel="stylesheet" media="all" href="public/stylesheets/normalize.css" />
@@ -14,11 +14,10 @@
 
       <div class="header">
         <nav role="menubar">
-          <!-- <a href="https://propertyux.github.io/hubot-pretend/index.html">Documentation</a>
-          <a href="https://propertyux.github.io/hubot-pretend/usage/00-setup_test.html">Usage</a>
-          <a href="https://propertyux.github.io/hubot-pretend/api/pretend.js.html">API</a>
-          <a href="https://propertyux.github.io/hubot-pretend/source/pretend.html">Source</a>
-          <a href="https://github.com/propertyux/hubot-pretend">GitHub</a> -->
+          <a href="index.html">Project</a>
+          <a href="base.js.html">Documentation</a>
+          <a href="tests.html">Tests</a>
+          <a href="https://github.com/timkinnane/hubot-playbook">Source</a>
         </nav>
 
         <div class="playbook-logo">
@@ -127,150 +126,37 @@
         
           
           
-          <h1>Improv</h1>
+          <h1>Dialogue</h1>
         
       </div>
 
       
         
-        <h2 id="classes">Classes</h2>
-<dl>
-<dt><a href="#Improv">Improv</a></dt>
-<dd><p>Improv parses message templates at runtime with context from user attributes,
-pre-populated data and/or custom extensions.</p>
-<p>e.g. &quot;hello ${ this.user.name }&quot; will render with the value at the user.name
-path in current context.</p>
-<p>Message strings containing expressions are automatically rendered by Improv
-middleware and can be merged with data from any source, including a
-Transcript search for instance.</p>
-<p>Note:</p>
-<ul>
-<li>The context object is applied as &#39;this&#39; in the scope where the template is
-rendered, e.g. <code>this.user.name</code> is the value at <em>user.name</em> path.</li>
-<li><em>Don&#39;t</em> use back-ticks when declaring strings, or it will render
-immediately.</li>
-<li>Improv uses a singleton pattern to parse templates from a central
-middleware. It should be initialised with a robot via <code>.use</code>.</li>
-<li>Calling <code>.reset()</code> will clear everything (for testing).</li>
-</ul>
-</dd>
-</dl>
-
-<h2 id="functions">Functions</h2>
-<dl>
-<dt><a href="#use">use(robot)</a> ⇒ <code><a href="#Improv">Improv</a></code></dt>
-<dd><p>Setup middleware and improv context collection in the brain.</p>
-<p>This is the main interface to get either a new or existing instance.
-If the robot is new but an instance exists (e.g. in tests) then Improv will
-attach the new robot but keep existing config and extensions.</p>
-</dd>
-<dt><a href="#configure">configure([options])</a> ⇒ <code>Object</code></dt>
-<dd><p>Configure the Improv instance</p>
-</dd>
-<dt><a href="#extend">extend(dataFunc)</a> ⇒ <code><a href="#Improv">Improv</a></code></dt>
-<dd><p>Add extra functions to provide further context. They are called with the
-current context whenever a template is rendered and should return extra
-key/values to merge with context and/or override keys of existing data.</p>
-</dd>
-<dt><a href="#mergeData">mergeData([user])</a> ⇒ <code>Object</code></dt>
-<dd><p>Provdies current context to messages merged with any data reutrn by added
-extensions and a user object (if provideed).</p>
-</dd>
-<dt><a href="#parse">parse(strings, context)</a> ⇒ <code>array</code></dt>
-<dd><p>Merge templated messages with context data (replace unknown as configured).
-Called by middleware after context data gathered and possibly extended.</p>
-<p>Pre-renders each expression individually to catch and replace any unknowns.
-Failed expressions will be replaced with fallback unless a full replacement
-is configured, to replace the entire string.</p>
-</dd>
-<dt><a href="#middleware">middleware(context, next, done)</a></dt>
-<dd><p>Middleware checks for template tags and parses if required.</p>
-</dd>
-<dt><a href="#warn">warn()</a></dt>
-<dd></dd>
-<dt><a href="#remember">remember(path, value)</a> ⇒ <code>Object</code></dt>
-<dd><p>Add data to context on the fly</p>
-</dd>
-<dt><a href="#forget">forget(path)</a> ⇒ <code>Object</code></dt>
-<dd><p>Remove data from context on the fly</p>
-</dd>
-<dt><a href="#reset">reset()</a></dt>
-<dd><p>Wipte slate for tests to reinitialise without existing instance or context</p>
-</dd>
-</dl>
-
-<p><a name="Improv"></a></p>
-<h2 id="improv">Improv</h2>
-<p>Improv parses message templates at runtime with context from user attributes,
-pre-populated data and/or custom extensions.</p>
-<p>e.g. “hello ${ this.user.name }” will render with the value at the user.name
-path in current context.</p>
-<p>Message strings containing expressions are automatically rendered by Improv
-middleware and can be merged with data from any source, including a
-Transcript search for instance.</p>
-<p>Note:</p>
-<ul>
-<li>The context object is applied as ‘this’ in the scope where the template is
-rendered, e.g. <code>this.user.name</code> is the value at <em>user.name</em> path.</li>
-<li><em>Don’t</em> use back-ticks when declaring strings, or it will render
-immediately.</li>
-<li>Improv uses a singleton pattern to parse templates from a central
-middleware. It should be initialised with a robot via <code>.use</code>.</li>
-<li>Calling <code>.reset()</code> will clear everything (for testing).</li>
-</ul>
+        <p><a name="Dialogue"></a></p>
+<h2 id="dialogue">Dialogue</h2>
+<p>Dialogues control which paths are available and for how long. Passing
+messages into a dialogue will match against the current path and route any
+replies.</p>
+<p>Where paths are self-replicating steps, the dialogue persists along the
+journey.</p>
 <p><strong>Kind</strong>: global class  </p>
-<hr>
-<p><a name="new_Improv_new"></a></p>
-<h3 id="new-improv-robot-">new Improv(robot)</h3>
-<p><strong>Returns</strong>: <a href="#Improv"><code>Improv</code></a> - New or prior existing (singleton) instance  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>robot</td>
-<td><code>Robot</code></td>
-<td>Hubot Robot instance</td>
-</tr>
-</tbody>
-</table>
-<hr>
-<p><a name="use"></a></p>
-<h2 id="use-robot-code-improv-code-improv-">use(robot) ⇒ <a href="#Improv"><code>Improv</code></a></h2>
-<p>Setup middleware and improv context collection in the brain.</p>
-<p>This is the main interface to get either a new or existing instance.
-If the robot is new but an instance exists (e.g. in tests) then Improv will
-attach the new robot but keep existing config and extensions.</p>
-<p><strong>Kind</strong>: global function<br><strong>Returns</strong>: <a href="#Improv"><code>Improv</code></a> - The instance - really only accessed by tests<br><strong>Todo</strong></p>
 <ul>
-<li>[ ] Test persistant context save/load from brain with a data store.</li>
+<li><a href="#Dialogue">Dialogue</a><ul>
+<li><a href="#new_Dialogue_new">new Dialogue(res, [options], [key])</a></li>
+<li><a href="#Dialogue+end">.end()</a> ⇒ <code>boolean</code></li>
+<li><a href="#Dialogue+send">.send(…strings)</a> ⇒ <code>Promise</code></li>
+<li><a href="#Dialogue+onTimeout">.onTimeout([override])</a></li>
+<li><a href="#Dialogue+clearTimeout">.clearTimeout()</a></li>
+<li><a href="#Dialogue+startTimeout">.startTimeout()</a></li>
+<li><a href="#Dialogue+addPath">.addPath([prompt], [branches], [options], [key])</a> ⇒ <code>Promise</code></li>
+<li><a href="#Dialogue+addBranch">.addBranch(regex, [message], [callback])</a></li>
+<li><a href="#Dialogue+receive">.receive(res)</a> ⇒ <code>Promise</code></li>
 </ul>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>robot</td>
-<td><code>Robot</code></td>
-<td>The robot to use, usually existing from constructor</td>
-</tr>
-</tbody>
-</table>
+</li>
+</ul>
 <hr>
-<p><a name="configure"></a></p>
-<h2 id="configure-options-code-object-code-">configure([options]) ⇒ <code>Object</code></h2>
-<p>Configure the Improv instance</p>
-<p><strong>Kind</strong>: global function<br><strong>Returns</strong>: <code>Object</code> - The module exports for chaining  </p>
+<p><a name="new_Dialogue_new"></a></p>
+<h3 id="new-dialogue-res-options-key-">new Dialogue(res, [options], [key])</h3>
 <table>
 <thead>
 <tr>
@@ -280,80 +166,54 @@ attach the new robot but keep existing config and extensions.</p>
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>res</td>
+<td><code>Response</code></td>
+<td>Hubot Response object</td>
+</tr>
 <tr>
 <td>[options]</td>
 <td><code>Object</code></td>
 <td>Key/val options for config</td>
 </tr>
 <tr>
-<td>[options.save]</td>
+<td>[options.sendReplies]</td>
 <td><code>boolean</code></td>
-<td>Keep context collection in hubot brain</td>
+<td>Toggle replying/sending (prefix with “@user”)</td>
 </tr>
 <tr>
-<td>[options.fallback]</td>
+<td>[options.timeout]</td>
+<td><code>number</code></td>
+<td>Allowed time to reply (in miliseconds) before cancelling listeners</td>
+</tr>
+<tr>
+<td>[options.timeoutText]</td>
 <td><code>string</code></td>
-<td>Fallback content replace any unknowns within messages</td>
+<td>What to send when timeout reached, set null to not send</td>
 </tr>
 <tr>
-<td>[options.replacement]</td>
+<td>[key]</td>
 <td><code>string</code></td>
-<td>Replace all messages containing unknowns, overrides fallback</td>
-</tr>
-<tr>
-<td>[options.app]</td>
-<td><code>Object</code></td>
-<td>Data object with app context attributes to merge into tempaltes</td>
-</tr>
-<tr>
-<td>[options.admins]</td>
-<td><code>array</code></td>
-<td>Array of usernames authorised to populate context data</td>
+<td>Key name for this instance</td>
 </tr>
 </tbody>
 </table>
-<hr>
-<p><a name="extend"></a></p>
-<h2 id="extend-datafunc-code-improv-code-improv-">extend(dataFunc) ⇒ <a href="#Improv"><code>Improv</code></a></h2>
-<p>Add extra functions to provide further context. They are called with the
-current context whenever a template is rendered and should return extra
-key/values to merge with context and/or override keys of existing data.</p>
-<p><strong>Kind</strong>: global function<br><strong>Returns</strong>: <a href="#Improv"><code>Improv</code></a> - The instance for chaining  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>dataFunc</td>
-<td><code>function</code></td>
-<td>Receives current context, to return more data</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Example</strong> <em>(extend context with user transcript history)</em>  </p>
-<pre><code class="lang-js">
-improv.use(robot)
-improv.extend(<span class="hljs-function">(<span class="hljs-params">context</span>) =&gt;</span> {
-  context.user.favColor = <span class="hljs-string">'always blue'</span>
-  <span class="hljs-keyword">return</span> context
+<p><strong>Example</strong> <em>(listener sets up dialogue with user on match (10 second timeout))</em>  </p>
+<pre><code class="lang-js">robot.hear(<span class="hljs-regexp">/hello/</span>, (res) =&gt; {
+  <span class="hljs-keyword">let</span> dlg = <span class="hljs-keyword">new</span> Dialogue(res, { <span class="hljs-attr">timeout</span>: <span class="hljs-number">10000</span> })
+  <span class="hljs-comment">// ...proceed to add paths</span>
 })
-robot.send({ <span class="hljs-attr">user</span>: user }, <span class="hljs-string">'I know your favorite color is ${ this.user.favColor }'</span>)
-<span class="hljs-comment">// ^ middleware will render template with the values and user in context</span>
 </code></pre>
 <hr>
-<p><a name="mergeData"></a></p>
-<h2 id="mergedata-user-code-object-code-">mergeData([user]) ⇒ <code>Object</code></h2>
-<p>Provdies current context to messages merged with any data reutrn by added
-extensions and a user object (if provideed).</p>
-<p><strong>Kind</strong>: global function<br><strong>Returns</strong>: <code>Object</code> - Context and user data, with any extensions merged<br><strong>Todo</strong></p>
-<ul>
-<li>[ ] Allow tagging other user’s data by merge with robot.brain.userForId</li>
-</ul>
+<p><a name="Dialogue+end"></a></p>
+<h3 id="dialogue-end-code-boolean-code-">dialogue.end() ⇒ <code>boolean</code></h3>
+<p>Shutdown and emit status (for scene to disengage participants).</p>
+<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a><br><strong>Returns</strong>: <code>boolean</code> - Shutdown status, false if was already ended  </p>
+<hr>
+<p><a name="Dialogue+send"></a></p>
+<h3 id="dialogue-send-strings-code-promise-code-">dialogue.send(…strings) ⇒ <code>Promise</code></h3>
+<p>Send or reply with message as configured (@user reply or send to room).</p>
+<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a><br><strong>Returns</strong>: <code>Promise</code> - Resolves with result of send (respond middleware context)  </p>
 <table>
 <thead>
 <tr>
@@ -364,21 +224,18 @@ extensions and a user object (if provideed).</p>
 </thead>
 <tbody>
 <tr>
-<td>[user]</td>
-<td><code>Object</code></td>
-<td>User (usually from middleware context)</td>
+<td>…strings</td>
+<td><code>string</code></td>
+<td>Message strings</td>
 </tr>
 </tbody>
 </table>
 <hr>
-<p><a name="parse"></a></p>
-<h2 id="parse-strings-context-code-array-code-">parse(strings, context) ⇒ <code>array</code></h2>
-<p>Merge templated messages with context data (replace unknown as configured).
-Called by middleware after context data gathered and possibly extended.</p>
-<p>Pre-renders each expression individually to catch and replace any unknowns.
-Failed expressions will be replaced with fallback unless a full replacement
-is configured, to replace the entire string.</p>
-<p><strong>Kind</strong>: global function<br><strong>Returns</strong>: <code>array</code> - Strings populated with context values  </p>
+<p><a name="Dialogue+onTimeout"></a></p>
+<h3 id="dialogue-ontimeout-override-">dialogue.onTimeout([override])</h3>
+<p>Default timeout method sends message, unless null or method overriden.</p>
+<p>If given a method it will call that or can be reassigned as a new function.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a>  </p>
 <table>
 <thead>
 <tr>
@@ -389,22 +246,74 @@ is configured, to replace the entire string.</p>
 </thead>
 <tbody>
 <tr>
-<td>strings</td>
+<td>[override]</td>
+<td><code>function</code></td>
+<td>New function to call (optional)</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><a name="Dialogue+clearTimeout"></a></p>
+<h3 id="dialogue-cleartimeout-">dialogue.clearTimeout()</h3>
+<p>Stop countdown for matching dialogue branches.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a>  </p>
+<hr>
+<p><a name="Dialogue+startTimeout"></a></p>
+<h3 id="dialogue-starttimeout-">dialogue.startTimeout()</h3>
+<p>Start (or restart) countdown for matching dialogue branches.</p>
+<p>Catches the onTimeout method because it can be overriden and may throw.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a>  </p>
+<hr>
+<p><a name="Dialogue+addPath"></a></p>
+<h3 id="dialogue-addpath-prompt-branches-options-key-code-promise-code-">dialogue.addPath([prompt], [branches], [options], [key]) ⇒ <code>Promise</code></h3>
+<p>Add a dialogue path, with branches to follow and a prompt (optional).</p>
+<p>Any new path added overwrites the previous. If a path isn’t given a key but
+the parent dialogue has one, it will be given to the path.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a><br><strong>Returns</strong>: <code>Promise</code> - Resolves when sends complete or immediately  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>[prompt]</td>
+<td><code>string</code></td>
+<td>To send on path setup (e.g. presenting options)</td>
+</tr>
+<tr>
+<td>[branches]</td>
 <td><code>array</code></td>
-<td>One or more strings being posted</td>
+<td>Array of args for each branch, each containing:<br>                            - RegExp for listener<br>                            - String to send and/or<br>                            - Function to call on match</td>
 </tr>
 <tr>
-<td>context</td>
+<td>[options]</td>
 <td><code>Object</code></td>
-<td>Template data, reference as ‘this’ for interpolation</td>
+<td>Key/val options for path</td>
+</tr>
+<tr>
+<td>[key]</td>
+<td><code>string</code></td>
+<td>Key name for this path</td>
 </tr>
 </tbody>
 </table>
+<p><strong>Example</strong>  </p>
+<pre><code class="lang-js"><span class="hljs-keyword">let</span> dlg = <span class="hljs-keyword">new</span> Dialogue(res)
+<span class="hljs-keyword">let</span> path = dlg.addPath(<span class="hljs-string">'Turn left or right?'</span>, [
+  [ <span class="hljs-regexp">/left/</span>, <span class="hljs-string">'Ok, going left!'</span> ]
+  [ <span class="hljs-regexp">/right/</span>, <span class="hljs-string">'Ok, going right!'</span> ]
+], <span class="hljs-string">'which-way'</span>)
+</code></pre>
 <hr>
-<p><a name="middleware"></a></p>
-<h2 id="middleware-context-next-done-">middleware(context, next, done)</h2>
-<p>Middleware checks for template tags and parses if required.</p>
-<p><strong>Kind</strong>: global function  </p>
+<p><a name="Dialogue+addBranch"></a></p>
+<h3 id="dialogue-addbranch-regex-message-callback-">dialogue.addBranch(regex, [message], [callback])</h3>
+<p>Add a branch to dialogue path, which is usually added first, but will be
+created if not.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a>  </p>
 <table>
 <thead>
 <tr>
@@ -415,36 +324,32 @@ is configured, to replace the entire string.</p>
 </thead>
 <tbody>
 <tr>
-<td>context</td>
-<td><code>Object</code></td>
-<td>Passed through middleware stack, with res</td>
+<td>regex</td>
+<td><code>RegExp</code></td>
+<td>Matching pattern</td>
 </tr>
 <tr>
-<td>next</td>
+<td>[message]</td>
+<td><code>string</code></td>
+<td>Message text for response on match</td>
+</tr>
+<tr>
+<td>[callback]</td>
 <td><code>function</code></td>
-<td>Called when all middleware is complete</td>
-</tr>
-<tr>
-<td>done</td>
-<td><code>function</code></td>
-<td>Initial (final) completion callback</td>
+<td>Function called when matched</td>
 </tr>
 </tbody>
 </table>
 <hr>
-<p><a name="warn"></a></p>
-<h2 id="warn-">warn()</h2>
-<p><strong>Kind</strong>: global function<br><strong>Todo</strong></p>
+<p><a name="Dialogue+receive"></a></p>
+<h3 id="dialogue-receive-res-code-promise-code-">dialogue.receive(res) ⇒ <code>Promise</code></h3>
+<p>Process incoming message for match against path branches.</p>
+<p>If matched, restart timeout. If no additional paths or branches added (by
+matching branch handler), end dialogue.</p>
+<p>Overrides any prior response with current one.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a><br><strong>Returns</strong>: <code>Promise</code> - Resolves when matched/catch handler complete<br><strong>Todo</strong></p>
 <ul>
-<li>[ ] ask configured admins to provide context for any unknowns</li>
-</ul>
-<hr>
-<p><a name="remember"></a></p>
-<h2 id="remember-path-value-code-object-code-">remember(path, value) ⇒ <code>Object</code></h2>
-<p>Add data to context on the fly</p>
-<p><strong>Kind</strong>: global function<br><strong>Returns</strong>: <code>Object</code> - The module exports for chaining<br><strong>Todo</strong></p>
-<ul>
-<li>[ ] Save to brain on update if configured to save</li>
+<li>[ ] Test with handler using res.http/get to populate new path</li>
 </ul>
 <table>
 <thead>
@@ -456,46 +361,12 @@ is configured, to replace the entire string.</p>
 </thead>
 <tbody>
 <tr>
-<td>path</td>
-<td><code>array/string</code></td>
-<td>The path of the property to set</td>
-</tr>
-<tr>
-<td>value</td>
-<td><code>*</code></td>
-<td>The value to set</td>
+<td>res</td>
+<td><code>Response</code></td>
+<td>Hubot Response object</td>
 </tr>
 </tbody>
 </table>
-<hr>
-<p><a name="forget"></a></p>
-<h2 id="forget-path-code-object-code-">forget(path) ⇒ <code>Object</code></h2>
-<p>Remove data from context on the fly</p>
-<p><strong>Kind</strong>: global function<br><strong>Returns</strong>: <code>Object</code> - The module exports for chaining<br><strong>Todo</strong></p>
-<ul>
-<li>[ ] Clear from brain on update if configured to save</li>
-</ul>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>path</td>
-<td><code>array/string</code></td>
-<td>The path of the property to unset</td>
-</tr>
-</tbody>
-</table>
-<hr>
-<p><a name="reset"></a></p>
-<h2 id="reset-">reset()</h2>
-<p>Wipte slate for tests to reinitialise without existing instance or context</p>
-<p><strong>Kind</strong>: global function  </p>
 <hr>
 
         

@@ -2,7 +2,7 @@
 
 <html>
 <head>
-  <title>playbook.js.md</title>
+  <title>path.js.md</title>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
   <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
   <link rel="stylesheet" media="all" href="public/stylesheets/normalize.css" />
@@ -14,11 +14,10 @@
 
       <div class="header">
         <nav role="menubar">
-          <!-- <a href="https://propertyux.github.io/hubot-pretend/index.html">Documentation</a>
-          <a href="https://propertyux.github.io/hubot-pretend/usage/00-setup_test.html">Usage</a>
-          <a href="https://propertyux.github.io/hubot-pretend/api/pretend.js.html">API</a>
-          <a href="https://propertyux.github.io/hubot-pretend/source/pretend.html">Source</a>
-          <a href="https://github.com/propertyux/hubot-pretend">GitHub</a> -->
+          <a href="index.html">Project</a>
+          <a href="base.js.html">Documentation</a>
+          <a href="tests.html">Tests</a>
+          <a href="https://github.com/timkinnane/hubot-playbook">Source</a>
         </nav>
 
         <div class="playbook-logo">
@@ -127,49 +126,39 @@
         
           
           
-          <h1>Playbook</h1>
+          <h1>Path</h1>
         
       </div>
 
       
         
-        <p><a name="Playbook"></a></p>
-<h2 id="playbook">Playbook</h2>
-<p>Playbook brings conversational context and branching to Hubot.</p>
-<p>Modules are available as properties and their instances as collection items.</p>
-<p>Uses singleton pattern to make sure only one Playbook is created when used
-in multiple script files loaded by the same Hubot.</p>
+        <p><a name="Path"></a></p>
+<h2 id="path">Path</h2>
+<p>Paths are the smallest and most essential node for conversations. They allow
+matching message text against multiple branches in a tightly scoped context.</p>
+<p>A path is open when branches are added and closed when a branch is matched.
+While open, it can process incoming messages against the possible branches.</p>
+<p>A matched branch can respond to the user and lay more branches to keep the
+path open, until finally a branch is matched without any new ones added.</p>
 <p><strong>Kind</strong>: global class  </p>
 <ul>
-<li><a href="#Playbook">Playbook</a><ul>
-<li><a href="#Playbook+use">.use(robot, [improvise])</a> ⇒ <a href="#Playbook"><code>Playbook</code></a></li>
-<li><a href="#Playbook+dialogue">.dialogue(res, […args])</a> ⇒ <code>Dialogue</code></li>
-<li><a href="#Playbook+scene">.scene([…args])</a> ⇒ <code>Scene</code></li>
-<li><a href="#Playbook+sceneEnter">.sceneEnter(res, […args])</a> ⇒ <code>Dialogue/boolean</code></li>
-<li><a href="#Playbook+sceneListen">.sceneListen(type, regex, […args], callback)</a> ⇒ <code>Scene</code></li>
-<li><a href="#Playbook+sceneHear">.sceneHear([…args])</a></li>
-<li><a href="#Playbook+sceneRespond">.sceneRespond([…args])</a></li>
-<li><a href="#Playbook+director">.director([…args])</a> ⇒ <code>Director</code></li>
-<li><a href="#Playbook+transcript">.transcript([…args])</a> ⇒ <code>Transcript</code></li>
-<li><a href="#Playbook+transcribe">.transcribe(instance, […args])</a> ⇒ <code>Transcript</code></li>
-<li><a href="#Playbook+improvise">.improvise([options])</a> ⇒ <code>Improv</code></li>
-<li><a href="#Playbook+shutdown">.shutdown()</a></li>
-<li><a href="#Playbook+reset">.reset()</a> ⇒ <a href="#Playbook"><code>Playbook</code></a></li>
-<li><a href="#Playbook+outline">.outline([…args])</a> ⇒ <a href="#Playbook"><code>Playbook</code></a></li>
+<li><a href="#Path">Path</a><ul>
+<li><a href="#new_Path_new">new Path(robot, [branches], [options], [key])</a></li>
+<li><a href="#Path+addBranch">.addBranch(regex, [strings], [callback])</a></li>
+<li><a href="#Path+getHandler">.getHandler(strings, callback)</a> ⇒ <code>function</code></li>
+<li><a href="#Path+catchHandler">.catchHandler()</a> ⇒ <code>function</code></li>
+<li><a href="#Path+match">.match(res)</a> ⇒ <code>Promise</code></li>
 </ul>
 </li>
 </ul>
 <hr>
-<p><a name="Playbook+use"></a></p>
-<h3 id="playbook-use-robot-improvise-code-playbook-code-playbook-">playbook.use(robot, [improvise]) ⇒ <a href="#Playbook"><code>Playbook</code></a></h3>
-<p>Attach Playbook to robot unless already done.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Playbook"><code>Playbook</code></a><br><strong>Returns</strong>: <a href="#Playbook"><code>Playbook</code></a> - Self for chaining  </p>
+<p><a name="new_Path_new"></a></p>
+<h3 id="new-path-robot-branches-options-key-">new Path(robot, [branches], [options], [key])</h3>
 <table>
 <thead>
 <tr>
 <th>Param</th>
 <th>Type</th>
-<th>Default</th>
 <th>Description</th>
 </tr>
 </thead>
@@ -177,22 +166,133 @@ in multiple script files loaded by the same Hubot.</p>
 <tr>
 <td>robot</td>
 <td><code>Robot</code></td>
-<td></td>
-<td>Hubot instance</td>
+<td>Hubot Robot instance</td>
 </tr>
 <tr>
-<td>[improvise]</td>
-<td><code>boolean</code></td>
-<td><code>true</code></td>
-<td>Enable/disable improv module and middleware (default true)</td>
+<td>[branches]</td>
+<td><code>array</code></td>
+<td>Array of args for each branch, each containing:<br>                                         - RegExp for listener<br>                                         - String to send and/or<br>                                         - Function to call on match</td>
+</tr>
+<tr>
+<td>[options]</td>
+<td><code>Object</code></td>
+<td>Key/val options for config</td>
+</tr>
+<tr>
+<td>[options.catchMessage]</td>
+<td><code>Object</code></td>
+<td>Message to send via catch handler</td>
+</tr>
+<tr>
+<td>[options.catchCallback]</td>
+<td><code>Object</code></td>
+<td>Function to call within catch handler</td>
+</tr>
+<tr>
+<td>[key]</td>
+<td><code>string</code></td>
+<td>Key name for this instance</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example</strong> <em>(showing branch argument variations)</em>  </p>
+<pre><code class="lang-js"><span class="hljs-keyword">let</span> choice = <span class="hljs-keyword">new</span> Path(robot, [
+  [ <span class="hljs-regexp">/door 1/</span>, <span class="hljs-string">'foo'</span> ]
+  [ <span class="hljs-regexp">/door 2/</span>, <span class="hljs-string">'bar'</span>, () =&gt; bar() ]
+  [ <span class="hljs-regexp">/door 3/</span>, () =&gt; baz() ]
+])
+</code></pre>
+<p><strong>Example</strong> <em>(with message and callback options)</em>  </p>
+<pre><code class="lang-js"><span class="hljs-keyword">let</span> choice = <span class="hljs-keyword">new</span> Path(robot, {
+  <span class="hljs-attr">catchMessage</span>: <span class="hljs-string">'sorry, nothing matched'</span>
+  catchCallback: <span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> noMatch()
+})
+</code></pre>
+<hr>
+<p><a name="Path+addBranch"></a></p>
+<h3 id="path-addbranch-regex-strings-callback-">path.addBranch(regex, [strings], [callback])</h3>
+<p>Add an optional dialogue branch.</p>
+<p>Each branch is assigned a handler to call on match, which can sends a
+message and/or fire a given callback.</p>
+<p>Branch handlers are called by <code>.match</code>, if input matches a branch, which
+then returns the matched handler’s return value.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Path"><code>Path</code></a>  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>regex</td>
+<td><code>RegExp</code></td>
+<td>Matching pattern</td>
+</tr>
+<tr>
+<td>[strings]</td>
+<td><code>string/array</code></td>
+<td>Message text for response on match</td>
+</tr>
+<tr>
+<td>[callback]</td>
+<td><code>function</code></td>
+<td>Function called when matched</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example</strong> <em>(with regex, message and callback)</em>  </p>
+<pre><code class="lang-js">path.addBranch(<span class="hljs-regexp">/hello/i</span>, <span class="hljs-string">'hello there'</span>, helloCallback)
+</code></pre>
+<hr>
+<p><a name="Path+getHandler"></a></p>
+<h3 id="path-gethandler-strings-callback-code-function-code-">path.getHandler(strings, callback) ⇒ <code>function</code></h3>
+<p>Ready a function to call on a match or catch, sending stirngs and/or doing
+a callback.</p>
+<p>Handlers return a promise that resolves with a merged object containing the
+conext returned by send middleware if strings were sent, and the return
+value of the callback if there was one.</p>
+<p>Either may return a promise so the result is wrapped to resolve both.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Path"><code>Path</code></a><br><strong>Returns</strong>: <code>function</code> - The handler  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>strings</td>
+<td><code>string/array</code></td>
+<td>Message text to send on match</td>
+</tr>
+<tr>
+<td>callback</td>
+<td><code>function</code></td>
+<td>Function to call on match</td>
 </tr>
 </tbody>
 </table>
 <hr>
-<p><a name="Playbook+dialogue"></a></p>
-<h3 id="playbook-dialogue-res-args-code-dialogue-code-">playbook.dialogue(res, […args]) ⇒ <code>Dialogue</code></h3>
-<p>Create stand-alone dialogue (not within scene).</p>
-<p><strong>Kind</strong>: instance method of <a href="#Playbook"><code>Playbook</code></a><br><strong>Returns</strong>: <code>Dialogue</code> - New Dialogue instance  </p>
+<p><a name="Path+catchHandler"></a></p>
+<h3 id="path-catchhandler-code-function-code-">path.catchHandler() ⇒ <code>function</code></h3>
+<p>Get handler for when nothing matches, if configured.</p>
+<p>If neither <code>catchMessage</code> or <code>catchCallback</code> is set, nothing happens.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Path"><code>Path</code></a><br><strong>Returns</strong>: <code>function</code> - Handler (or undefined)  </p>
+<hr>
+<p><a name="Path+match"></a></p>
+<h3 id="path-match-res-code-promise-code-">path.match(res) ⇒ <code>Promise</code></h3>
+<p>Attempt to match an incoming response object. Overrides the response match
+(from the more general dialogue listener) even if null.</p>
+<p>Matching closes the path and fires the handler which may add branches,
+re-opening it. Without a match, it will attempt to use a catch handler
+(which may be null). The matched branch or catch handler method may return
+a promise or not, the response is returned wrapped in a promise either way.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Path"><code>Path</code></a><br><strong>Returns</strong>: <code>Promise</code> - Resolves with matched/catch branch handler result  </p>
 <table>
 <thead>
 <tr>
@@ -207,264 +307,16 @@ in multiple script files loaded by the same Hubot.</p>
 <td><code>Response</code></td>
 <td>Hubot Response object</td>
 </tr>
-<tr>
-<td>[…args]</td>
-<td><code>*</code></td>
-<td>Optional other Dialogue constructor args</td>
-</tr>
 </tbody>
 </table>
-<hr>
-<p><a name="Playbook+scene"></a></p>
-<h3 id="playbook-scene-args-code-scene-code-">playbook.scene([…args]) ⇒ <code>Scene</code></h3>
-<p>Create new Scene.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Playbook"><code>Playbook</code></a><br><strong>Returns</strong>: <code>Scene</code> - New Scene instance  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>[…args]</td>
-<td><code>*</code></td>
-<td>Optional Scene constructor args</td>
-</tr>
-</tbody>
-</table>
-<hr>
-<p><a name="Playbook+sceneEnter"></a></p>
-<h3 id="playbook-sceneenter-res-args-code-dialogue-boolean-code-">playbook.sceneEnter(res, […args]) ⇒ <code>Dialogue/boolean</code></h3>
-<p>Create and enter Scene.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Playbook"><code>Playbook</code></a><br><strong>Returns</strong>: <code>Dialogue/boolean</code> - Entered Dialogue or false if failed  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>res</td>
-<td><code>Response</code></td>
-<td>Response object from entering participant</td>
-</tr>
-<tr>
-<td>[…args]</td>
-<td><code>*</code></td>
-<td>Both Scene and Dialogue constructor args</td>
-</tr>
-</tbody>
-</table>
-<hr>
-<p><a name="Playbook+sceneListen"></a></p>
-<h3 id="playbook-scenelisten-type-regex-args-callback-code-scene-code-">playbook.sceneListen(type, regex, […args], callback) ⇒ <code>Scene</code></h3>
-<p>Create scene and setup listener to enter.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Playbook"><code>Playbook</code></a><br><strong>Returns</strong>: <code>Scene</code> - New Scene instance  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>type</td>
-<td><code>string</code></td>
-<td>Robot listener type: hear</td>
-<td>respond</td>
-</tr>
-<tr>
-<td>regex</td>
-<td><code>RegExp</code></td>
-<td>Match pattern</td>
-</tr>
-<tr>
-<td>[…args]</td>
-<td><code>*</code></td>
-<td>Scene constructor args</td>
-</tr>
-<tr>
-<td>callback</td>
-<td><code>function</code></td>
-<td>Callback to fire after entered</td>
-</tr>
-</tbody>
-</table>
-<hr>
-<p><a name="Playbook+sceneHear"></a></p>
-<h3 id="playbook-scenehear-args-">playbook.sceneHear([…args])</h3>
-<p>Alias of sceneListen with hear as specified type.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Playbook"><code>Playbook</code></a>  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>[…args]</td>
-<td><code>*</code></td>
-<td>Scene constructor args</td>
-</tr>
-</tbody>
-</table>
-<hr>
-<p><a name="Playbook+sceneRespond"></a></p>
-<h3 id="playbook-scenerespond-args-">playbook.sceneRespond([…args])</h3>
-<p>Alias of sceneListen with respond as specified type.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Playbook"><code>Playbook</code></a>  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>[…args]</td>
-<td><code>*</code></td>
-<td>Scene constructor args</td>
-</tr>
-</tbody>
-</table>
-<hr>
-<p><a name="Playbook+director"></a></p>
-<h3 id="playbook-director-args-code-director-code-">playbook.director([…args]) ⇒ <code>Director</code></h3>
-<p>Create new Director.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Playbook"><code>Playbook</code></a><br><strong>Returns</strong>: <code>Director</code> - New Director instance  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>[…args]</td>
-<td><code>*</code></td>
-<td>Director constructor args</td>
-</tr>
-</tbody>
-</table>
-<hr>
-<p><a name="Playbook+transcript"></a></p>
-<h3 id="playbook-transcript-args-code-transcript-code-">playbook.transcript([…args]) ⇒ <code>Transcript</code></h3>
-<p>Create a transcript with optional config to record events from modules</p>
-<p><strong>Kind</strong>: instance method of <a href="#Playbook"><code>Playbook</code></a><br><strong>Returns</strong>: <code>Transcript</code> - The new transcript  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>[…args]</td>
-<td><code>*</code></td>
-<td>Transcript constructor args</td>
-</tr>
-</tbody>
-</table>
-<hr>
-<p><a name="Playbook+transcribe"></a></p>
-<h3 id="playbook-transcribe-instance-args-code-transcript-code-">playbook.transcribe(instance, […args]) ⇒ <code>Transcript</code></h3>
-<p>Create transcript and record a given module in one step.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Playbook"><code>Playbook</code></a><br><strong>Returns</strong>: <code>Transcript</code> - The new transcript<br><strong>Todo</strong></p>
-<ul>
-<li>[ ] Allow passing instance key instead of object, to find from arrays</li>
-</ul>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>instance</td>
-<td><code>*</code></td>
-<td>A Playbook module (dialogue, scene or director)</td>
-</tr>
-<tr>
-<td>[…args]</td>
-<td><code>*</code></td>
-<td>Constructor args</td>
-</tr>
-</tbody>
-</table>
-<hr>
-<p><a name="Playbook+improvise"></a></p>
-<h3 id="playbook-improvise-options-code-improv-code-">playbook.improvise([options]) ⇒ <code>Improv</code></h3>
-<p>Initialise Improv singleton module, or update configuration if exists.</p>
-<p>Access methods via <code>Playbook.improv</code> property.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Playbook"><code>Playbook</code></a><br><strong>Returns</strong>: <code>Improv</code> - Improv interface  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>[options]</td>
-<td><code>Object</code></td>
-<td>Key/val options for config</td>
-</tr>
-</tbody>
-</table>
-<hr>
-<p><a name="Playbook+shutdown"></a></p>
-<h3 id="playbook-shutdown-">playbook.shutdown()</h3>
-<p>Exit all scenes, end all dialogues.</p>
-<p>TODO: detach listeners for scenes, directors, transcripts and improv</p>
-<p><strong>Kind</strong>: instance method of <a href="#Playbook"><code>Playbook</code></a>  </p>
-<hr>
-<p><a name="Playbook+reset"></a></p>
-<h3 id="playbook-reset-code-playbook-code-playbook-">playbook.reset() ⇒ <a href="#Playbook"><code>Playbook</code></a></h3>
-<p>Shutdown and re-initialise instance (mostly for tests).</p>
-<p><strong>Kind</strong>: instance method of <a href="#Playbook"><code>Playbook</code></a><br><strong>Returns</strong>: <a href="#Playbook"><code>Playbook</code></a> - - The reset instance  </p>
-<hr>
-<p><a name="Playbook+outline"></a></p>
-<h3 id="playbook-outline-args-code-playbook-code-playbook-">playbook.outline([…args]) ⇒ <a href="#Playbook"><code>Playbook</code></a></h3>
-<p>Load outline and setup scene listeners for <em>global</em> bits.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Playbook"><code>Playbook</code></a><br><strong>Returns</strong>: <a href="#Playbook"><code>Playbook</code></a> - The reset instance  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>[…args]</td>
-<td><code>*</code></td>
-<td>Outline constructor args</td>
-</tr>
-</tbody>
-</table>
+<p><strong>Example</strong>  </p>
+<pre><code class="lang-js">listener matching against possible branches
+<span class="hljs-keyword">let</span> choice = <span class="hljs-keyword">new</span> Path(robot, [
+  [ <span class="hljs-regexp">/door 1/</span>, <span class="hljs-string">'pies'</span> ]
+  [ <span class="hljs-regexp">/door 2/</span>, <span class="hljs-string">'lies'</span> ]
+])
+robot.hear(<span class="hljs-regexp">/door/</span>, (res) =&gt; choice.match(res))
+</code></pre>
 <hr>
 
         

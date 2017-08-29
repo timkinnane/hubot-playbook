@@ -2,7 +2,7 @@
 
 <html>
 <head>
-  <title>dialogue.js.md</title>
+  <title>outline.js.md</title>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
   <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
   <link rel="stylesheet" media="all" href="public/stylesheets/normalize.css" />
@@ -14,11 +14,10 @@
 
       <div class="header">
         <nav role="menubar">
-          <!-- <a href="https://propertyux.github.io/hubot-pretend/index.html">Documentation</a>
-          <a href="https://propertyux.github.io/hubot-pretend/usage/00-setup_test.html">Usage</a>
-          <a href="https://propertyux.github.io/hubot-pretend/api/pretend.js.html">API</a>
-          <a href="https://propertyux.github.io/hubot-pretend/source/pretend.html">Source</a>
-          <a href="https://github.com/propertyux/hubot-pretend">GitHub</a> -->
+          <a href="index.html">Project</a>
+          <a href="base.js.html">Documentation</a>
+          <a href="tests.html">Tests</a>
+          <a href="https://github.com/timkinnane/hubot-playbook">Source</a>
         </nav>
 
         <div class="playbook-logo">
@@ -127,37 +126,42 @@
         
           
           
-          <h1>Dialogue</h1>
+          <h1>Outline</h1>
         
       </div>
 
       
         
-        <p><a name="Dialogue"></a></p>
-<h2 id="dialogue">Dialogue</h2>
-<p>Dialogues control which paths are available and for how long. Passing
-messages into a dialogue will match against the current path and route any
-replies.</p>
-<p>Where paths are self-replicating steps, the dialogue persists along the
-journey.</p>
-<p><strong>Kind</strong>: global class  </p>
+        <p><a name="Outline"></a></p>
+<h2 id="outline">Outline</h2>
+<p>Outlines are a conversation modelling schema / handler, with collections of
+attributes for setting up scenes, dialogues, paths and directors, for
+interactions defined as bits.</p>
+<p>Define a key and condition to execute each bit, either consecutively off a
+prior bit, or with a listen attribute to become effectively a global entry
+point to a scene.</p>
+<p>A subsequent bit can even lead back to it’s own parent or any other bit,
+creating a mesh of possible conversational pathways.</p>
+<p><strong>Kind</strong>: global class<br><strong>Todo</strong></p>
 <ul>
-<li><a href="#Dialogue">Dialogue</a><ul>
-<li><a href="#new_Dialogue_new">new Dialogue(res, [options], [key])</a></li>
-<li><a href="#Dialogue+end">.end()</a> ⇒ <code>boolean</code></li>
-<li><a href="#Dialogue+send">.send(…strings)</a> ⇒ <code>Promise</code></li>
-<li><a href="#Dialogue+onTimeout">.onTimeout([override])</a></li>
-<li><a href="#Dialogue+clearTimeout">.clearTimeout()</a></li>
-<li><a href="#Dialogue+startTimeout">.startTimeout()</a></li>
-<li><a href="#Dialogue+addPath">.addPath([prompt], [branches], [options], [key])</a> ⇒ <code>Promise</code></li>
-<li><a href="#Dialogue+addBranch">.addBranch(regex, [message], [callback])</a></li>
-<li><a href="#Dialogue+receive">.receive(res)</a> ⇒ <code>Promise</code></li>
+<li>[ ] Add bit attribute for callback function as a key of extended response</li>
+<li>[ ] Add bit attribute for director whitelist/blacklist names and/or auth function</li>
+</ul>
+<ul>
+<li><a href="#Outline">Outline</a><ul>
+<li><a href="#new_Outline_new">new Outline(bits, [options], [key])</a></li>
+<li><a href="#Outline+doBit">.doBit(res, key)</a></li>
+<li><a href="#Outline+setupScene">.setupScene(bit)</a></li>
+<li><a href="#Outline+getSceneArgs">.getSceneArgs()</a> ⇒ <code>array</code></li>
+<li><a href="#Outline+setupDialogue">.setupDialogue(res)</a></li>
+<li><a href="#Outline+setupPath">.setupPath(res)</a></li>
+<li><a href="#Outline+bitCondition">.bitCondition(key)</a> ⇒ <code>RegExp</code></li>
 </ul>
 </li>
 </ul>
 <hr>
-<p><a name="new_Dialogue_new"></a></p>
-<h3 id="new-dialogue-res-options-key-">new Dialogue(res, [options], [key])</h3>
+<p><a name="new_Outline_new"></a></p>
+<h3 id="new-outline-bits-options-key-">new Outline(bits, [options], [key])</h3>
 <table>
 <thead>
 <tr>
@@ -168,29 +172,54 @@ journey.</p>
 </thead>
 <tbody>
 <tr>
-<td>res</td>
-<td><code>Response</code></td>
-<td>Hubot Response object</td>
+<td>bits</td>
+<td><code>Array.&lt;string/Object&gt;</code></td>
+<td>Attributes to setup bits (accepts YAML file path)</td>
+</tr>
+<tr>
+<td>bits[].send</td>
+<td><code>array</code></td>
+<td>String/s to send when doing bit (minimum requirement)</td>
+</tr>
+<tr>
+<td>[bits[].catch]</td>
+<td><code>string</code></td>
+<td>To send if response unmatched by listeners</td>
+</tr>
+<tr>
+<td>[bits[].condition]</td>
+<td><code>string</code></td>
+<td>Converted to regex for listener to trigger bit</td>
+</tr>
+<tr>
+<td>[bits[].listen]</td>
+<td><code>string</code></td>
+<td>Type of listener (hear/respond) for scene entry bit</td>
+</tr>
+<tr>
+<td>[bits[].scene]</td>
+<td><code>string</code></td>
+<td>Scope for the scene (only used if it has a listen type)</td>
+</tr>
+<tr>
+<td>[bits[].key]</td>
+<td><code>string</code></td>
+<td>Key for scene and/or dialogue running the bit</td>
+</tr>
+<tr>
+<td>[bits[].options]</td>
+<td><code>Object</code></td>
+<td>Key/val options for scene and/or dialogue config</td>
+</tr>
+<tr>
+<td>[bits[].next]</td>
+<td><code>array</code></td>
+<td>Key/s (strings) for consequitive bits</td>
 </tr>
 <tr>
 <td>[options]</td>
 <td><code>Object</code></td>
-<td>Key/val options for config</td>
-</tr>
-<tr>
-<td>[options.sendReplies]</td>
-<td><code>boolean</code></td>
-<td>Toggle replying/sending (prefix with “@user”)</td>
-</tr>
-<tr>
-<td>[options.timeout]</td>
-<td><code>number</code></td>
-<td>Allowed time to reply (in miliseconds) before cancelling listeners</td>
-</tr>
-<tr>
-<td>[options.timeoutText]</td>
-<td><code>string</code></td>
-<td>What to send when timeout reached, set null to not send</td>
+<td>Key/val options for outline config</td>
 </tr>
 <tr>
 <td>[key]</td>
@@ -199,159 +228,13 @@ journey.</p>
 </tr>
 </tbody>
 </table>
-<p><strong>Example</strong> <em>(listener sets up dialogue with user on match (10 second timeout))</em>  </p>
-<pre><code class="lang-js">robot.hear(<span class="hljs-regexp">/hello/</span>, (res) =&gt; {
-  <span class="hljs-keyword">let</span> dlg = <span class="hljs-keyword">new</span> Dialogue(res, { <span class="hljs-attr">timeout</span>: <span class="hljs-number">10000</span> })
-  <span class="hljs-comment">// ...proceed to add paths</span>
-})
-</code></pre>
 <hr>
-<p><a name="Dialogue+end"></a></p>
-<h3 id="dialogue-end-code-boolean-code-">dialogue.end() ⇒ <code>boolean</code></h3>
-<p>Shutdown and emit status (for scene to disengage participants).</p>
-<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a><br><strong>Returns</strong>: <code>boolean</code> - Shutdown status, false if was already ended  </p>
-<hr>
-<p><a name="Dialogue+send"></a></p>
-<h3 id="dialogue-send-strings-code-promise-code-">dialogue.send(…strings) ⇒ <code>Promise</code></h3>
-<p>Send or reply with message as configured (@user reply or send to room).</p>
-<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a><br><strong>Returns</strong>: <code>Promise</code> - Resolves with result of send (respond middleware context)  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>…strings</td>
-<td><code>string</code></td>
-<td>Message strings</td>
-</tr>
-</tbody>
-</table>
-<hr>
-<p><a name="Dialogue+onTimeout"></a></p>
-<h3 id="dialogue-ontimeout-override-">dialogue.onTimeout([override])</h3>
-<p>Default timeout method sends message, unless null or method overriden.</p>
-<p>If given a method it will call that or can be reassigned as a new function.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a>  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>[override]</td>
-<td><code>function</code></td>
-<td>New function to call (optional)</td>
-</tr>
-</tbody>
-</table>
-<hr>
-<p><a name="Dialogue+clearTimeout"></a></p>
-<h3 id="dialogue-cleartimeout-">dialogue.clearTimeout()</h3>
-<p>Stop countdown for matching dialogue branches.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a>  </p>
-<hr>
-<p><a name="Dialogue+startTimeout"></a></p>
-<h3 id="dialogue-starttimeout-">dialogue.startTimeout()</h3>
-<p>Start (or restart) countdown for matching dialogue branches.</p>
-<p>Catches the onTimeout method because it can be overriden and may throw.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a>  </p>
-<hr>
-<p><a name="Dialogue+addPath"></a></p>
-<h3 id="dialogue-addpath-prompt-branches-options-key-code-promise-code-">dialogue.addPath([prompt], [branches], [options], [key]) ⇒ <code>Promise</code></h3>
-<p>Add a dialogue path, with branches to follow and a prompt (optional).</p>
-<p>Any new path added overwrites the previous. If a path isn’t given a key but
-the parent dialogue has one, it will be given to the path.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a><br><strong>Returns</strong>: <code>Promise</code> - Resolves when sends complete or immediately  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>[prompt]</td>
-<td><code>string</code></td>
-<td>To send on path setup (e.g. presenting options)</td>
-</tr>
-<tr>
-<td>[branches]</td>
-<td><code>array</code></td>
-<td>Array of args for each branch, each containing:<br>                            - RegExp for listener<br>                            - String to send and/or<br>                            - Function to call on match</td>
-</tr>
-<tr>
-<td>[options]</td>
-<td><code>Object</code></td>
-<td>Key/val options for path</td>
-</tr>
-<tr>
-<td>[key]</td>
-<td><code>string</code></td>
-<td>Key name for this path</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Example</strong>  </p>
-<pre><code class="lang-js"><span class="hljs-keyword">let</span> dlg = <span class="hljs-keyword">new</span> Dialogue(res)
-<span class="hljs-keyword">let</span> path = dlg.addPath(<span class="hljs-string">'Turn left or right?'</span>, [
-  [ <span class="hljs-regexp">/left/</span>, <span class="hljs-string">'Ok, going left!'</span> ]
-  [ <span class="hljs-regexp">/right/</span>, <span class="hljs-string">'Ok, going right!'</span> ]
-], <span class="hljs-string">'which-way'</span>)
-</code></pre>
-<hr>
-<p><a name="Dialogue+addBranch"></a></p>
-<h3 id="dialogue-addbranch-regex-message-callback-">dialogue.addBranch(regex, [message], [callback])</h3>
-<p>Add a branch to dialogue path, which is usually added first, but will be
-created if not.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a>  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>regex</td>
-<td><code>RegExp</code></td>
-<td>Matching pattern</td>
-</tr>
-<tr>
-<td>[message]</td>
-<td><code>string</code></td>
-<td>Message text for response on match</td>
-</tr>
-<tr>
-<td>[callback]</td>
-<td><code>function</code></td>
-<td>Function called when matched</td>
-</tr>
-</tbody>
-</table>
-<hr>
-<p><a name="Dialogue+receive"></a></p>
-<h3 id="dialogue-receive-res-code-promise-code-">dialogue.receive(res) ⇒ <code>Promise</code></h3>
-<p>Process incoming message for match against path branches.</p>
-<p>If matched, restart timeout. If no additional paths or branches added (by
-matching branch handler), end dialogue.</p>
-<p>Overrides any prior response with current one.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Dialogue"><code>Dialogue</code></a><br><strong>Returns</strong>: <code>Promise</code> - Resolves when matched/catch handler complete<br><strong>Todo</strong></p>
-<ul>
-<li>[ ] Test with handler using res.http/get to populate new path</li>
-</ul>
+<p><a name="Outline+doBit"></a></p>
+<h3 id="outline-dobit-res-key-">outline.doBit(res, key)</h3>
+<p>Send messages and setup any following listeners for a bit.</p>
+<p>Called in an open dialogue, as a callback on entering the scene or
+continuing from a prior bit. Adds the bit as a property of the response.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Outline"><code>Outline</code></a>  </p>
 <table>
 <thead>
 <tr>
@@ -365,6 +248,117 @@ matching branch handler), end dialogue.</p>
 <td>res</td>
 <td><code>Response</code></td>
 <td>Hubot Response object</td>
+</tr>
+<tr>
+<td>key</td>
+<td><code>string</code></td>
+<td>The key for a loaded bit</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><a name="Outline+setupScene"></a></p>
+<h3 id="outline-setupscene-bit-">outline.setupScene(bit)</h3>
+<p>Prepare the arguments required to add listener for a scene entering bit.</p>
+<p>Only applicable to bits with a <code>listen</code> attribute (hear or respond).
+Subsequent bits will play out within the same scene so their listen type is
+irrelevant because all responses from an engaged audience will be routed
+through the current dialogue.</p>
+<p>Bits only require a <code>.listen</code> and <code>.condition</code> property to setup a scene
+listener and will use defaults if <code>.scope</code> and <code>.options</code> are null.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Outline"><code>Outline</code></a>  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>bit</td>
+<td><code>Object</code></td>
+<td>Attributes to setup scene for entry to bit</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><a name="Outline+getSceneArgs"></a></p>
+<h3 id="outline-getsceneargs-code-array-code-">outline.getSceneArgs() ⇒ <code>array</code></h3>
+<p>Get arguments to pass into scene listeners for <em>global</em> bits.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Outline"><code>Outline</code></a><br><strong>Returns</strong>: <code>array</code> - Items contain required arguments (call with spread syntax)<br><strong>Example</strong> <em>(The hard way)</em>  </p>
+<pre><code class="lang-js"><span class="hljs-keyword">const</span> scene = <span class="hljs-keyword">new</span> Scene(robot)
+<span class="hljs-keyword">const</span> outline = <span class="hljs-keyword">new</span> Outline(<span class="hljs-string">'./conversation.yml'</span>)
+outline.getSceneArgs().map(<span class="hljs-function">(<span class="hljs-params">args</span>) =&gt;</span> scene.listen(...args)
+</code></pre>
+<p><strong>Example</strong> <em>(The easy way)</em>  </p>
+<pre><code class="lang-js"><span class="hljs-keyword">const</span> pb = <span class="hljs-keyword">new</span> Playbook(robot).outline(<span class="hljs-string">'./conversation.yml'</span>)
+<span class="hljs-comment">// ^ playbook helper creates outline and sets up scenes</span>
+</code></pre>
+<hr>
+<p><a name="Outline+setupDialogue"></a></p>
+<h3 id="outline-setupdialogue-res-">outline.setupDialogue(res)</h3>
+<p>Dialogue is already open from the scene being triggered.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Outline"><code>Outline</code></a>  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>res</td>
+<td><code>Response</code></td>
+<td>Hubot Response object</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><a name="Outline+setupPath"></a></p>
+<h3 id="outline-setuppath-res-">outline.setupPath(res)</h3>
+<p>Add path options and branches to</p>
+<p><strong>Kind</strong>: instance method of <a href="#Outline"><code>Outline</code></a>  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>res</td>
+<td><code>Response</code></td>
+<td>Hubot Response object</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><a name="Outline+bitCondition"></a></p>
+<h3 id="outline-bitcondition-key-code-regexp-code-">outline.bitCondition(key) ⇒ <code>RegExp</code></h3>
+<p>Convert a bit’s condition attribute into a regex.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Outline"><code>Outline</code></a><br><strong>Returns</strong>: <code>RegExp</code> - The pattern for the bit’s listener<br><strong>Todo</strong></p>
+<ul>
+<li>[ ] Use <code>conditioner-regex</code> to convert array of conditions to pattern</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>key</td>
+<td><code>string</code></td>
+<td>The key for a loaded bit</td>
 </tr>
 </tbody>
 </table>
