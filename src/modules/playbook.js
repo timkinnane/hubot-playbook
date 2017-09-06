@@ -48,7 +48,7 @@ class Playbook {
     if (this.robot.playbook === this) return this.robot.playbook
     this.robot.playbook = this
     this.log = this.robot.logger
-    this.log.info(`Playbook using ${this.robot.name} bot`)
+    this.log.debug(`Playbook using ${this.robot.name} bot`)
     if (improvise) this.improvise()
     return this
   }
