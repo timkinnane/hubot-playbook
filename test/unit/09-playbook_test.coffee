@@ -111,12 +111,12 @@ describe 'Playbook', ->
           sendReplies: false
         playbook.scenes[0].config.scope.should.equal 'room'
 
-      it 'passed the scene options to dialogue', -> co ->
+      it 'passed the scene options to dialogue', ->
         res = pretend.response 'tester', 'test', 'testing'
         dialogue = playbook.sceneEnter res,
           scope: 'room'
           sendReplies: false
-        dialogue.config.sendReplies.should.equal false
+        dialogue.config.sendReplies.should.be.false
 
   describe '.sceneListen', ->
 

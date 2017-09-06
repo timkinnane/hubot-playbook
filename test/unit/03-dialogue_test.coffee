@@ -174,7 +174,7 @@ describe 'Dialogue', ->
         dialogue.onTimeout timeout
         dialogue.startTimeout()
         clock.tick 1001
-        dialogue.send.should.not.have.calledOnce
+        dialogue.send.should.not.have.been.calledOnce
 
     context 'method override (by assignment)', ->
 
@@ -196,7 +196,7 @@ describe 'Dialogue', ->
         override = sinon.spy dialogue, 'onTimeout'
         dialogue.startTimeout()
         try clock.tick 1001
-        override.should.have.threw
+        override.should.throw
 
   describe '.clearTimeout', ->
 
@@ -395,14 +395,14 @@ describe 'Dialogue', ->
         dialogue.receive pretend.response 'tester', 'foo'
         dialogue.end.should.have.calledOnce
 
-      it 'calls the branch handler', -> co ->
+      it 'calls the branch handler', ->
         dialogue = new Dialogue testRes
         callback = sinon.spy()
         dialogue.addBranch /foo/, 'bar', callback
         dialogue.receive pretend.response 'tester', 'foo'
         callback.should.have.calledOnce
 
-      it 'sends the branch message', -> co ->
+      it 'sends the branch message', ->
         dialogue = new Dialogue testRes
         callback = sinon.spy()
         dialogue.addBranch /foo/, 'bar', callback

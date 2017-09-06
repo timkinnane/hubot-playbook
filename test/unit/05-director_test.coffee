@@ -135,7 +135,7 @@ describe 'Director', ->
           type: 'pinklist'
 
       it 'should throw error', ->
-        Director.prototype.constructor.should.have.threw
+        Director.prototype.constructor.should.throw
 
     context 'with invalid option for scope', ->
 
@@ -144,7 +144,7 @@ describe 'Director', ->
           scope: 'robot'
 
       it 'should throw error', ->
-        Director.prototype.constructor.should.have.threw
+        Director.prototype.constructor.should.throw
 
     context 'without key, with authorise function and options', ->
 
@@ -311,7 +311,7 @@ describe 'Director', ->
           @result.should.be.true
 
         it 'does not call authorise function', ->
-          @authorise.should.not.have.calledOnce
+          @authorise.should.not.have.been.calledOnce
 
       context 'has list, username not on list', ->
 
@@ -350,7 +350,7 @@ describe 'Director', ->
           @result.should.be.false
 
         it 'does not call authorise function', ->
-          @authorise.should.not.have.calledOnce
+          @authorise.should.not.have.been.calledOnce
 
       context 'has list, username not on list', ->
 
@@ -568,7 +568,7 @@ describe 'Director', ->
         @tester.send 'let me in'
 
       it 'prevents the scene enter method', ->
-        @enter.should.not.have.calledOnce
+        @enter.should.not.have.been.calledOnce
 
       it 'does not call the scene listener callback', ->
-        @callback.should.not.have.calledOnce
+        @callback.should.not.have.been.calledOnce

@@ -75,7 +75,7 @@ describe 'Base', ->
         pretend.robot.emit.should.have.calledWith 'error', @err
 
       it 'threw error', ->
-        @base.error.should.have.threw
+        @base.error.should.throw
 
     context 'with error context string', ->
 
@@ -90,7 +90,7 @@ describe 'Base', ->
         pretend.robot.emit.should.have.calledWith 'error'
 
       it 'threw error', ->
-        @base.error.should.have.threw
+        @base.error.should.throw
 
     context 'using inherited method for error', ->
 
@@ -102,7 +102,7 @@ describe 'Base', ->
         Base.prototype.error.should.have.calledWith 'Throw me an error'
 
       it 'threw', ->
-        @module.error.should.have.threw
+        @module.error.should.throw
 
   describe '.configure', ->
 
@@ -119,7 +119,7 @@ describe 'Base', ->
     it 'throws when not given options', ->
       base = new Base 'module', pretend.robot
       try base.configure 'not an object'
-      base.configure.should.have.threw
+      base.configure.should.throw
 
   describe '.defaults', ->
 

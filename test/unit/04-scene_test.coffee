@@ -69,7 +69,7 @@ describe 'Scene', ->
         try @scene = new Scene pretend.robot, scope: 'monkey'
 
       it 'throws error when given invalid scope', ->
-        Scene.prototype.constructor.should.have.threw
+        Scene.prototype.constructor.should.throw
 
   describe '.listen', ->
 
@@ -122,7 +122,7 @@ describe 'Scene', ->
         try @scene.listen 'smell', /test/, -> null
 
       it 'throws', ->
-        @scene.listen.should.have.threw
+        @scene.listen.should.throw
 
     context 'with an invalid regex', ->
 
@@ -130,7 +130,7 @@ describe 'Scene', ->
         try @scene.listen 'hear', 'test', -> null
 
       it 'throws', ->
-        @scene.listen.should.have.threw
+        @scene.listen.should.throw
 
     context 'with an invalid callback', ->
 
@@ -138,7 +138,7 @@ describe 'Scene', ->
         try @scene.listen 'hear', /test/, { not: 'a function '}
 
       it 'throws', ->
-        @scene.listen.should.have.threw
+        @scene.listen.should.throw
 
   describe '.hear', ->
 

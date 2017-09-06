@@ -71,13 +71,17 @@ describe 'Path', ->
 
     context 'with bad arguments for branch', ->
 
-      beforeEach ->
-        try @path = new Path pretend.robot, 'breakme.jpg'
-
       it 'throws', ->
-        Path.constructor.should.have.threw
+        try @path = new Path pretend.robot, 'breakme.jpg'
+        Path.constructor.should.throw
 
   describe '.addBranch', ->
+
+    beforeEach ->
+      sinon.spy Path.prototype, 'addBranch'
+
+    afterEach ->
+      Path.prototype.addBranch.restore()
 
     it 'creates branch object', ->
       path = new Path pretend.robot
@@ -124,14 +128,22 @@ describe 'Path', ->
     it 'throws with invalid regex', ->
       path = new Path pretend.robot
       try path.addBranch 'derp'
-      path.addBranch.should.have.threw
+      path.addBranch.should.throw
 
-    it 'throws with invalid message and/or callback', ->
+    it 'throws with insufficient args', ->
       path = new Path pretend.robot
       try path.addBranch /.*/
+      path.addBranch.should.throw
+
+    it 'throws with invalid message', ->
+      path = new Path pretend.robot
       try path.addBranch /.*/, () ->
+      path.addBranch.should.throw
+
+    it 'throws with invalid callback', ->
+      path = new Path pretend.robot
       try path.addBranch /.*/, 'foo', 'bar'
-      path.addBranch.should.have.alwaysThrew
+      path.addBranch.should.throw
 
   describe '.getHandler', ->
 

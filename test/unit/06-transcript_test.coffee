@@ -183,7 +183,7 @@ describe 'Transcript', ->
           ]
 
         it 'does not throw', ->
-          @transcript.recordEvent.should.not.have.threw
+          @transcript.recordEvent.should.not.throw
 
   describe '.recordAll', ->
 
