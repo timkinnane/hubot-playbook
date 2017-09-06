@@ -21,7 +21,7 @@ Playbook can be used with any version from then on.
 
 ## Usage & Development
 
-1. [Read the docs](https://timkinnane.github.io/hubot-playbook) to get an understanding of Playbook modules and their methods.
+1. [Read the docs](https://timkinnane.github.io/hubot-playbook/path.js.html) to get an understanding of Playbook modules and their methods.
 
 2. [See basic examples](https://github.com/timkinnane/hubot-playbook/tree/master/integration/scripts) in the integration scripts, [the outcomes of are tested here](https://github.com/timkinnane/hubot-playbook/blob/master/integration/test/Usage_test.coffee).
 
