@@ -68,7 +68,7 @@ class Path extends Base {
   */
   addBranch (regex, ...args) {
     let callback, strings
-    if (!_.isRegExp(regex)) this.error('Invalid RegExp for branch')
+    if (!_.isRegExp(regex)) this.error(`Invalid RegExp for branch: ${regex}`)
     if (_.isString(args[0]) || _.isArray(args[0])) strings = args.shift()
     if (_.isFunction(args[0])) callback = args.shift()
     if ((strings == null) && (callback == null)) this.error('Missing args for branch')

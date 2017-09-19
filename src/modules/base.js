@@ -59,7 +59,8 @@ class Base {
   */
   error (err) {
     if (_.isString(err)) {
-      const text = `${this.id || 'constructor'}: ${err}`
+      let text = `${this.id || 'constructor'}: ${err}`
+      if (this.key !== undefined) text += ` (key: ${this.key})`
       err = new Error(text)
     }
     if (this.robot != null) this.robot.emit('error', err)
