@@ -68,7 +68,7 @@ class Scene extends Base {
    * add dialogue branches or process response as required.
    *
    * @param  {String} type       The listener type: hear|respond
-   * @param  {RegExp} regex      Matcher for listener
+   * @param  {RegExp} regex      Matcher for listener (accepts string, will cast as RegExp)
    * @param  {Function} callback Called when matched, with Response and Dialogue as arguments
    *
    * @example
@@ -80,6 +80,7 @@ class Scene extends Base {
   */
   listen (type, regex, callback) {
     if (!_.includes(['hear', 'respond'], type)) this.error('Invalid listener type')
+    if (_.isString(regex) && _.isRegExp(new RegExp(regex))) regex = new RegExp(regex)
     if (!_.isRegExp(regex)) this.error('Invalid regex for listener')
     if (!_.isFunction(callback)) this.error('Invalid callback for listener')
 

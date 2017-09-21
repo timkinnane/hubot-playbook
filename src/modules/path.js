@@ -59,7 +59,7 @@ class Path extends Base {
    * Branch handlers are called by `.match`, if input matches a branch, which
    * then returns the matched handler's return value.
    *
-   * @param {RegExp} regex           Matching pattern
+   * @param {RegExp} regex           Matching pattern (accepts string, will cast as RegExp)
    * @param {string/array} [strings] Message text for response on match
    * @param {Function} [callback]    Function called when matched
    *
@@ -68,6 +68,7 @@ class Path extends Base {
   */
   addBranch (regex, ...args) {
     let callback, strings
+    if (_.isString(regex) && _.isRegExp(new RegExp(regex))) regex = new RegExp(regex)
     if (!_.isRegExp(regex)) this.error(`Invalid RegExp for branch: ${regex}`)
     if (_.isString(args[0]) || _.isArray(args[0])) strings = args.shift()
     if (_.isFunction(args[0])) callback = args.shift()
