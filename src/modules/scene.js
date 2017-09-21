@@ -1,9 +1,10 @@
 'use strict'
 
-import _ from 'lodash'
-import Base from './base'
-import Dialogue from './dialogue'
-import Middleware from '../utils/middleware'
+const _ = require('lodash')
+const Base = require('./base')
+const Dialogue = require('./dialogue')
+const Middleware = require('../utils/middleware')
+require('../utils/string-to-regex')
 
 /**
  * Scenes conduct participation in dialogue. They use listeners to enter an
@@ -84,7 +85,7 @@ class Scene extends Base {
   */
   listen (type, regex, callback) {
     if (!_.includes(['hear', 'respond'], type)) this.error('Invalid listener type')
-    if (_.isString(regex) && _.isRegExp(new RegExp(regex))) regex = new RegExp(regex)
+    if (_.isString(regex) && _.isRegExp(regex.toRegExp())) regex = regex.toRegExp()
     if (!_.isRegExp(regex)) this.error('Invalid regex for listener')
     if (!_.isFunction(callback)) this.error('Invalid callback for listener')
 

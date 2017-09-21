@@ -1,7 +1,8 @@
 'use strict'
 
-import _ from 'lodash'
-import Base from './base'
+const _ = require('lodash')
+const Base = require('./base')
+require('../utils/string-to-regex')
 
 /**
  * Paths are the smallest and most essential node for conversations. They allow
@@ -68,7 +69,7 @@ class Path extends Base {
   */
   addBranch (regex, ...args) {
     let callback, strings
-    if (_.isString(regex) && _.isRegExp(new RegExp(regex))) regex = new RegExp(regex)
+    if (_.isString(regex) && _.isRegExp(regex.toRegExp())) regex = regex.toRegExp()
     if (!_.isRegExp(regex)) this.error(`Invalid RegExp for branch: ${regex}`)
     if (_.isString(args[0]) || _.isArray(args[0])) strings = args.shift()
     if (_.isFunction(args[0])) callback = args.shift()

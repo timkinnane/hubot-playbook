@@ -68,6 +68,11 @@ describe 'Scene', ->
 
   describe '.listen', ->
 
+    it 'accepts a string that can be cast as RegExp', ->
+      scene = new Scene pretend.robot
+      scene.listen 'hear', '/test/i', () -> null
+      pretend.robot.listeners.pop().regex.should.eql /test/i
+
     context 'with hear type and message matching regex', ->
 
       it 'registers a robot hear listener with scene as attribute', ->

@@ -93,6 +93,11 @@ describe 'Path', ->
       path.addBranch /.*/, 'foo', () ->
       path.branches[0].regex.should.be.instanceof RegExp
 
+    it 'accepts a string that can be cast as RegExp', ->
+      path = new Path pretend.robot
+      path.addBranch '/.*/ig', 'foo', () ->
+      path.branches[0].regex.should.be.instanceof RegExp
+
     it 'calls getHandler with strings and callback', ->
       path = new Path pretend.robot
       callback = ->
