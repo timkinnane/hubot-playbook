@@ -2,7 +2,6 @@
 
 import _ from 'lodash'
 import Base from './base'
-import hooker from 'hooker'
 
 /**
  * Directors provide conversation firewalls, allowing listed users to be
@@ -48,13 +47,13 @@ class Director extends Base {
     this.defaults({
       type: 'whitelist',
       scope: 'username',
-      deniedReply: process.env.DENIED_REPLY || "Sorry, I can't do that."
+      deniedReply: process.env.DENIED_REPLY || null
     })
     this.authorise = authArg
 
     if (!_.includes(['whitelist', 'blacklist'], this.config.type)) this.error('Invalid type')
     if (!_.includes(['username', 'room'], this.config.scope)) this.error('Invalid scope')
-    this.log.info(`New ${this.config.scope} Director ${this.config.type}: ${this.id}`)
+    this.log.info(`New ${this.config.scope} Director ${this.config.type}`)
 
     const listEnv = this.config.type.toUpperCase()
     switch (this.config.scope) {
@@ -128,47 +127,46 @@ class Director extends Base {
    * Process access or denial (either silently or with reply, as configured).
    *
    * @param  {Response} res Hubot Response object
-   * @return {boolean}      Access allowed
+   * @return {Promise}      Resolves with boolean, access allowed/denied
   */
   process (res) {
-    const allowed = this.isAllowed(res)
+    const isAllowed = Promise.resolve(this.isAllowed(res))
     const user = res.message.user.name
     const message = res.message.text
-    if (allowed) {
-      this.log.debug(`${this.id} allowed ${user} on receiving ${message}`)
-      this.emit('allow', res)
-      return true
-    } else {
-      this.log.info(`${this.id} denied ${user} on receiving: ${message}`)
-      this.emit('deny', res)
-      if (!_.includes(['', null], this.config.deniedReply)) res.reply(this.config.deniedReply)
-      return false
-    }
+    return isAllowed.then((allowed) => {
+      if (allowed) {
+        this.log.debug(`${this.id} allowed ${user} on receiving ${message}`)
+        this.emit('allow', res)
+      } else {
+        this.log.info(`${this.id} denied ${user} on receiving: ${message}`)
+        this.emit('deny', res)
+        if (!_.includes(['', null], this.config.deniedReply)) res.reply(this.config.deniedReply)
+      }
+      return allowed
+    })
   }
 
   /**
    * Let this director control access to any listener matching regex.
    *
-   * @param  {Regex}  regex - Listener match pattern
-   * @return {Director}     - Self, for chaining methods
+   * @param  {Regex}  regex Listener match pattern
+   * @return {Director}     Self, for chaining methods
   */
   directMatch (regex) {
     this.log.info(`${this.id} now controlling access to listeners matching ${regex}`)
     this.robot.listenerMiddleware((context, next, done) => {
-      const res = context.response
-      const isMatch = res.message.text.match(regex)
-      const isDenied = !this.process(res)
-      if (isMatch && isDenied) {
-        res.message.finish() // don't process this message further
+      if (!context.response.message.text.match(regex)) return next(done)
+      this.process(context.response).then((allowed) => {
+        if (allowed) return next(done)
+        context.response.message.finish() // don't process this message further
         return done() // don't process further middleware
-      }
-      return next(done)
+      })
     }) // nothing matched or user allowed
     return this
   }
 
   /**
-   * Let this director control access to a listener by listener or scene ID.
+   * Let this director control access to a listener by listener ID.
    *
    * If multiple listeners use the same ID, it's assumed to deny all of them.
    *
@@ -178,14 +176,12 @@ class Director extends Base {
   directListener (id) {
     this.log.info(`Director ${this.id} now controlling access to listener ${id}`)
     this.robot.listenerMiddleware((context, next, done) => {
-      const res = context.response
-      const isMatch = context.listener.options.id === id
-      const isDenied = !this.process(res)
-      if (isMatch && isDenied) {
+      if (context.listener.options.id !== id) return next(done)
+      this.process(context.response).then((allowed) => {
+        if (allowed) return next(done)
         context.response.message.finish() // don't process this message further
         return done() // don't process further middleware
-      }
-      return next(done)
+      })
     }) // nothing matched or user allowed
     return this
   }
@@ -197,16 +193,15 @@ class Director extends Base {
    *
    * @param  {Scene} scene The Scene instance
    * @return {Director}    Self, for chaining methods
-   * @todo Replace hooker usage with custom middleware on scene enter.
-   * e.g. https://gist.github.com/darrenscerri/5c3b3dcbe4d370435cfa
   */
   directScene (scene) {
     this.log.info(`${this.id} now controlling ${scene.id}`)
-    this.directListener(scene.id) //  to control scene's listeners
-    hooker.hook(scene, 'enter', {
-      pre: res => {
-        if (!this.process(res)) return hooker.preempt(false)
-      }
+    const director = this
+    scene.registerMiddleware((context, next, done) => {
+      director.process(context.response).then((allowed) => {
+        if (allowed) next(done)
+        else done()
+      })
     })
     return this
   }

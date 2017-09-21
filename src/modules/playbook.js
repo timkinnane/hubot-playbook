@@ -81,15 +81,16 @@ class Playbook {
   /**
    * Create and enter Scene.
    *
-   * @param  {Response} res     Response object from entering participant
-   * @param  {*}   [args]       Both Scene and Dialogue constructor args
-   * @return {Dialogue/boolean} Entered Dialogue or false if failed
+   * @param  {Response} res    Response object from entering participant
+   * @param  {*}        [args] Both Scene and Dialogue constructor args
+   * @param  {Function} [cb]   Called with context after enter middleware done
+   * @return {Promise}         Resolves with final enter middleware context
   */
   sceneEnter (res, ...args) {
     const scene = new this.Scene(this.robot, ...args)
-    const dialogue = scene.enter(res, ...args)
+    const processEnter = scene.enter(res, ...args)
     this.scenes.push(scene)
-    return dialogue
+    return processEnter
   }
 
   /**

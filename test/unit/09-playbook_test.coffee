@@ -92,15 +92,19 @@ describe 'Playbook', ->
 
       it 'makes scene with default user type', ->
         playbook.sceneEnter pretend.response 'tester', 'test', 'testing'
-        playbook.scenes[0].should.be.instanceof playbook.Scene
+        .then ->
+          playbook.scenes[0].should.be.instanceof playbook.Scene
 
-      it 'returns a dialogue', ->
+      it 'resolves with a dialogue', ->
         playbook.sceneEnter pretend.response 'tester', 'test'
-        .should.be.instanceof playbook.Dialogue
+        .then (dialogue) ->
+          dialogue.should.be.instanceof playbook.Dialogue
 
       it 'enters scene, engaging user (stores against id)', ->
-        dialogue = playbook.sceneEnter pretend.response 'tester', 'test'
-        playbook.scenes[0].engaged[pretend.users.tester.id].should.eql dialogue
+        playbook.sceneEnter pretend.response 'tester', 'test'
+        .then (dialogue) ->
+          playbook.scenes[0].engaged[pretend.users.tester.id]
+          .should.eql dialogue
 
     context 'with type and options args', ->
 
@@ -109,14 +113,15 @@ describe 'Playbook', ->
         playbook.sceneEnter res,
           scope: 'room'
           sendReplies: false
-        playbook.scenes[0].config.scope.should.equal 'room'
+        .then -> playbook.scenes[0].config.scope.should.equal 'room'
 
       it 'passed the scene options to dialogue', ->
         res = pretend.response 'tester', 'test', 'testing'
-        dialogue = playbook.sceneEnter res,
+        playbook.sceneEnter res,
           scope: 'room'
           sendReplies: false
-        dialogue.config.sendReplies.should.be.false
+        .then (dialogue) ->
+          dialogue.config.sendReplies.should.be.false
 
   describe '.sceneListen', ->
 
@@ -283,7 +288,7 @@ describe 'Playbook', ->
     context 'extended using transcript reocrds', ->
 
       it 'merge the recorded answers with attribute tags', -> co ->
-        dialogue = playbook.sceneEnter res = pretend.response 'tester', 'test'
+        dialogue = yield playbook.sceneEnter pretend.response 'tester', 'test'
         transcript = playbook.transcribe dialogue, events: ['match']
         playbook.improv.extend (data) ->
           userId = data.user.id

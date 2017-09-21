@@ -157,7 +157,7 @@ in multiple script files loaded by the same Hubot.</p>
 <li><a href="#Playbook+use">.use(robot, [improvise])</a> ⇒ <a href="#Playbook"><code>Playbook</code></a></li>
 <li><a href="#Playbook+dialogue">.dialogue(res, […args])</a> ⇒ <code>Dialogue</code></li>
 <li><a href="#Playbook+scene">.scene([…args])</a> ⇒ <code>Scene</code></li>
-<li><a href="#Playbook+sceneEnter">.sceneEnter(res, […args])</a> ⇒ <code>Dialogue/boolean</code></li>
+<li><a href="#Playbook+sceneEnter">.sceneEnter(res, […args], [cb])</a> ⇒ <code>Promise</code></li>
 <li><a href="#Playbook+sceneListen">.sceneListen(type, regex, […args], callback)</a> ⇒ <code>Scene</code></li>
 <li><a href="#Playbook+sceneHear">.sceneHear([…args])</a></li>
 <li><a href="#Playbook+sceneRespond">.sceneRespond([…args])</a></li>
@@ -249,9 +249,9 @@ in multiple script files loaded by the same Hubot.</p>
 </table>
 <hr>
 <p><a name="Playbook+sceneEnter"></a></p>
-<h3 id="playbook-sceneenter-res-args-code-dialogue-boolean-code-">playbook.sceneEnter(res, […args]) ⇒ <code>Dialogue/boolean</code></h3>
+<h3 id="playbook-sceneenter-res-args-cb-code-promise-code-">playbook.sceneEnter(res, […args], [cb]) ⇒ <code>Promise</code></h3>
 <p>Create and enter Scene.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Playbook"><code>Playbook</code></a><br><strong>Returns</strong>: <code>Dialogue/boolean</code> - Entered Dialogue or false if failed  </p>
+<p><strong>Kind</strong>: instance method of <a href="#Playbook"><code>Playbook</code></a><br><strong>Returns</strong>: <code>Promise</code> - Resolves with final enter middleware context  </p>
 <table>
 <thead>
 <tr>
@@ -270,6 +270,11 @@ in multiple script files loaded by the same Hubot.</p>
 <td>[…args]</td>
 <td><code>*</code></td>
 <td>Both Scene and Dialogue constructor args</td>
+</tr>
+<tr>
+<td>[cb]</td>
+<td><code>function</code></td>
+<td>Called with context after enter middleware done</td>
 </tr>
 </tbody>
 </table>

@@ -166,7 +166,8 @@ scene. The scope of audience can be:</p>
 <li><a href="#Scene+hear">.hear()</a></li>
 <li><a href="#Scene+respond">.respond()</a></li>
 <li><a href="#Scene+whoSpeaks">.whoSpeaks(res)</a> ⇒ <code>string</code></li>
-<li><a href="#Scene+enter">.enter(res, [options], …args)</a> ⇒ <code>Dialogue</code></li>
+<li><a href="#Scene+registerMiddleware">.registerMiddleware(piece)</a></li>
+<li><a href="#Scene+processEnter">.processEnter(context, [done])</a> ⇒ <code>Dialogue</code></li>
 <li><a href="#Scene+exit">.exit(res, [status])</a> ⇒ <code>boolean</code></li>
 <li><a href="#Scene+exitAll">.exitAll()</a></li>
 <li><a href="#Scene+getDialogue">.getDialogue(participants)</a> ⇒ <code>Dialogue</code></li>
@@ -273,7 +274,7 @@ add dialogue branches or process response as required.</p>
 <tr>
 <td>regex</td>
 <td><code>RegExp</code></td>
-<td>Matcher for listener</td>
+<td>Matcher for listener (accepts string, will cast as RegExp)</td>
 </tr>
 <tr>
 <td>callback</td>
@@ -321,15 +322,17 @@ scene.listen(<span class="hljs-string">'respond'</span>, /hello/, (res) =&gt; {
 </tbody>
 </table>
 <hr>
-<p><a name="Scene+enter"></a></p>
-<h3 id="scene-enter-res-options-args-code-dialogue-code-">scene.enter(res, [options], …args) ⇒ <code>Dialogue</code></h3>
-<p>Engage the participants in dialogue. A new Dialogue instance is created and
-all further messages from the audience in this scene’s scope will be passed
-to that dialogue, untill they are exited from the scene.</p>
-<p>Would usually be invoked by a listener, using the Scene <code>.listen</code>, <code>.hear</code>
-or <code>respond</code> methods, but could be called directly to force audience into
-a scene unprompted.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a><br><strong>Returns</strong>: <code>Dialogue</code> - The started dialogue  </p>
+<p><a name="Scene+registerMiddleware"></a></p>
+<h3 id="scene-registermiddleware-piece-">scene.registerMiddleware(piece)</h3>
+<p>Add a function to the enter middleware stack, to continue or interrupt the
+pipeline. Called with:</p>
+<ul>
+<li>bound ‘this’ containing the current scene</li>
+<li>context, object containing relevant attributes for the pipeline</li>
+<li>next, function to call to continue the pipeline</li>
+<li>done, final pipeline function, optionally given as argument to next</li>
+</ul>
+<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a>  </p>
 <table>
 <thead>
 <tr>
@@ -340,19 +343,60 @@ a scene unprompted.</p>
 </thead>
 <tbody>
 <tr>
-<td>res</td>
-<td><code>Response</code></td>
-<td>Hubot Response object</td>
+<td>piece</td>
+<td><code>function</code></td>
+<td>Pipeline function to add to the stack.</td>
 </tr>
+</tbody>
+</table>
+<hr>
+<p><a name="Scene+processEnter"></a></p>
+<h3 id="scene-processenter-context-done-code-dialogue-code-">scene.processEnter(context, [done]) ⇒ <code>Dialogue</code></h3>
+<p>Engage the participants in dialogue. A new Dialogue instance is created and
+all further messages from the audience in this scene’s scope will be passed
+to that dialogue, untill they are exited from the scene.</p>
+<p>Would usually be invoked as the final piece of enter middleware, after
+stack execution is triggered by a scene listener but could be called
+directly to force audience into a scene unprompted.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a><br><strong>Returns</strong>: <code>Dialogue</code> - The final dialogue  </p>
+<table>
+<thead>
 <tr>
-<td>[options]</td>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>context</td>
 <td><code>Object</code></td>
-<td>Dialogue options merged with scene config</td>
+<td>The final context after middleware completed</td>
 </tr>
 <tr>
-<td>…args</td>
-<td><code>*</code></td>
-<td>Any additional args for Dialogue constructor</td>
+<td>context.response</td>
+<td><code>Object</code></td>
+<td>The hubot response object</td>
+</tr>
+<tr>
+<td>context.participants</td>
+<td><code>string</code></td>
+<td>Who is being entered to the scene</td>
+</tr>
+<tr>
+<td>[context.options]</td>
+<td><code>Object</code></td>
+<td>Options object given to dialogue</td>
+</tr>
+<tr>
+<td>[context.arguments]</td>
+<td><code>Array</code></td>
+<td>Additional arguments given to dialogue</td>
+</tr>
+<tr>
+<td>[done]</td>
+<td><code>function</code></td>
+<td>Optional final callback after processed - given context</td>
 </tr>
 </tbody>
 </table>

@@ -223,352 +223,395 @@ describe 'Director', ->
 
     context 'whitelist without authorise function', ->
 
-      beforeEach ->
-        @director = new Director pretend.robot
-
       context 'no list', ->
 
-        beforeEach ->
-          @result = @director.isAllowed @res
-
         it 'returns false', ->
-          @result.should.be.false
+          director = new Director pretend.robot
+          director.isAllowed pretend.response 'tester', 'test'
+          .should.be.false
 
       context 'has list, username on list', ->
 
-        beforeEach ->
-          @director.names = ['tester']
-          @result = @director.isAllowed @res
-
         it 'returns true', ->
-          @result.should.be.true
+          director = new Director pretend.robot
+          director.names = ['tester']
+          director.isAllowed pretend.response 'tester', 'test'
+          .should.be.true
 
       context 'has list, username not on list', ->
 
-        beforeEach ->
-          @director.names = ['nobody']
-          @result = @director.isAllowed @res
-
         it 'returns false', ->
-          @result.should.be.false
+          director = new Director pretend.robot
+          director.names = ['nobody']
+          director.isAllowed pretend.response 'tester', 'test'
+          .should.be.false
 
     context 'blacklist without authorise function', ->
 
-      beforeEach ->
-        @director = new Director pretend.robot,
-          type: 'blacklist'
-
       context 'no list', ->
 
-        beforeEach ->
-          @result = @director.isAllowed @res
-
         it 'returns true', ->
-          @result.should.be.true
+          director = new Director pretend.robot, type: 'blacklist'
+          director.isAllowed pretend.response 'tester', 'test'
+          .should.be.true
 
       context 'has list, username on list', ->
 
-        beforeEach ->
-          @director.names = ['tester']
-          @result = @director.isAllowed @res
-
         it 'returns false', ->
-          @result.should.be.false
+          director = new Director pretend.robot, type: 'blacklist'
+          director.names = ['tester']
+          director.isAllowed pretend.response 'tester', 'test'
+          .should.be.false
 
       context 'has list, username not on list', ->
 
-        beforeEach ->
-          @director.names = ['nobody']
-          @result = @director.isAllowed @res
-
         it 'returns true', ->
-          @result.should.be.true
+          director = new Director pretend.robot, type: 'blacklist'
+          director.names = ['nobody']
+          director.isAllowed pretend.response 'tester', 'test'
+          .should.be.true
 
     context 'whitelist with authorise function', ->
 
-      beforeEach ->
-        @authorise = sinon.spy -> 'AUTHORISE'
-        @director = new Director pretend.robot, @authorise
-
       context 'no list', ->
 
-        beforeEach ->
-          @result = @director.isAllowed @res
-
         it 'calls authorise function with username and res', ->
-          @authorise.should.have.calledWith 'tester', @res
+          authorise = sinon.spy -> 'AUTHORISE'
+          director = new Director pretend.robot, authorise
+          res = pretend.response 'tester', 'test'
+          director.isAllowed res
+          authorise.should.have.calledWith 'tester', res
 
         it 'returns value of authorise function', ->
-          @result.should.equal 'AUTHORISE'
+          authorise = sinon.spy -> 'AUTHORISE'
+          director = new Director pretend.robot, authorise
+          director.isAllowed pretend.response 'tester', 'test'
+          .should.equal 'AUTHORISE'
 
       context 'has list, username on list', ->
 
-        beforeEach ->
-          @director.names = ['tester']
-          @result = @director.isAllowed @res
-
         it 'returns true', ->
-          @result.should.be.true
+          authorise = sinon.spy -> 'AUTHORISE'
+          director = new Director pretend.robot, authorise
+          director.names = ['tester']
+          director.isAllowed pretend.response 'tester', 'test'
+          .should.be.true
 
         it 'does not call authorise function', ->
-          @authorise.should.not.have.been.calledOnce
+          authorise = sinon.spy -> 'AUTHORISE'
+          director = new Director pretend.robot, authorise
+          director.names = ['tester']
+          director.isAllowed pretend.response 'tester', 'test'
+          authorise.should.not.have.been.calledOnce
 
       context 'has list, username not on list', ->
 
-        beforeEach ->
-          @director.names = ['nobody']
-          @result = @director.isAllowed @res
-
         it 'returns value of authorise function', ->
-          @result.should.equal 'AUTHORISE'
+          authorise = sinon.spy -> 'AUTHORISE'
+          director = new Director pretend.robot, authorise
+          director.names = ['nobody']
+          director.isAllowed pretend.response 'tester', 'test'
+          .should.equal 'AUTHORISE'
 
     context 'blacklist with authorise function', ->
 
-      beforeEach ->
-        @authorise = sinon.spy -> 'AUTHORISE'
-        @director = new Director pretend.robot, @authorise,
-          type: 'blacklist'
-
       context 'no list', ->
 
-        beforeEach ->
-          @result = @director.isAllowed @res
-
         it 'calls authorise function with username and res', ->
-          @authorise.should.have.calledWith 'tester', @res
+          authorise = sinon.spy -> 'AUTHORISE'
+          director = new Director pretend.robot, authorise, type: 'blacklist'
+          res = pretend.response 'tester', 'test'
+          director.isAllowed res
+          authorise.should.have.calledWith 'tester', res
 
         it 'returns value of authorise function', ->
-          @result.should.equal 'AUTHORISE'
+          authorise = sinon.spy -> 'AUTHORISE'
+          director = new Director pretend.robot, authorise, type: 'blacklist'
+          director.isAllowed pretend.response 'tester', 'test'
+          .should.equal 'AUTHORISE'
 
       context 'has list, username on list', ->
 
-        beforeEach ->
-          @director.names = ['tester']
-          @result = @director.isAllowed @res
-
         it 'returns false', ->
-          @result.should.be.false
+          authorise = sinon.spy -> 'AUTHORISE'
+          director = new Director pretend.robot, authorise, type: 'blacklist'
+          director.names = ['tester']
+          director.isAllowed pretend.response 'tester', 'test'
+          .should.be.false
 
         it 'does not call authorise function', ->
-          @authorise.should.not.have.been.calledOnce
+          authorise = sinon.spy -> 'AUTHORISE'
+          director = new Director pretend.robot, authorise, type: 'blacklist'
+          director.names = ['tester']
+          director.isAllowed pretend.response 'tester', 'test'
+          authorise.should.not.have.been.calledOnce
 
       context 'has list, username not on list', ->
 
-        beforeEach ->
-          @director.names = ['nobody']
-          @result = @director.isAllowed @res
-
         it 'returns value of authorise function', ->
-          @result.should.equal 'AUTHORISE'
+          authorise = sinon.spy -> 'AUTHORISE'
+          director = new Director pretend.robot, authorise, type: 'blacklist'
+          director.names = ['nobody']
+          director.isAllowed pretend.response 'tester', 'test'
+          .should.equal 'AUTHORISE'
 
     context 'room scope, blacklist room', ->
 
-      beforeEach ->
-        @director = new Director pretend.robot,
-          type: 'blacklist'
-          scope: 'room'
-        @director.names = ['testing']
-        @result = @director.isAllowed @res
-
       it 'returns false', ->
-        @result.should.be.false
+        director = new Director pretend.robot, type: 'blacklist', scope: 'room'
+        director.names = ['testing']
+        director.isAllowed pretend.response 'tester', 'test', 'testing'
+        .should.be.false
 
     context 'room scope, whitelist room', ->
 
-      beforeEach ->
-        @director = new Director pretend.robot,
-          type: 'whitelist'
-          scope: 'room'
-        @director.names = ['testing']
-        @result = @director.isAllowed @res
-
       it 'returns true', ->
-        @result.should.be.true
+        director = new Director pretend.robot, type: 'whitelist', scope: 'room'
+        director.names = ['testing']
+        director.isAllowed pretend.response 'tester', 'test', 'testing'
+        .should.be.true
 
   describe '.process', ->
 
-    beforeEach ->
-      @director = new Director pretend.robot
-      @scene = new Scene pretend.robot
+    it 'calls .isAllowed to determine if user is allowed or denied', ->
+      director = new Director pretend.robot
+      scene = new Scene pretend.robot
+      res = pretend.response 'tester', 'testing'
+      director.process res
+      director.isAllowed.should.have.calledWith res
 
-    context 'denied user', ->
+    it 'returns a promise', ->
+      director = new Director pretend.robot
+      scene = new Scene pretend.robot
+      director.process pretend.response 'tester', 'testing'
+      .then.should.be.a 'function'
 
-      beforeEach ->
-        @result = @director.process @res
+    it 'resolves to .isAllowed result', -> co ->
+      director = new Director pretend.robot
+      scene = new Scene pretend.robot
+      result = yield director.process pretend.response 'tester', 'testing'
+      result.should.equal director.isAllowed.returnValues.pop()
 
-      it 'calls .isAllowed to determine if user is allowed or denied', ->
-        @director.isAllowed.should.have.calledWith @res
+    context 'with async auth function', ->
 
-      it 'returns the same result as .isAllowed', ->
-        @result.should.equal @director.isAllowed.returnValues.pop()
+      it 'resolves with auth function result after finished', -> co ->
+        authorise = -> new Promise (resolve, reject) ->
+          done = -> resolve('AUTHORISE')
+          setTimeout done, 30
+        director = new Director pretend.robot, authorise
+        result = yield director.process pretend.response 'tester', 'test'
+        result.should.equal 'AUTHORISE'
 
     context 'denied with denied reply value', ->
 
-      beforeEach ->
-        @result = @director.process @res
-
-      it 'calls response method reply with reply value', ->
-        @res.reply.should.have.calledWith @director.config.deniedReply
+      it 'calls response method reply with reply value', -> co ->
+        director = new Director pretend.robot, deniedReply: 'DENIED'
+        res = pretend.response 'tester', 'test'
+        yield director.process res
+        res.reply.should.have.calledWith 'DENIED'
 
     context 'denied without denied reply value', ->
 
-      beforeEach ->
-        @director.config.deniedReply = null
-        @result = @director.process @res
+      it 'does not call response reply method', -> co ->
+        director = new Director pretend.robot
+        res = pretend.response 'tester', 'test'
+        yield director.process res
+        res.reply.should.not.have.called
 
-      it 'does not call response reply method', ->
-        @res.reply.should.not.have.called
+    context 'allowed user with denied reply value', ->
 
-    context 'allowed user', ->
+      it 'calls .isAllowed to determine if user is allowed or denied', -> co ->
+        director = new Director pretend.robot
+        director.names = ['tester']
+        res = pretend.response 'tester', 'test'
+        yield director.process res
+        director.isAllowed.should.have.calledWith res
 
-      beforeEach ->
-        @director.names = ['tester']
-        @result = @director.process @res
+      it 'resolves to same value as .isAllowed', -> co ->
+        director = new Director pretend.robot
+        director.names = ['tester']
+        result = yield director.process pretend.response 'tester', 'test'
+        result.should.equal director.isAllowed.returnValues.pop()
 
-      it 'calls .isAllowed to determine if user is allowed or denied', ->
-        @director.isAllowed.should.have.calledWith @res
-
-      it 'returns the same value as .isAllowed', ->
-        @result.should.equal @director.isAllowed.returnValues.pop()
-
-      it 'does not send denied reply', ->
-        @res.reply.should.not.have.called
+      it 'does not send denied reply', -> co ->
+        director = new Director pretend.robot
+        director.names = ['tester']
+        res = pretend.response 'tester', 'test'
+        yield director.process res
+        res.reply.should.not.have.called
 
   describe '.directMatch', ->
 
-    beforeEach ->
-      @director = new Director pretend.robot
-      @callback = sinon.spy()
-      pretend.robot.hear /let me in/, @callback
-      @director.directMatch /let me in/
-
     context 'allowed user sending message matching directed match', ->
 
-      beforeEach ->
-        @director.names = ['tester']
-        @tester.send 'let me in'
+      it 'calls .process to perform access checks and reply', -> co ->
+        director = new Director pretend.robot
+        pretend.robot.hear /let me in/, ->
+        director.directMatch /let me in/
+        director.names = ['tester']
+        yield pretend.user('tester').send 'let me in'
+        director.process.should.have.calledOnce
 
-      it 'calls .process with response to perform access checks and reply', ->
-        @director.process.should.have.calledOnce
-
-      it 'triggers match callback normally', ->
-        @callback.should.have.calledOnce
+      it 'triggers match callback normally', -> co ->
+        director = new Director pretend.robot
+        callback = sinon.spy()
+        pretend.robot.hear /let me in/, callback
+        director.directMatch /let me in/
+        director.names = ['tester']
+        yield pretend.user('tester').send 'let me in'
+        callback.should.have.calledOnce
 
     context 'denied user sending message matching directed match', ->
 
-      beforeEach ->
-        @tester.send 'let me in'
+      it 'calls .process to perform access checks and reply', -> co ->
+        director = new Director pretend.robot
+        pretend.robot.hear /let me in/, ->
+        director.directMatch /let me in/
+        yield pretend.user('tester').send 'let me in'
+        director.process.should.have.calledOnce
 
-      it 'calls .process to perform access checks and reply', ->
-        @director.process.should.have.calledOnce
-
-      it 'prevents match callback from triggering', ->
-        @callback.should.not.have.called
+      it 'prevents match callback from triggering', -> co ->
+        director = new Director pretend.robot
+        callback = sinon.spy()
+        pretend.robot.hear /let me in/, callback
+        director.directMatch /let me in/
+        yield pretend.user('tester').send 'let me in'
+        callback.should.not.have.called
 
     context 'denied user sending unmatched message', ->
 
-      beforeEach ->
-        @tester.send 'foo'
-
-      it 'does not call .process because middleware did not match', ->
-        @director.process.should.not.have.called
+      it 'does not call .process because middleware did not match', -> co ->
+        director = new Director pretend.robot
+        pretend.robot.hear /let me in/, ->
+        director.directMatch /let me in/
+        yield pretend.user('tester').send 'foo'
+        director.process.should.not.have.called
 
   describe '.directListener', ->
 
-    beforeEach ->
-      @director = new Director pretend.robot
-      @callback = sinon.spy()
-      pretend.robot.hear /let me in/, id: 'entry-test', @callback
-      @director.directListener 'entry-test'
+    context 'with message matching directed listener id', ->
 
-    context 'allowed user sending message matching directed listener id', ->
+      it 'calls .process to perform access checks and reply', -> co ->
+        director = new Director pretend.robot
+        pretend.robot.hear /let me in/, id: 'entry-test', ->
+        director.directListener 'entry-test'
+        yield pretend.user('tester').send 'let me in'
+        director.process.should.have.calledOnce
 
-      beforeEach ->
-        @director.names = ['tester']
-        @tester.send 'let me in'
+      it 'triggers match callback when allowed', -> co ->
+        director = new Director pretend.robot
+        callback = sinon.spy()
+        pretend.robot.hear /let me in/, id: 'entry-test', callback
+        director.directListener 'entry-test'
+        director.names = ['tester']
+        yield pretend.user('tester').send 'let me in'
+        callback.should.have.calledOnce
 
-      it 'calls .process with response to perform access checks and reply', ->
-        @director.process.should.have.calledOnce
+      it 'prevents match callback when denied', -> co ->
+        director = new Director pretend.robot
+        callback = sinon.spy()
+        pretend.robot.hear /let me in/, id: 'entry-test', callback
+        director.directListener 'entry-test'
+        yield pretend.user('tester').send 'let me in'
+        callback.should.not.have.called
 
-      it 'triggers match callback normally', ->
-        @callback.should.have.calledOnce
+    context 'with unmatched message', ->
 
-    context 'denied user sending message matching directed match', ->
-
-      beforeEach ->
-        @tester.send 'let me in'
-
-      it 'calls .process to perform access checks and reply', ->
-        @director.process.should.have.calledOnce
-
-      it 'prevents match callback from triggering', ->
-        @callback.should.not.have.called
-
-    context 'denied user sending unmatched message', ->
-
-      beforeEach ->
-        @tester.send 'foo'
-
-      it 'does not call .process because middleware did not match', ->
-        @director.process.should.not.have.called
+      it 'does not call .process because middleware did not match', -> co ->
+        director = new Director pretend.robot
+        pretend.robot.hear /let me in/, id: 'entry-test', ->
+        director.directListener 'entry-test'
+        yield pretend.user('tester').send 'foo'
+        director.process.should.not.have.called
 
   describe '.directScene', ->
 
     beforeEach ->
-      @director = new Director pretend.robot
-      @scene = new Scene pretend.robot
-      @enter = sinon.spy @scene, 'enter'
-      @director.directScene @scene
+      sinon.spy Scene.prototype, 'enter'
+      sinon.spy Scene.prototype, 'processEnter'
 
-    it 'calls .directListener to control access to scene listeners', ->
-      @director.directListener.should.have.calledWith @scene.id
+    afterEach ->
+      Scene.prototype.enter.restore()
+      Scene.prototype.processEnter.restore()
 
-    context 'scene enter manually called (user allowed)', ->
+    it 'scene enter middleware calls director .process', ->
+      director = new Director pretend.robot
+      scene = new Scene pretend.robot
+      director.directScene scene
+      res = pretend.response 'tester', 'test'
+      scene.enter res
+      .then -> director.process.should.have.calledWith res
 
-      beforeEach ->
-        @director.names = ['tester']
-        @result = @scene.enter @res
+    context 'user allowed', ->
 
-      it 'calls .process to perform access checks and reply', ->
-        @director.process.should.have.calledWith @res
+      it 'allowed scene enter, resolves with Dialogue', ->
+        director = new Director pretend.robot
+        scene = new Scene pretend.robot
+        director.directScene scene
+        director.names = ['tester']
+        scene.enter pretend.response 'tester', 'test'
+        .then (result) ->
+          scene.processEnter.should.have.calledOnce
+          result.should.be.instanceof Dialogue
 
-      it 'allowed the .enter method, returning a Dialogue object', ->
-        @result.should.be.instanceof Dialogue
+    context 'user denied', ->
 
-    context 'scene enter manually called (user denied)', ->
+      it 'preempts scene enter, resolves undefined instead', ->
+        director = new Director pretend.robot
+        scene = new Scene pretend.robot
+        director.directScene scene
+        scene.enter pretend.response 'tester', 'test'
+        .then (result) ->
+          scene.processEnter.should.not.have.called
+          should.not.exist result
 
-      beforeEach ->
-        @result = @scene.enter @res # no list, denies all in whitelist mode
+    context 'with multiple scenes, only one directed', ->
 
-      it 'calls .process to perform access checks and reply', ->
-        @director.process.should.have.calledWith @res
+      it 'calls process only once for the directed scene', -> co ->
+        director = new Director pretend.robot
+        sceneA = new Scene pretend.robot
+        sceneB = new Scene pretend.robot
+        director.directScene sceneA
+        resA = pretend.response 'tester', 'let me in A'
+        resB = pretend.response 'tester', 'let me in A'
+        yield sceneA.enter resA
+        yield sceneB.enter resB
+        director.process.should.have.calledOnce
+        director.process.should.have.calledWithExactly resA
 
-      it 'preempts scene.enter, returning false instead', ->
-        @result.should.be.false
+    # TODO: Fix hack below. Because send middleware resolves before scene enter
+    # middleware, simply yielding on send will not allow asserting on the
+    # outcome of the enter middleware. Need to refactor pretend with updated
+    # nubot async features that use nextTick approach to ensure middleware only
+    # resolves when everything final
 
     context 'allowed user sends message matching scene listener', ->
 
-      beforeEach ->
-        @callback = sinon.spy()
-        @scene.hear /let me in/, @callback
-        @director.names = ['tester']
-        @tester.send 'let me in'
-
-      it 'triggers the scene enter method', ->
-        @enter.should.have.calledOnce
-
-      it 'calls the scene listener callback', ->
-        @callback.should.have.calledOnce
+      it 'allows scene to process entry', (done) ->
+        director = new Director pretend.robot
+        scene = new Scene pretend.robot
+        director.directScene scene
+        director.names = ['tester']
+        callback = sinon.spy()
+        scene.hear /let me in/, callback
+        pretend.user('tester').send 'let me in'
+        setTimeout () ->
+          scene.processEnter.should.have.calledOnce
+          callback.should.have.calledOnce
+          done()
+        , 35
 
     context 'denied user sends message matching scene listener', ->
 
-      beforeEach ->
-        @callback = sinon.spy()
-        @scene.hear /let me in/, @callback
-        @tester.send 'let me in'
-
-      it 'prevents the scene enter method', ->
-        @enter.should.not.have.been.calledOnce
-
-      it 'does not call the scene listener callback', ->
-        @callback.should.not.have.been.calledOnce
+      it 'prevents the scene from processing entry', (done) ->
+        director = new Director pretend.robot
+        scene = new Scene pretend.robot
+        director.directScene scene
+        callback = sinon.spy()
+        scene.hear /let me in/, callback
+        pretend.user('tester').send 'let me in'
+        setTimeout () ->
+          scene.processEnter.should.not.have.called
+          callback.should.not.have.called
+          done()
+        , 35

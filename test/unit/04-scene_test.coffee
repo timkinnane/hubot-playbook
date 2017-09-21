@@ -8,25 +8,26 @@ pretend = require 'hubot-pretend'
 Dialogue = require '../../lib/modules/dialogue'
 Scene = require '../../lib/modules/scene'
 
+clock = null
+matchRes = null
+matchAny = /.*/
+
 describe 'Scene', ->
 
   beforeEach ->
     pretend.start()
     pretend.log.level = 'silent'
-    @tester = pretend.user 'tester', id:'tester', room: 'testing'
-    @clock = sinon.useFakeTimers()
+    clock = sinon.useFakeTimers()
+
+    matchRes = sinon.match.instanceOf pretend.robot.Response
+    .and sinon.match.has 'dialogue'
 
     Object.getOwnPropertyNames(Scene.prototype).map (key) ->
       sinon.spy Scene.prototype, key
 
-    # generate a response object for starting dialogues
-    pretend.robot.hear /test/, -> # listen to tests
-    pretend.user('tester').send 'test'
-    .then => @res = pretend.lastListen()
-
   afterEach ->
     pretend.shutdown()
-    @clock.restore()
+    clock.restore()
 
     Object.getOwnPropertyNames(Scene.prototype).map (key) ->
       Scene.prototype[key].restore()
@@ -35,407 +36,564 @@ describe 'Scene', ->
 
     context 'without options', ->
 
-      beforeEach ->
-        @scene = new Scene pretend.robot
-
       it 'defaults to `user` scope', ->
-        @scene.config.scope.should.equal 'user'
+        scene = new Scene pretend.robot
+        scene.config.scope.should.equal 'user'
 
-      it 'attaches the receive middleware to robot', ->
+      it 'attaches receive middleware to robot', ->
+        new Scene pretend.robot
         pretend.robot.receiveMiddleware.should.have.calledOnce
 
     context 'with options', ->
 
-      beforeEach ->
-        @scene = new Scene pretend.robot, sendReplies: true
-
       it 'stored options in config object', ->
-        @scene.config.sendReplies.should.be.true
+        scene = new Scene pretend.robot, sendReplies: true
+        scene.config.sendReplies.should.be.true
 
     context 'with room scope option', ->
 
-      beforeEach ->
-        @scene = new Scene pretend.robot, scope: 'room'
-
       it 'accepts given room scope', ->
-        @scene.config.scope.should.equal 'room'
+        scene = new Scene pretend.robot, scope: 'room'
+        scene.config.scope.should.equal 'room'
 
       it 'stores config with default options for scope', ->
-        @scene.config.sendReplies.should.be.true
+        scene = new Scene pretend.robot, scope: 'room'
+        scene.config.sendReplies.should.be.true
 
     context 'with invalid scope', ->
 
-      beforeEach ->
-        try @scene = new Scene pretend.robot, scope: 'monkey'
-
       it 'throws error when given invalid scope', ->
+        try new Scene pretend.robot, scope: 'monkey'
         Scene.prototype.constructor.should.throw
 
   describe '.listen', ->
 
-    beforeEach ->
-      @scene = new Scene pretend.robot, scope: 'user'
-
     context 'with hear type and message matching regex', ->
 
-      beforeEach ->
-        @callback = sinon.spy()
-        @scene.listen 'hear', /test/, @callback
-        @tester.send 'test'
-
       it 'registers a robot hear listener with scene as attribute', ->
+        scene = new Scene pretend.robot
+        scene.listen 'hear', /test/, () -> null
         pretend.robot.hear.should.have.calledWithMatch sinon.match.regexp
-        , sinon.match.has 'scene', @scene
+        , sinon.match.has 'scene', scene
         , sinon.match.func
 
-      it 'calls the given callback from listener', ->
-        @callback.should.have.calledOnce
+      it 'calls callback from listener when matched', -> co ->
+        scene = new Scene pretend.robot
+        callback = sinon.spy()
+        scene.listen 'hear', /test/, callback
+        yield pretend.user('tester').send 'test'
+        callback.should.have.calledOnce
 
       it 'callback should receive res and dialogue', ->
-        matchRes = sinon.match.instanceOf pretend.robot.Response
-        .and sinon.match.has 'dialogue'
-        @callback.should.have.calledWith matchRes
+        scene = new Scene pretend.robot
+        callback = sinon.spy()
+        scene.listen 'hear', /test/, callback
+        pretend.user('tester').send 'test'
+        .then ->
+          callback.should.have.calledWith matchRes
 
     context 'with respond type and message matching regex', ->
 
-      beforeEach ->
-        @callback = sinon.spy()
-        @id = @scene.listen 'respond', /test/, @callback
-        @tester.send 'hubot test'
-
       it 'registers a robot respond listener with scene as attribute', ->
-        pretend.robot.respond.should.have.calledWithMatch sinon.match.regexp
-        , sinon.match.has 'scene', @scene
-        , sinon.match.func
+        scene = new Scene pretend.robot
+        callback = sinon.spy()
+        id = scene.listen 'respond', /test/, callback
+        pretend.user('tester').send 'hubot test'
+        .then ->
+          pretend.robot.respond.should.have.calledWithMatch sinon.match.regexp
+          , sinon.match.has 'scene', scene
+          , sinon.match.func
 
-      it 'calls the given callback from listener', ->
-        @callback.should.have.calledOnce
+      it 'calls callback from listener when matched', -> co ->
+        scene = new Scene pretend.robot
+        callback = sinon.spy()
+        id = scene.listen 'respond', /test/, callback
+        yield pretend.user('tester').send 'hubot test'
+        callback.should.have.calledOnce
 
-      it 'callback should receive res and dialogue', ->
-        matchRes = sinon.match.instanceOf pretend.robot.Response
-        .and sinon.match.has 'dialogue'
-        @callback.should.have.calledWith matchRes
+      it 'callback should receive res and dialogue', -> co ->
+        scene = new Scene pretend.robot
+        callback = sinon.spy()
+        id = scene.listen 'respond', /test/, callback
+        yield pretend.user('tester').send 'hubot test'
+        callback.should.have.calledWith matchRes
 
-    context 'with an invalid type', ->
-
-      beforeEach ->
-        try @scene.listen 'smell', /test/, -> null
+    context 'with an invalid listener type', ->
 
       it 'throws', ->
-        @scene.listen.should.throw
+        scene = new Scene pretend.robot
+        try scene.listen 'smell', /test/, -> null
+        scene.listen.should.throw
 
     context 'with an invalid regex', ->
 
-      beforeEach ->
-        try @scene.listen 'hear', 'test', -> null
-
       it 'throws', ->
-        @scene.listen.should.throw
+        scene = new Scene pretend.robot
+        try scene.listen 'hear', 'test', -> null
+        scene.listen.should.throw
 
     context 'with an invalid callback', ->
 
-      beforeEach ->
-        try @scene.listen 'hear', /test/, { not: 'a function '}
-
       it 'throws', ->
-        @scene.listen.should.throw
+        scene = new Scene pretend.robot
+        try scene.listen 'hear', /test/, { not: 'a function '}
+        scene.listen.should.throw
 
   describe '.hear', ->
 
-    beforeEach ->
-      @scene = new Scene pretend.robot
-      @scene.hear /test/, -> null
-
     it 'calls .listen with hear listen type and arguments', ->
-      args = ['hear', /test/, sinon.match.func]
-      @scene.listen.getCall(0).should.have.calledWith args...
+      scene = new Scene pretend.robot
+      scene.hear /test/, -> null
+      expectedArgs = ['hear', /test/, sinon.match.func]
+      scene.listen.getCall(0).should.have.calledWith expectedArgs...
 
   describe '.respond', ->
 
-    beforeEach ->
-      @scene = new Scene pretend.robot
-      @scene.respond /test/, -> null
-
     it 'calls .listen with respond listen type and arguments', ->
-      args = ['respond', /test/, sinon.match.func]
-      @scene.listen.getCall(0).should.have.calledWith args...
+      scene = new Scene pretend.robot
+      scene.respond /test/, -> null
+      expectedArgs = ['respond', /test/, sinon.match.func]
+      scene.listen.getCall(0).should.have.calledWith expectedArgs...
 
   describe '.whoSpeaks', ->
 
+    beforeEach ->
+      pretend.user('tester', { id: 'user_111', room: 'testing' }).send('test')
+
     context 'user scene', ->
 
-      beforeEach ->
-        @scene = new Scene pretend.robot, scope: 'user'
-        @scene.whoSpeaks @res
-
       it 'returns the ID of engaged user', ->
-        @scene.whoSpeaks.returnValues.pop().should.equal 'tester'
+        scene = new Scene pretend.robot, scope: 'user'
+        scene.whoSpeaks pretend.lastReceive()
+        .should.equal 'user_111'
 
     context 'room sceene', ->
 
-      beforeEach ->
-        @scene = new Scene pretend.robot, scope: 'room'
-        @scene.whoSpeaks @res
-
       it 'returns the room ID', ->
-        @scene.whoSpeaks.returnValues.pop().should.equal 'testing'
+        scene = new Scene pretend.robot, scope: 'room'
+        scene.whoSpeaks pretend.lastReceive()
+        .should.equal 'testing'
 
     context 'direct scene', ->
 
-      beforeEach ->
-        @scene = new Scene pretend.robot, scope: 'direct'
-        @scene.whoSpeaks @res
-
       it 'returns the concatenated user ID and room ID', ->
-        @scene.whoSpeaks.returnValues.pop().should.equal 'tester_testing'
+        scene = new Scene pretend.robot, scope: 'direct'
+        scene.whoSpeaks pretend.lastReceive()
+        .should.equal 'user_111_testing'
+
+  describe '.registerMiddleware', ->
+
+    it 'accepts function for enter middleware stack', ->
+      piece = (context, next, done) -> null
+      scene = new Scene pretend.robot
+      scene.registerMiddleware piece
+      scene.enterMiddleware.stack[0].should.eql piece
+
+    it 'throws when given function with incorrect arguments', ->
+      piece = (notEnoughArgs) -> null
+      scene = new Scene pretend.robot
+      try scene.registerMiddleware piece
+      scene.registerMiddleware.should.throw
+      scene.enterMiddleware.stack.length.should.equal 0
 
   describe '.enter', ->
 
+    beforeEach ->
+      pretend.user('tester', { id: 'user_111', room: 'testing' }).send('test')
+
+    it 'returns a promise (then-able)', ->
+      scene = new Scene pretend.robot
+      promise = scene.enter pretend.lastReceive()
+      promise.then.should.be.a 'function'
+
+    it 'calls .processEnter with context', -> co ->
+      scene = new Scene pretend.robot
+      yield scene.enter pretend.lastReceive()
+      scene.processEnter.should.have.calledOnce
+
+    it 'resolves with created dialogue', -> co ->
+      scene = new Scene pretend.robot
+      result = yield scene.enter pretend.lastReceive()
+      result.should.be.instanceof Dialogue
+
+    context 'with callback', ->
+
+      it 'calls callback with final enter process context', (done) ->
+        scene = new Scene pretend.robot
+        keys = ['response', 'participants', 'options', 'arguments', 'dialogue']
+        callback = (result) ->
+          result.should.have.all.keys keys...
+          done()
+        scene.enter pretend.lastReceive(), callback
+        return
+
+    context 'with passing middleware', ->
+
+      it 'completes processing to resolve with dialogue', -> co ->
+        scene = new Scene pretend.robot
+        scene.registerMiddleware (context, next, done) -> next()
+        result = yield scene.enter pretend.lastReceive()
+        result.should.be.instanceof Dialogue
+
+      it 'calls callback with final enter process context', (done) ->
+        scene = new Scene(pretend.robot)
+        keys = ['response', 'participants', 'options', 'arguments', 'dialogue']
+        callback = (result) ->
+          result.should.have.all.keys keys...
+          done()
+        scene.registerMiddleware (context, next, done) -> next()
+        scene.enter pretend.lastReceive(), callback
+        return
+
+    context 'with blocking middleware', ->
+
+      it 'does not complete or call .processEnter', -> co ->
+        scene = new Scene pretend.robot
+        scene.registerMiddleware (context, next, done) -> done()
+        yield scene.enter pretend.lastReceive()
+        scene.processEnter.should.not.have.called
+
+    context 'with custom done function override', ->
+
+      it 'completes processing and calls custom done', -> co ->
+        scene = new Scene pretend.robot
+        custom = sinon.spy()
+        scene.registerMiddleware (context, next, done) -> next () ->
+          custom()
+          done()
+        yield scene.enter pretend.lastReceive()
+        custom.should.have.calledOnce
+
+    context 'with multiple middleware pieces', ->
+
+      it 'calls each sequentially passing ammended context', (done) ->
+        scene = new Scene pretend.robot
+        scene.registerMiddleware (context, next, done) ->
+          context.trace = ['A']
+          next()
+        scene.registerMiddleware (context, next, done) ->
+          context.trace.push('B')
+          next()
+        scene.registerMiddleware (context, next, done) ->
+          context.trace.push('C')
+          next()
+        scene.enter pretend.lastReceive(), (result) ->
+          result.trace.should.eql ['A', 'B', 'C']
+          done()
+        return
+
+      it 'does not process enter if any middleware blocks', -> co ->
+        scene = new Scene pretend.robot
+        scene.registerMiddleware (context, next, done) -> next()
+        scene.registerMiddleware (context, next, done) -> done()
+        scene.registerMiddleware (context, next, done) -> next()
+        yield scene.enter pretend.lastReceive()
+        scene.processEnter.should.not.have.called
+
     context 'user scene', ->
 
-      beforeEach ->
-        @scene = new Scene pretend.robot, scope: 'user'
-        @dialogue = @scene.enter @res
-
-      it 'saves engaged Dialogue instance with user ID', ->
-        @scene.engaged['tester'].should.be.instanceof Dialogue
+      it 'saves engaged Dialogue instance with user ID', -> co ->
+        scene = new Scene pretend.robot, scope: 'user'
+        yield scene.enter pretend.lastReceive()
+        scene.engaged['user_111'].should.be.instanceof Dialogue
 
     context 'room scene', ->
 
-      beforeEach ->
-        @scene = new Scene pretend.robot, scope: 'room'
-        @dialogue = @scene.enter @res
-
-      it 'saves engaged Dialogue instance with room key', ->
-        @scene.engaged['testing'].should.be.instanceof Dialogue
+      it 'saves engaged Dialogue instance with room key', -> co ->
+        scene = new Scene pretend.robot, scope: 'room'
+        yield scene.enter pretend.lastReceive()
+        scene.engaged['testing'].should.be.instanceof Dialogue
 
     context 'direct scene', ->
 
-      beforeEach ->
-        @scene = new Scene pretend.robot, scope: 'direct'
-        @dialogue = @scene.enter @res
-
-      it 'saves engaged Dialogue instance with composite key', ->
-        @scene.engaged['tester_testing'].should.be.instanceof Dialogue
+      it 'saves engaged Dialogue instance with composite key', -> co ->
+        scene = new Scene pretend.robot, scope: 'direct'
+        yield scene.enter pretend.lastReceive()
+        scene.engaged['user_111_testing'].should.be.instanceof Dialogue
 
     context 'with timeout options', ->
 
-      beforeEach ->
-        @scene = new Scene pretend.robot
-        @dialogue = @scene.enter @res,
+      it 'passes the options to dialogue config', ->
+        scene = new Scene pretend.robot
+        dialogue = yield scene.enter pretend.lastReceive(),
           timeout: 100
           timeoutText: 'foo'
-
-      it 'passes the options to dialogue config', ->
-        @dialogue.config.timeout.should.equal 100
-        @dialogue.config.timeoutText.should.equal 'foo'
+        dialogue.config.timeout.should.equal 100
+        dialogue.config.timeoutText.should.equal 'foo'
 
     context 'dialogue allowed to timeout after branch added', ->
 
-      beforeEach (done) ->
-        @scene = new Scene pretend.robot
-        @dialogue = @scene.enter @res,
+      it 'calls .exit first on "timeout"', (done) ->
+        scene = new Scene pretend.robot
+        scene.enter pretend.lastReceive(),
           timeout: 10,
           timeoutText: null
-        @dialogue.on 'end', -> done()
-        @dialogue.startTimeout()
-        @clock.tick 11
+        .then (dialogue)->
+          dialogue.on 'end', ->
+            scene.exit.getCall(0)
+            .should.have.calledWith pretend.lastReceive(), 'timeout'
+            done()
+          dialogue.startTimeout()
+          clock.tick 11
+        return
 
-      it 'calls .exit first on "timeout"', ->
-        @scene.exit.getCall(0).should.have.calledWith @res, 'timeout'
-
-      it 'calls .exit again on "incomplete"', ->
-        @scene.exit.getCall(1).should.have.calledWith @res, 'incomplete'
+      it 'calls .exit again on "incomplete"', (done) ->
+        scene = new Scene pretend.robot
+        scene.enter pretend.lastReceive(),
+          timeout: 10,
+          timeoutText: null
+        .then (dialogue) ->
+          dialogue.on 'end', ->
+            scene.exit.getCall(1)
+            .should.have.calledWith pretend.lastReceive(), 'incomplete'
+            done()
+          dialogue.startTimeout()
+          clock.tick 11
+        return
 
     context 'dialogue completed (by message matching branch)', ->
 
-      beforeEach -> co =>
-        @scene = new Scene pretend.robot
-        @dialogue = @scene.enter @res
-        @dialogue.addBranch /.*/, '' # match anything
-        yield @tester.send 'test'
-        yield @tester.send 'testing again'
+      it 'calls .exit once only', -> co ->
+        scene = new Scene pretend.robot
+        dialogue = yield scene.enter pretend.lastReceive()
+        dialogue.addBranch matchAny, ''
+        yield pretend.user('tester').send 'test'
+        yield pretend.user('tester').send 'testing again'
+        scene.exit.should.have.calledOnce
 
-      it 'calls .exit once only', ->
-        @scene.exit.should.have.calledOnce
-
-      it 'calls .exit once with last (matched) res and "complete"', ->
-        @scene.exit.should.have.calledWith @dialogue.res, 'complete'
+      it 'calls .exit once with last (matched) res and "complete"', -> co ->
+        scene = new Scene pretend.robot
+        dialogue = yield scene.enter pretend.lastReceive()
+        dialogue.addBranch matchAny, ''
+        yield pretend.user('tester').send 'test'
+        yield pretend.user('tester').send 'testing again'
+        scene.exit.should.have.calledWith dialogue.res, 'complete'
 
     context 're-enter currently engaged participants', ->
 
-      beforeEach ->
-        @scene = new Scene pretend.robot
-        @scene.enter @res
-        @scene.enter @res
+      it 'returns error the second time', -> co ->
+        scene = new Scene pretend.robot
+        resultA = yield scene.enter pretend.lastReceive()
+        try resultB = yield scene.enter pretend.lastReceive()
+        scene.enter.should.throw
 
-      it 'returns undefined the second time', ->
-        should.not.exist @scene.enter.returnValues[1]
+      it 'rejected enter can be caught', (done) ->
+        scene = new Scene pretend.robot
+        scene.enter pretend.lastReceive()
+        .then ->
+          scene.enter pretend.lastReceive()
+          .catch (err) ->
+            err.should.be.instanceof Error
+            done()
+        return
 
     context 're-enter previously engaged participants', ->
 
-      beforeEach ->
-        @scene = new Scene pretend.robot
-        @dialogueA = @scene.enter @res
-        @scene.exit @res # no reason given
-        @dialogueB = @scene.enter @res
-
-      it 'returns Dialogue instance (as per normal)', ->
-        @dialogueB.should.be.instanceof Dialogue
+      it 'returns Dialogue instance (as per normal)', -> co ->
+        scene = new Scene pretend.robot
+        dialogueA = yield scene.enter pretend.lastReceive()
+        scene.exit pretend.lastReceive() # no reason given
+        dialogueB = yield scene.enter pretend.lastReceive()
+        dialogueB.should.be.instanceof Dialogue
 
   describe '.exit', ->
 
+    beforeEach ->
+      pretend.user('tester', { id: 'user_111', room: 'testing' }).send('test')
+
     context 'with user in scene, called manually', ->
 
-      beforeEach ->
-        @scene = new Scene pretend.robot
-        @dialogue = @scene.enter @res, timeout: 10
-        @dialogue.addBranch /.*/, '' # starts timeout
-        @timeout = sinon.spy()
-        @dialogue.onTimeout @timeout
-        @dialogue.receive = sinon.spy()
-        @scene.exit @res, 'tester'
-        @tester.send 'test'
-        @clock.tick 11
+      it 'does not call onTimeout on dialogue', -> co ->
+        scene = new Scene pretend.robot
+        dialogue = yield scene.enter pretend.lastReceive(), timeout: 10
+        dialogue.addBranch matchAny, '' # starts timeout
+        timeout = sinon.spy()
+        dialogue.onTimeout timeout
+        scene.exit pretend.lastReceive(), 'testing exits'
+        clock.tick 11
+        timeout.should.not.have.called
 
-      it 'does not call onTimeout on dialogue', ->
-        @timeout.should.not.have.called
+      it 'removes the dialogue instance from engaged array', -> co ->
+        scene = new Scene pretend.robot
+        yield scene.enter pretend.lastReceive(), timeout: 10
+        scene.exit pretend.lastReceive(), 'testing exits'
+        should.not.exist scene.engaged['user_111']
 
-      it 'removes the dialogue instance from engaged array', ->
-        should.not.exist @scene.engaged['tester']
+      it 'returns true', -> co ->
+        scene = new Scene pretend.robot
+        yield scene.enter pretend.lastReceive(), timeout: 10
+        scene.exit pretend.lastReceive(), 'testing exits'
+        clock.tick 11
+        scene.exit.returnValues.pop().should.be.true
 
-      it 'returns true', ->
-        @scene.exit.returnValues.pop().should.be.true
+      it 'logged the reason', -> co ->
+        scene = new Scene pretend.robot
+        scene.id = 'scene_111'
+        yield scene.enter pretend.lastReceive(), timeout: 10
+        scene.exit pretend.lastReceive(), 'testing exits'
+        clock.tick 11
+        pretend.logs.pop().should.eql [
+          'info', 'Disengaged user user_111 (testing exits) (id: scene_111)'
+        ]
 
-      it 'dialogue does not continue receiving after scene exit', ->
-        @dialogue.receive.should.not.have.called
+      it 'dialogue does not continue receiving after scene exit', -> co ->
+        scene = new Scene pretend.robot
+        dialogue = yield scene.enter pretend.lastReceive(), timeout: 10
+        dialogue.addBranch matchAny, '' # starts timeout
+        dialogue.receive = sinon.spy()
+        scene.exit pretend.lastReceive(), 'tester'
+        pretend.user('tester').send 'test'
+        clock.tick 11
+        dialogue.receive.should.not.have.called
 
     context 'with user in scene, called from events', ->
 
-      beforeEach (done) ->
-        @scene = new Scene pretend.robot
-        @dialogue = @scene.enter @res, timeout: 10
-        @dialogue.on 'end', -> done()
-        @dialogue.addBranch /.*/, '' # starts timeout
-        @clock.tick 11
+      it 'gets called twice (on timeout and end)', (done) ->
+        scene = new Scene pretend.robot
+        scene.enter pretend.lastReceive(), timeout: 10
+        .then (dialogue) ->
+          dialogue.on 'end', ->
+            scene.exit.should.have.calledTwice
+            done()
+          dialogue.addBranch matchAny, '' # starts timeout
+          clock.tick 11
+        return
 
-      it 'gets called twice (on timeout and end)', ->
-        @scene.exit.should.have.calledTwice
+      it 'returns true the first time', (done) ->
+        scene = new Scene pretend.robot
+        scene.enter pretend.lastReceive(), timeout: 10
+        .then (dialogue) ->
+          dialogue.on 'end', ->
+            scene.exit.getCall(0).should.have.returned true
+            done()
+          dialogue.addBranch matchAny, '' # starts timeout
+          clock.tick 11
+        return
 
-      it 'returns true the first time', ->
-        @scene.exit.getCall(0).should.have.returned true
-
-      it 'returns false the second time (because already disengaged)', ->
-        @scene.exit.getCall(1).should.have.returned false
+      it 'returns false the second time (because already disengaged)', (done) ->
+        scene = new Scene pretend.robot
+        scene.enter pretend.lastReceive(), timeout: 10
+        .then (dialogue) ->
+          dialogue.on 'end', ->
+            scene.exit.getCall(1).should.have.returned false
+            done()
+          dialogue.addBranch matchAny, '' # starts timeout
+          clock.tick 11
+        return
 
     context 'user not in scene, called manually', ->
 
-      beforeEach ->
-        @scene = new Scene pretend.robot
-        @scene.exit @res, 'tester'
-
       it 'returns false', ->
-        @scene.exit.returnValues.pop().should.be.false
+        scene = new Scene pretend.robot
+        scene.exit pretend.lastReceive(), 'testing exits'
+        scene.exit.returnValues.pop().should.be.false
 
   describe '.exitAll', ->
 
     context 'with two users in scene', ->
 
-      beforeEach -> co =>
-        @scene = new Scene pretend.robot
-        yield pretend.user('A').send 'test'
-        @dialogueB = @scene.enter pretend.lastListen()
-        yield pretend.user('B').send 'test'
-        @dialogueA = @scene.enter pretend.lastListen()
-        @dialogueA.clearTimeout = sinon.spy()
-        @dialogueB.clearTimeout = sinon.spy()
-        @scene.exitAll()
+      it 'created two dialogues', -> co ->
+        scene = new Scene pretend.robot
+        dialogueB = yield scene.enter pretend.response 'A', 'test'
+        dialogueA = yield scene.enter pretend.response 'B', 'test'
+        scene.exitAll()
+        dialogueA.should.be.instanceof Dialogue
+        dialogueB.should.be.instanceof Dialogue
 
-      it 'created two dialogues', ->
-        @dialogueA.should.be.instanceof Dialogue
-        @dialogueB.should.be.instanceof Dialogue
+      it 'calls clearTimeout on both dialogues', -> co ->
+        scene = new Scene pretend.robot
+        dialogueB = yield scene.enter pretend.response 'A', 'test'
+        dialogueA = yield scene.enter pretend.response 'B', 'test'
+        dialogueA.clearTimeout = sinon.spy()
+        dialogueB.clearTimeout = sinon.spy()
+        scene.exitAll()
+        dialogueA.clearTimeout.should.have.calledOnce
+        dialogueB.clearTimeout.should.have.calledOnce
 
-      it 'calls clearTimeout on both dialogues', ->
-        @dialogueA.clearTimeout.should.have.calledOnce
-        @dialogueB.clearTimeout.should.have.calledOnce
-
-      it 'has no remaining engaged dialogues', ->
-        @scene.engaged.length.should.equal 0
+      it 'has no remaining engaged dialogues', -> co ->
+        scene = new Scene pretend.robot
+        dialogueB = yield scene.enter pretend.response 'A', 'test'
+        dialogueA = yield scene.enter pretend.response 'B', 'test'
+        scene.exitAll()
+        scene.engaged.length.should.equal 0
 
   describe '.getDialogue', ->
 
+    beforeEach ->
+      pretend.user('tester', { id: 'user_111', room: 'testing' }).send('test')
+
     context 'with user in scene', ->
 
-      beforeEach ->
-        @scene = new Scene pretend.robot
-        @dialogueA = @scene.enter @res
-        @dialogueB = @scene.getDialogue 'tester'
-
-      it 'returns the matching dialogue', ->
-        @dialogueB.should.eql @dialogueA
+      it 'returns the matching dialogue', -> co ->
+        scene = new Scene pretend.robot
+        dialogueA = yield scene.enter pretend.lastReceive()
+        dialogueB = scene.getDialogue 'user_111'
+        dialogueB.should.eql dialogueA
 
     context 'no user in scene', ->
 
-      beforeEach ->
-        @scene = new Scene pretend.robot
-        @dialogue = @scene.getDialogue 'tester'
-
       it 'returns undefined', ->
-        should.not.exist @dialogue
+        scene = new Scene pretend.robot
+        dialogue = scene.getDialogue 'user_111'
+        should.not.exist dialogue
 
   describe '.inDialogue', ->
 
+    beforeEach ->
+      pretend.user('tester', { id: 'user_111', room: 'testing' }).send('test')
+
     context 'in engaged user scene', ->
 
-      beforeEach ->
-        @scene = new Scene pretend.robot
-        @scene.enter @res
-        @userEngaged = @scene.inDialogue 'tester'
-        @roomEngaged = @scene.inDialogue 'testing'
+      it 'returns true with user ID', -> co ->
+        scene = new Scene pretend.robot
+        yield scene.enter pretend.lastReceive()
+        scene.inDialogue 'user_111'
+        .should.be.true
 
-      it 'returns true with user ID', ->
-        @userEngaged.should.be.true
+      it 'returns false with room name', -> co ->
+        scene = new Scene pretend.robot
+        yield scene.enter pretend.lastReceive()
+        scene.inDialogue 'testing'
+        .should.be.false
 
-      it 'returns false with room name', ->
-        @roomEngaged.should.be.false
+    context 'participant not in scene', ->
 
-    context 'no participants in scene', ->
-
-      beforeEach ->
-        @scene = new Scene pretend.robot
-        @userEngaged = @scene.inDialogue 'tester'
-
-      it 'returns false', ->
-        @userEngaged.should.be.false
+      it 'returns false', -> co ->
+        scene = new Scene pretend.robot
+        yield scene.enter pretend.lastReceive()
+        scene.inDialogue 'user_222'
+        .should.be.false
 
     context 'room scene, in scene', ->
 
-      beforeEach ->
-        @scene = new Scene pretend.robot, scope: 'room'
-        @scene.enter @res
-        @roomEngaged = @scene.inDialogue 'testing'
-        @userEngaged = @scene.inDialogue 'tester'
+      it 'returns true with roomname', -> co ->
+        scene = new Scene pretend.robot, scope: 'room'
+        yield scene.enter pretend.lastReceive()
+        scene.inDialogue 'testing'
+        .should.be.true
 
-      it 'returns true with roomname', ->
-        @roomEngaged.should.be.true
-
-      it 'returns false with user ID', ->
-        @userEngaged.should.be.false
+      it 'returns false with user ID', -> co ->
+        scene = new Scene pretend.robot, scope: 'room'
+        yield scene.enter pretend.lastReceive()
+        scene.inDialogue 'user_111'
+        .should.be.false
 
     context 'direct scene, in scene', ->
 
-      beforeEach ->
-        @scene = new Scene pretend.robot, scope: 'direct'
-        @scene.enter @res
-        @roomEngaged = @scene.inDialogue 'testing'
-        @userEngaged = @scene.inDialogue 'tester'
-        @directEngaged = @scene.inDialogue 'tester_testing'
+      it 'returns true with userID_roomID', -> co ->
+        scene = new Scene pretend.robot, scope: 'direct'
+        yield scene.enter pretend.lastReceive()
+        scene.inDialogue 'user_111_testing'
+        .should.be.true
 
-      it 'returns true with userID_roomID', ->
-        @directEngaged.should.be.true
+      it 'returns false with roomname', -> co ->
+        scene = new Scene pretend.robot, scope: 'direct'
+        yield scene.enter pretend.lastReceive()
+        scene.inDialogue 'testing'
+        .should.be.false
 
-      it 'returns false with roomname', ->
-        @roomEngaged.should.be.false
-
-      it 'returns false with user ID', ->
-        @userEngaged.should.be.false
+      it 'returns false with user ID', -> co ->
+        scene = new Scene pretend.robot, scope: 'direct'
+        yield scene.enter pretend.lastReceive()
+        scene.inDialogue 'user_111'
+        .should.be.false

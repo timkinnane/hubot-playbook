@@ -277,7 +277,7 @@ describe 'Transcript', ->
         events: [ 'enter', 'match', 'send' ]
       scene = new Scene pretend.robot
       transcript.recordScene scene
-      dialogue = scene.enter res
+      dialogue = yield scene.enter res
       dialogue.addBranch /test/, 'response'
       yield dialogue.receive res
       records = transcript.recordEvent.args.map((record) -> _.take(record, 2))
@@ -289,26 +289,27 @@ describe 'Transcript', ->
 
   describe '.recordDirector', ->
 
-    beforeEach (done) ->
-      @res = pretend.response 'tester', 'test'
-      removeListeners pretend.robot
-      @transcript = new Transcript pretend.robot, save: false
-      @director = new Director pretend.robot, type: 'blacklist'
-      @transcript.recordDirector @director
-      @director.on 'allow', -> done()
-      @director.names = ['tester']
-      @director.process @res
-      @director.config.type = 'whitelist'
-      @director.process @res
-
     it 'attached listeners for director events', ->
+      removeListeners pretend.robot
+      transcript = new Transcript pretend.robot, save: false
+      director = new Director pretend.robot, type: 'blacklist'
+      transcript.recordDirector director
       _.keys pretend.robot._events
       .should.eql ['allow', 'deny']
 
-    it 'records events emitted by director', ->
-      @transcript.recordEvent.args.should.eql [
-        [ 'deny', @director, @res ]
-        [ 'allow', @director, @res ]
+    it 'records events emitted by director', -> co ->
+      removeListeners pretend.robot
+      transcript = new Transcript pretend.robot, save: false
+      director = new Director pretend.robot, type: 'blacklist'
+      res = pretend.response 'tester', 'test'
+      transcript.recordDirector director
+      director.names = ['tester']
+      yield director.process res
+      director.config.type = 'whitelist'
+      yield director.process res
+      transcript.recordEvent.args.should.eql [
+        [ 'deny', director, res ]
+        [ 'allow', director, res ]
       ]
 
   describe '.findRecords', ->

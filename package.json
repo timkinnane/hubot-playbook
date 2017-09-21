@@ -36,7 +36,6 @@
     "coveralls": "cat coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
     "commitmsg": "validate-commit-msg",
-    "precommit": "npm test",
     "prepush": "npm test",
     "commit": "git-cz"
   },
@@ -69,9 +68,8 @@
     ]
   },
   "dependencies": {
-    "hooker": "^0.2.3",
-    "lodash": "^4.17.4",
-    "yamljs": "^0.3.0"
+    "async": "^2.5.0",
+    "lodash": "^4.17.4"
   },
   "devDependencies": {
     "babel-cli": "^6.24.1",

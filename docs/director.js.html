@@ -172,7 +172,7 @@ determine access.</p>
 <li><a href="#Director+add">.add(names)</a> ⇒ <a href="#Director"><code>Director</code></a></li>
 <li><a href="#Director+remove">.remove(names)</a> ⇒ <a href="#Director"><code>Director</code></a></li>
 <li><a href="#Director+isAllowed">.isAllowed(res)</a> ⇒ <code>boolean</code></li>
-<li><a href="#Director+process">.process(res)</a> ⇒ <code>boolean</code></li>
+<li><a href="#Director+process">.process(res)</a> ⇒ <code>Promise</code></li>
 <li><a href="#Director+directMatch">.directMatch(regex)</a> ⇒ <a href="#Director"><code>Director</code></a></li>
 <li><a href="#Director+directListener">.directListener(id)</a> ⇒ <a href="#Director"><code>Director</code></a></li>
 <li><a href="#Director+directScene">.directScene(scene)</a> ⇒ <a href="#Director"><code>Director</code></a></li>
@@ -303,9 +303,9 @@ noHomers.isAllowed(res2) <span class="hljs-comment">// true</span>
 </code></pre>
 <hr>
 <p><a name="Director+process"></a></p>
-<h3 id="director-process-res-code-boolean-code-">director.process(res) ⇒ <code>boolean</code></h3>
+<h3 id="director-process-res-code-promise-code-">director.process(res) ⇒ <code>Promise</code></h3>
 <p>Process access or denial (either silently or with reply, as configured).</p>
-<p><strong>Kind</strong>: instance method of <a href="#Director"><code>Director</code></a><br><strong>Returns</strong>: <code>boolean</code> - Access allowed  </p>
+<p><strong>Kind</strong>: instance method of <a href="#Director"><code>Director</code></a><br><strong>Returns</strong>: <code>Promise</code> - Resolves with boolean, access allowed/denied  </p>
 <table>
 <thead>
 <tr>
@@ -326,7 +326,7 @@ noHomers.isAllowed(res2) <span class="hljs-comment">// true</span>
 <p><a name="Director+directMatch"></a></p>
 <h3 id="director-directmatch-regex-code-director-code-director-">director.directMatch(regex) ⇒ <a href="#Director"><code>Director</code></a></h3>
 <p>Let this director control access to any listener matching regex.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Director"><code>Director</code></a><br><strong>Returns</strong>: <a href="#Director"><code>Director</code></a> - - Self, for chaining methods  </p>
+<p><strong>Kind</strong>: instance method of <a href="#Director"><code>Director</code></a><br><strong>Returns</strong>: <a href="#Director"><code>Director</code></a> - Self, for chaining methods  </p>
 <table>
 <thead>
 <tr>
@@ -346,7 +346,7 @@ noHomers.isAllowed(res2) <span class="hljs-comment">// true</span>
 <hr>
 <p><a name="Director+directListener"></a></p>
 <h3 id="director-directlistener-id-code-director-code-director-">director.directListener(id) ⇒ <a href="#Director"><code>Director</code></a></h3>
-<p>Let this director control access to a listener by listener or scene ID.</p>
+<p>Let this director control access to a listener by listener ID.</p>
 <p>If multiple listeners use the same ID, it’s assumed to deny all of them.</p>
 <p><strong>Kind</strong>: instance method of <a href="#Director"><code>Director</code></a><br><strong>Returns</strong>: <a href="#Director"><code>Director</code></a> - Self, for chaining methods  </p>
 <table>
@@ -370,11 +370,7 @@ noHomers.isAllowed(res2) <span class="hljs-comment">// true</span>
 <h3 id="director-directscene-scene-code-director-code-director-">director.directScene(scene) ⇒ <a href="#Director"><code>Director</code></a></h3>
 <p>Let this director control access to a given scene’s listener.</p>
 <p>Also hooks into <code>Scene.enter</code> to control access to manually entered scenes.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Director"><code>Director</code></a><br><strong>Returns</strong>: <a href="#Director"><code>Director</code></a> - Self, for chaining methods<br><strong>Todo</strong></p>
-<ul>
-<li>[ ] Replace hooker usage with custom middleware on scene enter.
-e.g. <a href="https://gist.github.com/darrenscerri/5c3b3dcbe4d370435cfa">https://gist.github.com/darrenscerri/5c3b3dcbe4d370435cfa</a></li>
-</ul>
+<p><strong>Kind</strong>: instance method of <a href="#Director"><code>Director</code></a><br><strong>Returns</strong>: <a href="#Director"><code>Director</code></a> - Self, for chaining methods  </p>
 <table>
 <thead>
 <tr>

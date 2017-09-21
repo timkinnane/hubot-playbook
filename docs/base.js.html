@@ -160,6 +160,7 @@ or event can be queried and recorded against its source.</p>
 <li><a href="#Base">Base</a><ul>
 <li><a href="#new_Base_new">new Base(name, robot, [options], [key])</a></li>
 <li><a href="#Base+log">.log</a> ⇒ <code>Object</code></li>
+<li><a href="#Base+appendLogDetails">.appendLogDetails(text)</a> ⇒ <code>string</code></li>
 <li><a href="#Base+error">.error(err)</a></li>
 <li><a href="#Base+configure">.configure(options)</a> ⇒ <a href="#Base"><code>Base</code></a></li>
 <li><a href="#Base+defaults">.defaults(settings)</a> ⇒ <a href="#Base"><code>Base</code></a></li>
@@ -217,6 +218,27 @@ radOne.config.radness <span class="hljs-comment">// == 'high'</span>
 <h3 id="base-log-code-object-code-">base.log ⇒ <code>Object</code></h3>
 <p>Getter allows robot to be replaced at runtime without losing route to log.</p>
 <p><strong>Kind</strong>: instance property of <a href="#Base"><code>Base</code></a><br><strong>Returns</strong>: <code>Object</code> - The robot’s log instance  </p>
+<hr>
+<p><a name="Base+appendLogDetails"></a></p>
+<h3 id="base-appendlogdetails-text-code-string-code-">base.appendLogDetails(text) ⇒ <code>string</code></h3>
+<p>Append the base instance details to any log it generates</p>
+<p><strong>Kind</strong>: instance method of <a href="#Base"><code>Base</code></a><br><strong>Returns</strong>: <code>string</code> - Log message with details appended  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>text</td>
+<td><code>string</code></td>
+<td>The original log message</td>
+</tr>
+</tbody>
+</table>
 <hr>
 <p><a name="Base+error"></a></p>
 <h3 id="base-error-err-">base.error(err)</h3>

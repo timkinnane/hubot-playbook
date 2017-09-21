@@ -3,6 +3,7 @@
 import _ from 'lodash'
 import Base from './base'
 import Dialogue from './dialogue'
+import Middleware from '../utils/middleware'
 
 /**
  * Scenes conduct participation in dialogue. They use listeners to enter an
@@ -29,6 +30,9 @@ class Scene extends Base {
   constructor (...args) {
     super('scene', ...args)
     this.defaults({ scope: 'user' })
+
+    // setup internal middleware stack for processing entry
+    this.enterMiddleware = new Middleware(this)
 
     // by default, prefix @user in room scene (to identify target recipient)
     if (this.config.scope === 'room') this.defaults({ sendReplies: true })
@@ -87,7 +91,9 @@ class Scene extends Base {
     // setup listener with scene as attribute for later/external reference
     // may fail if enter hooks override (from Director)
     this.robot[type](regex, {id: this.id, scene: this}, res => {
-      if (this.enter(res) !== null) callback(res)
+      this.enter(res, (context) => {
+        if (context.dialogue) callback(context.response, context)
+      })
     })
   }
 
@@ -120,25 +126,69 @@ class Scene extends Base {
   }
 
   /**
+    * Add a function to the enter middleware stack, to continue or interrupt the
+    * pipeline. Called with:
+    * - bound 'this' containing the current scene
+    * - context, object containing relevant attributes for the pipeline
+    * - next, function to call to continue the pipeline
+    * - done, final pipeline function, optionally given as argument to next
+    *
+    * @param  {Function} piece Pipeline function to add to the stack.
+   */
+  registerMiddleware (piece) {
+    this.enterMiddleware.register(piece)
+  }
+
+  /*
+   * Trrgger scene enter middleware to begin, calling optional callback if/when
+   * pipeline completes. Processing may reject promise, so should be caught.
+   *
+   * @param  {Response} res        Hubot Response object
+   * @param  {Object} [options]    Dialogue options merged with scene config
+   * @param  {*} args              Any additional args for Dialogue constructor
+   * @param  {Function} [callback] Called after middleware with final context
+   * @return {Promise}             Resolves with new Dialogue middleware completes
+  */
+  enter (res, ...args) {
+    const participants = this.whoSpeaks(res)
+    if (this.inDialogue(participants)) return Promise.reject(new Error('Already engaged'))
+
+    let callback // not required (undefined by default)
+    if (_.isFunction(args[ args.length - 1 ])) callback = args.pop()
+
+    let options = _.isObject(args[0]) ? args.shift() : {}
+    options = _.defaults({}, this.config, options)
+
+    // setup context and execute middleware stack, calling processEnter as
+    // final step if pipeline is allowed to complete
+    return this.enterMiddleware.execute({
+      response: res,
+      participants: participants,
+      options: options,
+      arguments: args
+    }, this.processEnter.bind(this), callback)
+  }
+
+  /**
    * Engage the participants in dialogue. A new Dialogue instance is created and
    * all further messages from the audience in this scene's scope will be passed
    * to that dialogue, untill they are exited from the scene.
    *
-   * Would usually be invoked by a listener, using the Scene `.listen`, `.hear`
-   * or `respond` methods, but could be called directly to force audience into
-   * a scene unprompted.
+   * Would usually be invoked as the final piece of enter middleware, after
+   * stack execution is triggered by a scene listener but could be called
+   * directly to force audience into a scene unprompted.
    *
-   * @param  {Response} res     Hubot Response object
-   * @param  {Object} [options] Dialogue options merged with scene config
-   * @param  {*} args           Any additional args for Dialogue constructor
-   * @return {Dialogue}         The started dialogue
-  */
-  enter (res, ...args) {
-    const participants = this.whoSpeaks(res)
-    if (this.inDialogue(participants)) return
-    let options = _.isObject(args[0]) ? args.shift() : {}
-    options = _.defaults({}, this.config, options)
-    const dialogue = new Dialogue(res, options, ...args)
+   * @param  {Object} context              The final context after middleware completed
+   * @param  {Object} context.response     The hubot response object
+   * @param  {string} context.participants Who is being entered to the scene
+   * @param  {Object} [context.options]    Options object given to dialogue
+   * @param  {Array}  [context.arguments]  Additional arguments given to dialogue
+   * @param  {Function} [done]             Optional final callback after processed - given context
+   * @return {Dialogue}                    The final dialogue
+   */
+  processEnter (context, done) {
+    let args = Array.from(context.arguments)
+    const dialogue = new Dialogue(context.response, context.options, ...args)
     dialogue.scene = this
     if (!dialogue.key && this.key) dialogue.key = this.key
     dialogue.on('timeout', (lastRes, other) => {
@@ -148,9 +198,11 @@ class Scene extends Base {
       let isComplete = (lastRes.dialogue.path) ? lastRes.dialogue.path.closed : false
       return this.exit(lastRes, `${(isComplete) ? '' : 'in'}complete`)
     })
-    this.engaged[participants] = dialogue
-    this.emit('enter', res, dialogue)
-    this.log.info(`Engaging ${this.config.scope} ${participants} in dialogue`)
+    this.engaged[context.participants] = dialogue
+    this.emit('enter', context.response, dialogue)
+    this.log.info(`Engaging ${this.config.scope} ${context.participants} in dialogue`)
+    context.dialogue = dialogue
+    process.nextTick(() => done(context))
     return dialogue
   }
 

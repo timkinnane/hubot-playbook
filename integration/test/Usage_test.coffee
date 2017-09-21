@@ -4,6 +4,9 @@ chai = require 'chai'
 should = chai.should()
 pretend = require 'hubot-pretend'
 
+# director methods are async, need to allow enter middleware time to process
+wait = (delay) -> new Promise (resolve, reject) -> setTimeout resolve, delay
+
 describe 'Playbook demo', ->
 
   afterEach ->
@@ -150,28 +153,44 @@ describe 'Playbook demo', ->
 
     context 'Nima gets whitelisted, both try to enter', ->
 
-      it 'allows Nima only, otherwise default response', -> co =>
+      it 'allows Nima', -> co =>
         yield @director.send "allow nima"
-        yield @pema.send "knock knock"
         yield @nima.send "knock knock"
+        yield wait 20
         pretend.messages.should.eql [
           [ 'director', "allow nima" ]
-          [ 'pema',     "knock knock" ]
-          [ 'hubot',    "@pema Sorry, nima's only." ]
           [ 'nima',     "knock knock" ]
           [ 'hubot',    "@nima You may enter!" ]
         ]
 
+      it 'gives others default response', -> co =>
+        yield @director.send "allow nima"
+        yield @pema.send "knock knock"
+        yield wait 20
+        pretend.messages.should.eql [
+          [ 'director', "allow nima" ]
+          [ 'pema',     "knock knock" ]
+          [ 'hubot',    "@pema Sorry, nima's only." ]
+        ]
+
     context 'Nima is blacklisted user, both try to enter', ->
 
-      it 'allows any but Nima, otherwise default response', -> co =>
+      it 'allows any but Nima', -> co =>
         yield @director.send "deny nima"
         yield @pema.send "knock knock"
-        yield @nima.send "knock knock"
+        yield wait 20
         pretend.messages.should.eql [
           [ 'director', "deny nima" ]
           [ 'pema',   "knock knock" ]
           [ 'hubot',  "@pema You may enter!" ]
+        ]
+
+      it 'gives others default response', -> co =>
+        yield @director.send "deny nima"
+        yield @nima.send "knock knock"
+        yield wait 20
+        pretend.messages.should.eql [
+          [ 'director', "deny nima" ]
           [ 'nima',   "knock knock" ]
           [ 'hubot',  "@nima Sorry, no nima's." ]
         ]
@@ -191,9 +210,9 @@ describe 'Playbook demo', ->
       it 'allows any in room #A', -> co =>
         yield @A.receive @director, "allow #A"
         yield @A.receive @pema, "knock knock"
+        yield wait 10
         yield @A.receive @nima, "knock knock"
-        yield @B.receive @pema, "knock knock"
-        yield @B.receive @nima, "knock knock"
+        yield wait 10
         @A.messages().should.eql [
           [ 'director',  "allow #A" ]
           [ 'pema',     "knock knock" ]
@@ -204,10 +223,10 @@ describe 'Playbook demo', ->
 
       it 'sends default response to other rooms', -> co =>
         yield @A.receive @director, "allow #A"
-        yield @A.receive @pema, "knock knock"
-        yield @A.receive @nima, "knock knock"
         yield @B.receive @pema, "knock knock"
+        yield wait 10
         yield @B.receive @nima, "knock knock"
+        yield wait 10
         @B.messages().should.eql [
           [ 'pema',   "knock knock" ]
           [ 'hubot',  "@pema Sorry, #A users only." ]
@@ -220,9 +239,9 @@ describe 'Playbook demo', ->
       it 'allows any in room #A', -> co =>
         yield @A.receive @director, "deny #A"
         yield @A.receive @pema, "knock knock"
+        yield wait 10
         yield @A.receive @nima, "knock knock"
-        yield @B.receive @pema, "knock knock"
-        yield @B.receive @nima, "knock knock"
+        yield wait 10
         @A.messages().should.eql [
           [ 'director',  "deny #A" ]
           [ 'pema',   "knock knock" ]
@@ -233,10 +252,10 @@ describe 'Playbook demo', ->
 
       it 'sends default response to other rooms', -> co =>
         yield @A.receive @director, "deny #A"
-        yield @A.receive @pema, "knock knock"
-        yield @A.receive @nima, "knock knock"
         yield @B.receive @pema, "knock knock"
+        yield wait 10
         yield @B.receive @nima, "knock knock"
+        yield wait 10
         @B.messages().should.eql [
           [ 'pema',     "knock knock" ]
           [ 'hubot',    "@pema You may enter!" ]
