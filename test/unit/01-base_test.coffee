@@ -31,9 +31,6 @@ describe 'Base', ->
       it 'stores the robot', ->
         @base.robot.should.eql pretend.robot
 
-      it 'inherits the robot logger', ->
-        @base.log.should.eql pretend.robot.logger
-
       it 'calls configure with options', ->
         @base.configure.should.have.calledWith test: 'testing'
 
@@ -55,6 +52,30 @@ describe 'Base', ->
 
       it 'runs error handler', ->
         Base.prototype.error.should.have.calledOnce
+
+  describe '.log', ->
+
+    it 'writes log on the given level', ->
+      base = new Base 'test', pretend.robot
+      base.id = 'test111'
+      base.log.debug 'This is some debug'
+      base.log.info 'This is info'
+      base.log.warning 'This is a warning'
+      base.log.error 'This is an error'
+      pretend.logs.slice(-4).should.eql [
+        [ 'debug', 'This is some debug (id: test111)' ],
+        [ 'info', 'This is info (id: test111)' ],
+        [ 'warning', 'This is a warning (id: test111)' ],
+        [ 'error', 'This is an error (id: test111)' ]
+      ]
+
+    it 'appends the key if instance has one', ->
+      base = new Base 'test', pretend.robot, 'super-test'
+      base.id = 'test111'
+      base.log.debug 'This is some debug'
+      pretend.logs.slice(-1).should.eql [
+        [ 'debug', 'This is some debug (id: test111, key: super-test)' ]
+      ]
 
   describe '.error', ->
 

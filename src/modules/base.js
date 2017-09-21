@@ -49,7 +49,25 @@ class Base {
    * @return {Object} The robot's log instance
    */
   get log () {
-    return this.robot ? this.robot.logger : null
+    if (!this.robot) return null
+    return {
+      info: (text) => this.robot.logger.info(this.appendLogDetails(text)),
+      debug: (text) => this.robot.logger.debug(this.appendLogDetails(text)),
+      warning: (text) => this.robot.logger.warning(this.appendLogDetails(text)),
+      error: (text) => this.robot.logger.error(this.appendLogDetails(text))
+    }
+  }
+
+  /**
+   * Append the base instance details to any log it generates
+   *
+   * @param  {string} text The original log message
+   * @return {string}      Log message with details appended
+   */
+  appendLogDetails (text) {
+    let details = `id: ${this.id}`
+    if (this.key !== undefined) details += `, key: ${this.key}`
+    return `${text} (${details})`
   }
 
   /**
