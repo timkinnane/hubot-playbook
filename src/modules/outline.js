@@ -1,6 +1,4 @@
-import fs from 'fs'
 import _ from 'lodash'
-import yaml from 'yamljs'
 import Base from './base'
 
 /**
@@ -15,7 +13,7 @@ import Base from './base'
  * A subsequent bit can even lead back to it’s own parent or any other bit,
  * creating a mesh of possible conversational pathways.
  *
- * @param {string/Object[]} bits      Attributes to setup bits (accepts YAML file path)
+ * @param {string/Object[]} bits      Attributes to setup bits
  * @param {array}  bits[].send        String/s to send when doing bit (minimum requirement)
  * @param {string} [bits[].catch]     To send if response unmatched by listeners
  * @param {string} [bits[].condition] Converted to regex for listener to trigger bit
@@ -34,7 +32,7 @@ class Outline extends Base {
   constructor (robot, bits, ...args) {
     super('outline', robot, ...args)
     this.scenes = []
-    this.bits = (_.isString(bits) && fs.existsSync(bits)) ? yaml.load(bits) : bits
+    this.bits = bits
     _.filter(this.bits, 'listen').map((bit) => this.setupScene(bit))
   }
 
