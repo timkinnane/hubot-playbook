@@ -4,15 +4,22 @@
   "private": true,
   "author": "timkinnane",
   "description": "Integration tests for Hubot-Playbok",
+  "standard": {
+    "env": [
+      "mocha"
+    ]
+  },
   "scripts": {
     "pretest": "npm install",
     "test": "mocha"
   },
   "devDependencies": {
-    "hubot-pretend": "1.2.0",
-    "coffee-script": "latest",
     "chai": "^3.5.0",
-    "mocha": "^3.3.0"
+    "hubot-pretend": "^1.2.0",
+    "mocha": "^3.3.0",
+    "mocha-clean": "^1.0.0",
+    "sinon": "^3.3.0",
+    "standard": "^10.0.3"
   },
   "engines": {
     "node": "^4.4.x"
