@@ -164,4 +164,4 @@ class Path extends Base {
   }
 }
 
-export default Path
+module.exports = Path

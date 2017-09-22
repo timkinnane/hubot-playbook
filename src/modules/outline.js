@@ -1,5 +1,7 @@
-import _ from 'lodash'
-import Base from './base'
+'use strict'
+
+const _ = require('lodash')
+const Base = require('./base')
 
 /**
  * Outlines are a conversation modelling schema / handler, with collections of
@@ -144,4 +146,4 @@ class Outline extends Base {
   }
 }
 
-export default Outline
+module.exports = Outline

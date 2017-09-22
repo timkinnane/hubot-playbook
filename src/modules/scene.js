@@ -257,4 +257,4 @@ class Scene extends Base {
   }
 }
 
-export default Scene
+module.exports = Scene

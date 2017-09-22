@@ -1,6 +1,6 @@
 'use strict'
 
-import Base from '../modules/base'
+const Base = require('../modules/base')
 
 class Module extends Base {
   constructor (robot, ...args) {
@@ -8,4 +8,4 @@ class Module extends Base {
   }
 }
 
-export default Module
+module.exports = Module

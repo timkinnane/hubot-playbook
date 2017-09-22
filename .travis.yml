@@ -5,8 +5,7 @@ cache:
 notifications:
   email: false
 node_js:
-  - '6'
-  - '4'
+  - '8'
 after_script:
   - npm run coveralls
 after_success:

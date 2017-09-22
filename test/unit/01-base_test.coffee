@@ -5,8 +5,8 @@ chai.use require 'sinon-chai'
 
 _ = require 'lodash'
 pretend = require 'hubot-pretend'
-Base = require '../../lib/modules/base'
-Module = require '../../lib/utils/module'
+Base = require '../../src/modules/base'
+Module = require '../../src/utils/module'
 
 describe 'Base', ->
 

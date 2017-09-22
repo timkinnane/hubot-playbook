@@ -1,7 +1,7 @@
 'use strict'
 
-import _ from 'lodash'
-import Base from './base'
+const _ = require('lodash')
+const Base = require('./base')
 
 _.mixin({
   'hasKeys': (obj, keys) => _.size(_.difference(keys, _.keys(obj))) === 0
@@ -262,4 +262,4 @@ class Transcript extends Base {
   */
 }
 
-export default Transcript
+module.exports = Transcript

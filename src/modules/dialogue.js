@@ -1,8 +1,8 @@
 'use strict'
 
-import _ from 'lodash'
-import Base from './base'
-import Path from './path'
+const _ = require('lodash')
+const Base = require('./base')
+const Path = require('./path')
 
 /**
  * Dialogues control which paths are available and for how long. Passing
@@ -192,4 +192,4 @@ class Dialogue extends Base {
   }
 }
 
-export default Dialogue
+module.exports = Dialogue

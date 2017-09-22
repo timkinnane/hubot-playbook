@@ -21,7 +21,7 @@
 #
 
 module.exports = (robot) ->
-  pb = require '../../lib'
+  pb = require '../../src'
   .use robot
 
   # knock to enter

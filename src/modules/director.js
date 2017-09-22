@@ -1,7 +1,7 @@
 'use strict'
 
-import _ from 'lodash'
-import Base from './base'
+const _ = require('lodash')
+const Base = require('./base')
 
 /**
  * Directors provide conversation firewalls, allowing listed users to be

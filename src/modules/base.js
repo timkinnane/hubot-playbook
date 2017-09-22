@@ -1,6 +1,6 @@
 'use strict'
 
-import _ from 'lodash'
+const _ = require('lodash')
 
 /**
  * Base is the parent class of every Playbook module, providing consistent
@@ -140,4 +140,4 @@ class Base {
   }
 }
 
-export default Base
+module.exports = Base

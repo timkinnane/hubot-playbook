@@ -1,10 +1,10 @@
-import _ from 'lodash'
-import Dialogue from './dialogue'
-import Scene from './scene'
-import Director from './director'
-import Transcript from './transcript'
-import Outline from './outline'
-import improv from './improv'
+const _ = require('lodash')
+const Dialogue = require('./dialogue')
+const Scene = require('./scene')
+const Director = require('./director')
+const Transcript = require('./transcript')
+const Outline = require('./outline')
+const improv = require('./improv')
 
 let instance
 
@@ -220,4 +220,4 @@ class Playbook {
   }
 }
 
-export default new Playbook()
+module.exports = new Playbook()

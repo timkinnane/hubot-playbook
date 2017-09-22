@@ -1,7 +1,7 @@
 'use strict'
 
-import _ from 'lodash'
-import Base from './base'
+const _ = require('lodash')
+const Base = require('./base')
 
 // init vars
 let instance, context, extensions
@@ -224,7 +224,7 @@ function reset () {
   context = null
 }
 
-export default {
+module.exports = {
   Improv: Improv,
   use: use,
   configure: configure,
