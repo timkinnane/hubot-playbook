@@ -82,6 +82,7 @@
     "co": "^4.6.0",
     "coffee-script": "^1.12.7",
     "coffeelint": "^1.16.0",
+    "commitizen": "^2.9.6",
     "coveralls": "^2.13.1",
     "cross-env": "^5.0.5",
     "cz-conventional-changelog": "^2.0.0",

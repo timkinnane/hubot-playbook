@@ -352,143 +352,143 @@ describe 'Dialogue', ->
 
   describe '.receive', ->
 
-    it 'stores the latest response object', ->
+    it 'stores the latest response object', -> co ->
       dialogue = new Dialogue testRes
       dialogue.addBranch /.*/, ->
-      dialogue.receive pretend.response 'tester', 'new test'
+      yield dialogue.receive pretend.response 'tester', 'new test'
       dialogue.res.message.text.should.equal 'new test'
 
-    it 'attaches itself to the response', ->
+    it 'attaches itself to the response', -> co ->
       dialogue = new Dialogue testRes
       dialogue.addBranch /.*/, ->
       newTestRes = pretend.response 'tester', 'new test'
-      dialogue.receive newTestRes
+      yield dialogue.receive newTestRes
       newTestRes.dialogue.should.eql dialogue
 
     context 'when already ended', ->
 
-      it 'returns false', ->
+      it 'returns false', -> co ->
         dialogue = new Dialogue testRes
         dialogue.end()
-        dialogue.receive testRes
-        .should.be.false
+        result = yield dialogue.receive testRes
+        result.should.be.false
 
-      it 'does not call the handler', ->
+      it 'does not call the handler', -> co ->
         dialogue = new Dialogue testRes
         callback = sinon.spy()
         dialogue.addBranch /.*/, callback
         dialogue.end()
-        dialogue.receive testRes
+        yield dialogue.receive testRes
         callback.should.not.have.called
 
     context 'on matching branch', ->
 
-      it 'clears timeout', ->
+      it 'clears timeout', -> co ->
         dialogue = new Dialogue testRes
         dialogue.addBranch /foo/, -> null
-        dialogue.receive pretend.response 'tester', 'foo'
+        yield dialogue.receive pretend.response 'tester', 'foo'
         dialogue.clearTimeout.should.have.calledOnce
 
-      it 'ends dialogue', ->
+      it 'ends dialogue', -> co ->
         dialogue = new Dialogue testRes
         dialogue.addBranch /foo/, -> null
-        dialogue.receive pretend.response 'tester', 'foo'
+        yield dialogue.receive pretend.response 'tester', 'foo'
         dialogue.end.should.have.calledOnce
 
-      it 'calls the branch handler', ->
+      it 'calls the branch handler', -> co ->
         dialogue = new Dialogue testRes
         callback = sinon.spy()
         dialogue.addBranch /foo/, 'bar', callback
-        dialogue.receive pretend.response 'tester', 'foo'
+        yield dialogue.receive pretend.response 'tester', 'foo'
         callback.should.have.calledOnce
 
-      it 'sends the branch message', ->
+      it 'sends the branch message', -> co ->
         dialogue = new Dialogue testRes
         callback = sinon.spy()
         dialogue.addBranch /foo/, 'bar', callback
-        dialogue.receive pretend.response 'tester', 'foo'
+        yield dialogue.receive pretend.response 'tester', 'foo'
         dialogue.send.should.have.calledWith 'bar'
 
     context 'on matching branches consecutively', ->
 
-      it 'only processes first match', ->
+      it 'only processes first match', -> co ->
         dialogue = new Dialogue testRes
         callback = sinon.spy()
         dialogue.addBranch /foo/, callback
         dialogue.addBranch /bar/, callback
-        dialogue.receive pretend.response 'tester', 'foo'
-        dialogue.receive pretend.response 'tester', 'bar'
+        yield dialogue.receive pretend.response 'tester', 'foo'
+        yield dialogue.receive pretend.response 'tester', 'bar'
         callback.should.have.calledOnce
 
     context 'on mismatch with catch', ->
 
-      it 'sends the catch message', ->
+      it 'sends the catch message', -> co ->
         dialogue = new Dialogue testRes
         dialogue.addBranch /foo/, ->
         dialogue.path.config.catchMessage = 'huh?'
-        dialogue.receive pretend.response 'tester', '?'
+        yield dialogue.receive pretend.response 'tester', '?'
         dialogue.send.should.have.calledWith 'huh?'
 
-      it 'does not clear timeout', ->
+      it 'does not clear timeout', -> co ->
         dialogue = new Dialogue testRes
         dialogue.addBranch /foo/, ->
         dialogue.path.config.catchMessage = 'huh?'
-        dialogue.receive pretend.response 'tester', '?'
+        yield dialogue.receive pretend.response 'tester', '?'
         dialogue.clearTimeout.should.not.have.called
 
-      it 'does not call end', ->
+      it 'does not call end', -> co ->
         dialogue = new Dialogue testRes
         dialogue.addBranch /foo/, ->
         dialogue.path.config.catchMessage = 'huh?'
-        dialogue.receive pretend.response 'tester', '?'
+        yield dialogue.receive pretend.response 'tester', '?'
         dialogue.end.should.not.have.called
 
     context 'on mismatch without catch', ->
 
-      it 'does not clear timeout', ->
+      it 'does not clear timeout', -> co ->
         dialogue = new Dialogue testRes
         dialogue.addBranch /foo/, ->
-        dialogue.receive pretend.response 'tester', '?'
+        yield dialogue.receive pretend.response 'tester', '?'
         dialogue.clearTimeout.should.not.have.called
 
-      it 'does not call end', ->
+      it 'does not call end', -> co ->
         dialogue = new Dialogue testRes
         dialogue.addBranch /foo/, ->
-        dialogue.receive pretend.response 'tester', '?'
+        yield dialogue.receive pretend.response 'tester', '?'
         dialogue.end.should.not.have.called
 
     context 'on matching branch that adds a new branch', ->
 
-      it 'added branches to current path', ->
+      it 'added branches to current path', -> co ->
         dialogue = new Dialogue testRes
         dialogue.addBranch /more/, ->
           dialogue.addBranch /1/, 'got 1'
           dialogue.addBranch /2/, 'got 2'
-        dialogue.receive pretend.response 'tester', 'more'
+        yield dialogue.receive pretend.response 'tester', 'more'
         _.map dialogue.path.branches, (branch) -> branch.regex
           .should.eql [ /more/, /1/, /2/ ]
 
-      it 'does not call end', ->
+      it 'does not call end', -> co ->
         dialogue = new Dialogue testRes
         dialogue.addBranch /more/, ->
           dialogue.addBranch /1/, 'got 1'
           dialogue.addBranch /2/, 'got 2'
-        dialogue.receive pretend.response 'tester', 'more'
+        yield dialogue.receive pretend.response 'tester', 'more'
         dialogue.end.should.not.have.called
 
     context 'on matching branch that adds a new path', ->
 
-      it 'added new branches to new path, overwrites prev path', ->
+      it 'added new branches to new path, overwrites prev path', -> co ->
         dialogue = new Dialogue testRes
         dialogue.addBranch /new/, ->
           dialogue.addPath [ [ /1/, 'got 1' ], [ /2/, 'got 2' ] ]
-        dialogue.receive pretend.response 'tester', 'new'
+        yield dialogue.receive pretend.response 'tester', 'new'
         _.map dialogue.path.branches, (branch) -> branch.regex
           .should.eql [ /1/, /2/ ]
 
-      it 'does not call end', ->
+      it 'does not call end', -> co ->
         dialogue = new Dialogue testRes
         dialogue.addBranch /new/, ->
           dialogue.addPath [ [ /1/, 'got 1' ], [ /2/, 'got 2' ] ]
-        dialogue.receive pretend.response 'tester', 'new'
+        yield dialogue.receive pretend.response 'tester', 'new'
         dialogue.end.should.not.have.called

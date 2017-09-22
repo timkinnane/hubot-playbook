@@ -179,14 +179,16 @@ class Dialogue extends Base {
    * @todo Test with handler using res.http/get to populate new path
   */
   receive (res) {
-    if (this.ended || this.path == null) return false // dialogue is over
+    if (this.ended || this.path == null) return Promise.resolve(false) // dialogue is over
     this.log.debug(`Dialogue received ${this.res.message.text}`)
     res.dialogue = this
     this.res = res
-    let handlerResult = this.path.match(res)
-    if (this.res.match) this.clearTimeout()
-    if (this.path.closed) this.end()
-    return handlerResult
+    return this.path.match(res).then((result) => {
+      this.log.debug(`Path match result: ${this.res.match} (handler returned: ${result})`)
+      if (this.res.match) this.clearTimeout()
+      if (this.path.closed) this.end()
+      return result
+    })
   }
 }
 

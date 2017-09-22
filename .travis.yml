@@ -7,8 +7,6 @@ notifications:
 node_js:
   - '6'
   - '4'
-before_script:
-  - npm prune
 after_script:
   - npm run coveralls
 after_success:
