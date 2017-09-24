@@ -87,10 +87,13 @@ describe 'Dialogue', ->
     context 'when timeout is running', ->
 
       it 'clears the timeout', ->
-        dialogue = new Dialogue testRes
+        dialogue = new Dialogue testRes, timeout: 10
+        dialogue.onTimeout = sinon.spy()
         dialogue.startTimeout()
         dialogue.end()
+        clock.tick 20
         dialogue.clearTimeout.should.have.calledOnce
+        dialogue.onTimeout.should.not.have.called
 
     context 'when already ended', ->
 
@@ -137,8 +140,7 @@ describe 'Dialogue', ->
     context 'with config.sendReplies set to true', ->
 
       it 'sends to room from original res, responding to the @user', -> co ->
-        dialogue = new Dialogue testRes
-        dialogue.config.sendReplies = true
+        dialogue = new Dialogue testRes, sendReplies: true
         yield dialogue.send 'test'
         pretend.messages.pop().should.eql [ 'testing', 'hubot', '@tester test' ]
 
@@ -147,11 +149,11 @@ describe 'Dialogue', ->
     context 'default method', ->
 
       it 'sends timeout message to room', ->
-        wait = pretend.observer.next()
-        dialogue = new Dialogue testRes, timeout: 1000
+        nextMessage = pretend.observer.next()
+        dialogue = new Dialogue testRes, timeout: 10
         dialogue.startTimeout()
-        clock.tick 1001
-        yield wait
+        clock.tick 20
+        yield nextMessage
         pretend.messages.pop().should.eql [
           'testing', 'hubot', dialogue.config.timeoutText
         ]
@@ -159,43 +161,38 @@ describe 'Dialogue', ->
     context 'method override (as argument)', ->
 
       it 'calls the override method', ->
-        dialogue = new Dialogue testRes
-        dialogue.configure timeout: 1000
+        dialogue = new Dialogue testRes, timeout: 10
         timeout = sinon.spy()
         dialogue.onTimeout timeout
         dialogue.startTimeout()
-        clock.tick 1001
-        timeout.should.have.calledOnce
+        clock.tick 20
+        dialogue.onTimeout.should.have.calledOnce
 
       it 'does not send the default timeout message', ->
-        dialogue = new Dialogue testRes
-        dialogue.configure timeout: 1000
+        dialogue = new Dialogue testRes, timeout: 10
         timeout = sinon.spy()
         dialogue.onTimeout timeout
         dialogue.startTimeout()
-        clock.tick 1001
-        dialogue.send.should.not.have.been.calledOnce
+        clock.tick 20
+        dialogue.send.should.not.have.called
 
     context 'method override (by assignment)', ->
 
       it 'calls the override method', ->
-        dialogue = new Dialogue testRes
-        dialogue.configure timeout: 1000
-        timeout = sinon.spy()
-        dialogue.onTimeout = timeout
+        dialogue = new Dialogue testRes, timeout: 10
+        dialogue.onTimeout = sinon.spy()
         dialogue.startTimeout()
-        clock.tick 1001
-        timeout.should.have.calledOnce
+        clock.tick 20
+        dialogue.onTimeout.should.have.calledOnce
 
     context 'method override with invalid function', ->
 
       it 'throws exception', ->
-        dialogue = new Dialogue testRes
-        dialogue.configure timeout: 1000
+        dialogue = new Dialogue testRes, timeout: 10
         dialogue.onTimeout -> throw new Error "Test exception"
         override = sinon.spy dialogue, 'onTimeout'
         dialogue.startTimeout()
-        try clock.tick 1001
+        try clock.tick 20
         override.should.throw
 
   describe '.clearTimeout', ->
@@ -203,43 +200,45 @@ describe 'Dialogue', ->
   describe '.startTimeout', ->
 
     it 'emits timeout event', ->
-      dialogue = new Dialogue testRes
-      dialogue.configure timeout: 1000
+      dialogue = new Dialogue testRes, timeout: 10
       timeoutMethod = sinon.spy()
       dialogue.onTimeout timeoutMethod
       timeoutEvent = sinon.spy()
       dialogue.on 'timeout', timeoutEvent
       dialogue.startTimeout()
-      clock.tick 1001
+      clock.tick 20
       timeoutEvent.should.have.calledOnce
 
     it 'emits end event', ->
-      dialogue = new Dialogue testRes
-      dialogue.configure timeout: 1000
+      dialogue = new Dialogue testRes, timeout: 10
       end = sinon.spy()
       dialogue.on 'end', end
       timeoutMethod = sinon.spy()
       dialogue.onTimeout timeoutMethod
       dialogue.startTimeout()
-      clock.tick 1001
+      clock.tick 20
       end.should.have.calledOnce
 
-    it 'calls onTimeout method', ->
-      dialogue = new Dialogue testRes
-      dialogue.configure timeout: 1000
-      timeoutMethod = sinon.spy()
-      dialogue.onTimeout timeoutMethod
+    it 'clears existing timeout', ->
+      dialogue = new Dialogue testRes, timeout: 10
+      dialogue.onTimeout = sinon.spy()
       dialogue.startTimeout()
-      clock.tick 1001
-      timeoutMethod.should.have.calledOnce
+      dialogue.startTimeout()
+      clock.tick 20
+      dialogue.clearTimeout.should.have.calledOnce
+      dialogue.onTimeout.should.have.calledOnce
+
+    it 'calls onTimeout method', ->
+      dialogue = new Dialogue testRes, timeout: 10
+      dialogue.onTimeout = sinon.spy()
+      dialogue.startTimeout()
+      clock.tick 20
+      dialogue.onTimeout.should.have.calledOnce
 
     it 'calls .end', ->
-      dialogue = new Dialogue testRes
-      dialogue.configure
-        timeout: 1000
-        timeoutText: null
+      dialogue = new Dialogue testRes, timeout: 10, timeoutText: null
       dialogue.startTimeout()
-      clock.tick 1001
+      clock.tick 20
       dialogue.end.should.have.calledOnce
 
   describe '.addPath', ->
@@ -384,10 +383,13 @@ describe 'Dialogue', ->
     context 'on matching branch', ->
 
       it 'clears timeout', -> co ->
-        dialogue = new Dialogue testRes
+        dialogue = new Dialogue testRes, timeout: 10
         dialogue.addBranch /foo/, -> null
+        dialogue.onTimeout = sinon.spy()
         yield dialogue.receive pretend.response 'tester', 'foo'
+        clock.tick 20
         dialogue.clearTimeout.should.have.calledOnce
+        dialogue.onTimeout.should.not.have.called
 
       it 'ends dialogue', -> co ->
         dialogue = new Dialogue testRes
