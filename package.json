@@ -90,7 +90,7 @@
     "nyc": "^11.2.1",
     "onchange": "^3.2.1",
     "rimraf": "^2.6.1",
-    "semantic-release": "^6.3.6",
+    "semantic-release": "^8.0.3",
     "sinon": "^3.2.1",
     "sinon-chai": "^2.13.0",
     "snazzy": "^7.0.0",
