@@ -2,6 +2,7 @@
 
 const _ = require('lodash')
 const Base = require('./base')
+require('../utils/string-to-regex')
 
 /**
  * Outlines are a conversation modelling schema / handler, with collections of
@@ -16,12 +17,12 @@ const Base = require('./base')
  * creating a mesh of possible conversational pathways.
  *
  * @param {string/Object[]} bits      Attributes to setup bits
+ * @param {string} bits[].key         Key for scene and/or dialogue running the bit (required)
  * @param {array}  bits[].send        String/s to send when doing bit (minimum requirement)
  * @param {string} [bits[].catch]     To send if response unmatched by listeners
  * @param {string} [bits[].condition] Converted to regex for listener to trigger bit
  * @param {string} [bits[].listen]    Type of listener (hear/respond) for scene entry bit
  * @param {string} [bits[].scene]     Scope for the scene (only used if it has a listen type)
- * @param {string} [bits[].key]       Key for scene and/or dialogue running the bit
  * @param {Object} [bits[].options]   Key/val options for scene and/or dialogue config
  * @param {array} [bits[].next]       Key/s (strings) for consequitive bits
  * @param {Object} [options]          Key/val options for outline config
@@ -34,7 +35,8 @@ class Outline extends Base {
   constructor (robot, bits, ...args) {
     super('outline', robot, ...args)
     this.scenes = []
-    this.bits = bits
+    this.bits = []
+    for (let bit of bits) this.bits[bit.key] = bit
     _.filter(this.bits, 'listen').map((bit) => this.setupScene(bit))
   }
 
@@ -137,12 +139,18 @@ class Outline extends Base {
    * Convert a bit's condition attribute into a regex.
    *
    * @param  {string} key The key for a loaded bit
-   * @return {RegExp}     The pattern for the bit's listener
+   * @return {RegExp}     The pattern for the bit's condition
    *
    * @todo Use `conditioner-regex` to convert array of conditions to pattern
    */
   bitCondition (key) {
-    return new RegExp(`\\b${this.bits[key].condition}\\b`, 'i')
+    let condition = this.bits[key].condition
+    if (_.isRegExp(condition)) return condition
+    if (_.isString(condition)) {
+      let regex = condition.toRegExp()
+      if (_.isRegExp(regex)) return regex
+    }
+    throw new Error(`Bit (${key}) condition (${condition}) can't be used as regex`)
   }
 }
 
