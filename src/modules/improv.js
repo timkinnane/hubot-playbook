@@ -37,8 +37,8 @@ class Improv extends Base {
       instance = this
       this.defaults({
         save: true,
-        fallback: process.env.IMRPOV_FALLBACK || 'unknown',
-        replacement: process.env.IMRPOV_REPLACEMENT || null
+        fallback: process.env.IMPROV_FALLBACK || 'unknown',
+        replacement: process.env.IMPROV_REPLACEMENT || null
       })
     }
     return instance
