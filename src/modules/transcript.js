@@ -28,8 +28,6 @@ _.mixin({
  * @param {array} [options.instanceAtts]  Module instance keys or paths to record
  * @param {string} [key]                  Key name for this instance
  *
- * @todo Add config to record response middleware context including listener ID
- *
  * @example <caption>transcript to record room name when match emitted</caption>
  * let matchRecordRooms = new Transcript(robot, {
  *   responseAtts: ['message.room']
@@ -111,15 +109,7 @@ class Transcript extends Base {
     )
   }
 
-  /**
-   * @todo Re-instate `recordListener` when regular listeners emit event with
-   * context containing options and ID.
-   */
-  /*
-  recordListener (context) {
-
-  }
-  */
+  recordListener (context) {}
 
   /**
    * Record events emitted by a given dialogue and it's path/s.
@@ -246,8 +236,6 @@ class Transcript extends Base {
    * @param  {string}  [userId]       Filter results by a user ID
    * @param  {integer} [captureGroup] Filter match by regex capture group subset
    * @return {array}                  Contains full match or just capture group
-   *
-   * @todo Re-instate `findIdMatches` when `recordListener` is funtional
   */
   /*
   findIdMatches (listenerId, ...args) {

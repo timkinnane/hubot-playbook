@@ -27,9 +27,6 @@ require('../utils/string-to-regex')
  * @param {array} [bits[].next]       Key/s (strings) for consequitive bits
  * @param {Object} [options]          Key/val options for outline config
  * @param {string} [key]              Key name for this instance
- *
- * @todo Add bit attribute for callback function as a key of extended response
- * @todo Add bit attribute for director whitelist/blacklist names and/or auth function
  */
 class Outline extends Base {
   constructor (robot, bits, ...args) {
@@ -140,8 +137,6 @@ class Outline extends Base {
    *
    * @param  {string} key The key for a loaded bit
    * @return {RegExp}     The pattern for the bit's condition
-   *
-   * @todo Use `conditioner-regex` to convert array of conditions to pattern
    */
   bitCondition (key) {
     let condition = this.bits[key].condition

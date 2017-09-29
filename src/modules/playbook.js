@@ -157,8 +157,6 @@ class Playbook {
    * @param  {*}  instance A Playbook module (dialogue, scene or director)
    * @param  {*}  [args]   Constructor args
    * @return {Transcript}  The new transcript
-   *
-   * @todo Allow passing instance key instead of object, to find from arrays
   */
   transcribe (instance, ...args) {
     const transcript = this.transcript(...args)
@@ -184,8 +182,6 @@ class Playbook {
 
   /**
    * Exit all scenes, end all dialogues.
-   *
-   * TODO: detach listeners for scenes, directors, transcripts and improv
   */
   shutdown () {
     if (this.log) this.log.info('Playbook shutting down')

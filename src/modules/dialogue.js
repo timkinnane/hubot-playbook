@@ -175,8 +175,6 @@ class Dialogue extends Base {
    *
    * @param {Response} res Hubot Response object
    * @return {Promise}     Resolves when matched/catch handler complete
-   *
-   * @todo Test with handler using res.http/get to populate new path
   */
   receive (res) {
     if (this.ended || this.path == null) return Promise.resolve(false) // dialogue is over

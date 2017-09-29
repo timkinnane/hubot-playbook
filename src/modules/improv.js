@@ -54,7 +54,6 @@ class Improv extends Base {
  *
  * @param  {Robot} robot The robot to use, usually existing from constructor
  * @return {Improv}      The instance - really only accessed by tests
- * @todo Test persistant context save/load from brain with a data store.
  */
 function use (robot) {
   let improv = new Improv(robot)
@@ -118,8 +117,6 @@ function extend (dataFunc) {
  *
  * @param  {Object} [user] User (usually from middleware context)
  * @return {Object}        Context and user data, with any extensions merged
- *
- * @todo Allow tagging other user's data by merge with robot.brain.userForId
 */
 function mergeData (user = {}) {
   if (!instance) throw new Error('Improv must be used with robot before using data')
@@ -181,9 +178,6 @@ function middleware (context, next, done) {
   return next()
 }
 
-/**
- * @todo ask configured admins to provide context for any unknowns
- */
 function warn (unknowns) {}
 
 /**
@@ -192,8 +186,6 @@ function warn (unknowns) {}
  * @param {array/string} path The path of the property to set
  * @param {*} value           The value to set
  * @return {Object}             The module exports for chaining
- *
- * @todo Save to brain on update if configured to save
  */
 function remember (path, value) {
   if (context == null) context = {}
@@ -206,8 +198,6 @@ function remember (path, value) {
  *
  * @param {array/string} path The path of the property to unset
  * @return {Object}             The module exports for chaining
- *
- * @todo Clear from brain on update if configured to save
  */
 function forget (path) {
   if (context == null) context = {}
