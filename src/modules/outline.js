@@ -35,7 +35,7 @@ class Outline extends Base {
   constructor (robot, bits, ...args) {
     super('outline', robot, ...args)
     this.scenes = []
-    this.bits = []
+    this.bits = {}
     for (let bit of bits) this.bits[bit.key] = bit
     _.filter(this.bits, 'listen').map((bit) => this.setupScene(bit))
   }
