@@ -2,16 +2,18 @@
 
 const _ = require('lodash')
 const Base = require('./base')
+const captureExpression = new RegExp(/(?:\$\{\s?)(.*?)(?:\s?\})/g)
 
 // init vars
-let instance, context, extensions
+let instance, data, extensions
+reset()
 
 /**
- * Improv parses message templates at runtime with context from user attributes,
+ * Improv parses message templates at runtime with data from user attributes,
  * pre-populated data and/or custom extensions.
  *
  * e.g. "hello ${ this.user.name }" will render with the value at the user.name
- * path in current context.
+ * path in current data.
  *
  * Message strings containing expressions are automatically rendered by Improv
  * middleware and can be merged with data from any source, including a
@@ -19,7 +21,7 @@ let instance, context, extensions
  *
  * Note:
  *
- * - The context object is applied as 'this' in the scope where the template is
+ * - The data object is applied as 'this' in the scope where the template is
  * rendered, e.g. `this.user.name` is the value at _user.name_ path.
  * - *Don't* use back-ticks when declaring strings, or it will render
  * immediately.
@@ -46,7 +48,7 @@ class Improv extends Base {
 }
 
 /**
- * Setup middleware and improv context collection in the brain.
+ * Setup middleware and improv data collection in the brain.
  *
  * This is the main interface to get either a new or existing instance.
  * If the robot is new but an instance exists (e.g. in tests) then Improv will
@@ -71,12 +73,11 @@ function use (robot) {
  * Configure the Improv instance
  *
  * @param {Object} [options]             Key/val options for config
- * @param {boolean} [options.save]       Keep context collection in hubot brain
+ * @param {boolean} [options.save]       Keep data collection in hubot brain
  * @param {string} [options.fallback]    Fallback content replace any unknowns within messages
  * @param {string} [options.replacement] Replace all messages containing unknowns, overrides fallback
- * @param {Object} [options.app]         Data object with app context attributes to merge into tempaltes
- * @param {array} [options.admins]       Array of usernames authorised to populate context data
- * @return {Object}                        The module exports for chaining
+ * @param {array} [options.admins]       Array of usernames authorised to populate data
+ * @return {Object}                      The module exports for chaining
  */
 function configure (options = {}) {
   if (!instance) throw new Error('Improv must be used with robot before configuring')
@@ -85,96 +86,160 @@ function configure (options = {}) {
 }
 
 /**
- * Add extra functions to provide further context. They are called with the
- * current context whenever a template is rendered and should return extra
- * key/values to merge with context and/or override keys of existing data.
+ * Add function to extend current data when rendering a template. Should return
+ * key/values to merge and/or override keys of existing data.
  *
- * @param  {Function} dataFunc Receives current context, to return more data
+ * If given a path argument, the extension function will only be called when the
+ * template string being rendered contains that path. This can prevent slow or
+ * expensive requests from running when their data isn't required.
+ *
+ * Extensions can set properties within current data model or return a new
+ * object, the keys and values will be deep merged so either will work.
+ *
+ * @param  {Function} dataFunc   Receives current data, to return more
+ * @param  {string}   [dataPath] Scope for running the extension (optional)
  * @return {Improv}            The instance for chaining
  *
- * @example <caption>extend context with user transcript history</caption>
+ * @example <caption>extend data with user transcript history</caption>
  *
  * improv.use(robot)
- * improv.extend((context) => {
- *   context.user.favColor = 'always blue'
- *   return context
- * })
+ * improv.extend((data) => {
+ *   data.user.favColor = 'always blue'
+ *   return data
+ * }, 'user.favColor')
  * robot.send({ user: user }, 'I know your favorite color is ${ this.user.favColor }')
- * // ^ middleware will render template with the values and user in context
+ * // ^ middleware will render template with the values and user in data
+ * // ^ by providing the path, it will only be run when specifically required
 */
-function extend (dataFunc) {
+function extend (dataFunc, dataPath) {
   if (!instance) throw new Error('Improv must be used with robot before extended')
-  if (_.isFunction(dataFunc)) {
-    if (extensions == null) extensions = []
-    extensions.push(dataFunc)
-  }
+  if (_.isFunction(dataFunc)) extensions.push({ function: dataFunc, path: dataPath })
   return this
 }
 
 /**
- * Provdies current context to messages merged with any data reutrn by added
- * extensions and a user object (if provideed).
+ * Search an array of strings for template expressions with `this.` data path.
  *
- * @param  {Object} [user] User (usually from middleware context)
- * @return {Object}        Context and user data, with any extensions merged
-*/
-function mergeData (user = {}) {
-  if (!instance) throw new Error('Improv must be used with robot before using data')
-  if (context == null) context = {}
-  let dataSources = [context, {user}]
-  if (instance.config.save) dataSources.push(instance.robot.brain.get('improv'))
-  let data = _.defaultsDeep({}, ...dataSources)
-  let merged = _.reduce(extensions, (merge, func) => {
-    return _.defaultsDeep(merge, func(merge))
-  }, data)
-  return merged
+ * @param  {array} strings Strings to search (usually from middleware)
+ * @return {array}         Path matches objects\n
+ *                         - [0]: expression including braces, e.g. `${ ... }`
+ *                         - [1]: the path, e.g. this.path.to.data
+ *                         - index: index of expression in string
+ *                         - input: string containing the matched path
+ */
+function matchPaths (strings) {
+  let match
+  let paths = []
+  for (let string of strings) {
+    while ((match = captureExpression.exec(string)) !== null) {
+      if (match[1].indexOf('this.' === 0)) paths.push(match)
+    }
+  }
+  return paths
 }
 
 /**
- * Merge templated messages with context data (replace unknown as configured).
- * Called by middleware after context data gathered and possibly extended.
+ * Provdies current data to messages merged with response context any extra data
+ * returned by added extensions.
  *
- * Pre-renders each expression individually to catch and replace any unknowns.
- * Failed expressions will be replaced with fallback unless a full replacement
- * is configured, to replace the entire string.
+ * @param  {Object} context Data provided at runtime to merge with improv data (usually from middleware)
+ * @param  {array}  [paths] Paths required, to filter out unnecessary extensions
+ * @return {Object}         Data, middleware context and any extensions merged
+*/
+function mergeData (context, paths) {
+  if (!instance) throw new Error('Improv must be used with robot before using data')
+
+  // start with known data, given context and saved data (optional)
+  let dataSources = [data, context]
+  if (instance.config.save) dataSources.push(instance.robot.brain.get('improv'))
+
+  // add user object to data root for shorter expressions
+  let user = _(context).at('response.message.user').head()
+  if (user) dataSources.push({user})
+
+  // assign values from all sources and extensions (if any)
+  let merged = _.defaultsDeep({}, ...dataSources)
+  if (extensions.length === 0) return merged
+
+  // provide existing data to extensions, if path requires it
+  return extensions.reduce((merged, extension) => {
+    let extensionRequired = (extension.path !== undefined)
+      ? _.some(paths, (path) => extension.path.indexOf(path) !== -1)
+      : true
+    if (extension.path === undefined || extensionRequired) {
+      return _.defaultsDeep(merged, extension.function(merged))
+    } else {
+      return merged
+    }
+  }, merged)
+}
+
+/**
+ * Replace expressions in sent string if they match the format of a data at a
+ * path bound to 'this', with the data at that path after collecting from all
+ * sources.
  *
- * @param {array}  strings One or more strings being posted
- * @param {Object} context Template data, reference as 'this' for interpolation
+ * @param {object} context          Context object (usually from middleware)
+ * @param {array}  context.strings  One or more strings being posted
+ * @param {object} context.response Response object being replied to
+ *
  * @return {array}         Strings populated with context values
 */
-function parse (strings, data) {
-  return _.map(strings, (string) => {
-    let regex = new RegExp(/(?:\$\{\s?)(.*?)(?:\s?\})/)
-    let match
-    while ((match = regex.exec(string)) !== null) {
-      try {
-        let template = new Function(`return \`${match[0]}\``) // eslint-disable-line
-        // ⬆ StandardJS error: The Function constructor is eval
-        let rendered = template.call(data)
-        string = string.replace(match[0], rendered)
-      } catch (e) {
-        instance.log.warning(`'${match[1]}' unknown in improv context for message: ${string}`)
-        if (instance.config.replacement !== null) return instance.config.replacement
-        else string = string.replace(match[0], instance.config.fallback)
-      }
+function parse (context) {
+  if (context.strings === undefined) {
+    throw new Error('Improv called without strings property in context argument')
+  }
+
+  // find path expressions in strings (may be none)
+  let pathmatches = matchPaths(context.strings)
+  if (pathmatches.length === 0) return context.strings
+
+  // get all data for required paths then render strings containing each path
+  let merged = mergeData(context, pathmatches.map((match) => match[1]))
+  return context.strings.map((string) => {
+    for (let match of _.filter(pathmatches, (m) => (m.input === string))) {
+      if (string.indexOf(match[1])) string = render(string, match, merged)
     }
     return string
   })
 }
 
 /**
- * Middleware checks for template tags and parses if required.
+ * Convert string containing expression to an interpolation template and call
+ * with supplied data bound to 'this'.
+ *
+ * Pre-renders expressions to catch and replace any unknowns. Failed expressions
+ * will be replaced with fallback unless a full replacement is configured, to
+ * replace the entire string.
+ *
+ * @param  {string} string   The string to replace expressions within
+ * @param  {object} match    RegExp result where string contained an expression
+ * @param  {object} callData Data to become 'this' when rendering expressions
+ * @return {string}          The result of rendering match input with given data
+ */
+function render (string, match, callData) {
+  try {
+    let template = new Function(`return \`${match[0]}\``) // eslint-disable-line
+    // ⬆ StandardJS error: The Function constructor is eval
+    let rendered = template.call(callData)
+    string = string.replace(match[0], rendered)
+  } catch (e) {
+    instance.log.warning(`'${match[1]}' unknown in improv context for message: ${string}`)
+    if (instance.config.replacement !== null) return instance.config.replacement
+    else string = string.replace(match[0], instance.config.fallback)
+  }
+  return string
+}
+
+/**
+ * Middleware parses template expressions, replacing with data if required.
  *
  * @param  {Object}   context - Passed through middleware stack, with res
  * @param  {Function} next    - Called when all middleware is complete
  * @param  {Function} done    - Initial (final) completion callback
 */
 function middleware (context, next, done) {
-  let hasExpression = _.some(context.strings, str => str.match(/\${.*}/))
-  if (hasExpression) {
-    let data = mergeData(context.response.message.user)
-    context.strings = parse(context.strings, data)
-  }
+  context.strings = parse(context)
   return next()
 }
 
@@ -188,20 +253,18 @@ function warn (unknowns) {}
  * @return {Object}             The module exports for chaining
  */
 function remember (path, value) {
-  if (context == null) context = {}
-  _.set(context, path, value)
+  _.set(data, path, value)
   return this
 }
 
 /**
- * Remove data from context on the fly
+ * Remove data from data on the fly
  *
  * @param {array/string} path The path of the property to unset
  * @return {Object}             The module exports for chaining
  */
 function forget (path) {
-  if (context == null) context = {}
-  else _.unset(context, path)
+  _.unset(data, path)
   return this
 }
 
@@ -210,29 +273,24 @@ function forget (path) {
  */
 function reset () {
   instance = null
-  extensions = null
-  context = null
+  extensions = []
+  data = {}
 }
 
 module.exports = {
-  Improv: Improv,
-  use: use,
-  configure: configure,
-  extend: extend,
-  mergeData: mergeData,
-  parse: parse,
-  warn: warn,
-  remember: remember,
-  forget: forget,
-  reset: reset,
+  Improv,
+  use,
+  configure,
+  extend,
+  mergeData,
+  parse,
+  render,
+  warn,
+  remember,
+  forget,
+  reset,
   get instance () { return instance },
-  get context () {
-    if (context == null) context = {}
-    return context
-  },
-  get extensions () {
-    if (extensions == null) extensions = []
-    return extensions
-  },
-  get config () { if (instance) return instance.config }
+  get data () { return data },
+  set data (props) { Object.assign(data, props) },
+  get extensions () { return extensions }
 }

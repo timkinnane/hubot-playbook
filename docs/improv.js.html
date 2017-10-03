@@ -148,16 +148,16 @@
         <h2 id="classes">Classes</h2>
 <dl>
 <dt><a href="#Improv">Improv</a></dt>
-<dd><p>Improv parses message templates at runtime with context from user attributes,
+<dd><p>Improv parses message templates at runtime with data from user attributes,
 pre-populated data and/or custom extensions.</p>
 <p>e.g. &quot;hello ${ this.user.name }&quot; will render with the value at the user.name
-path in current context.</p>
+path in current data.</p>
 <p>Message strings containing expressions are automatically rendered by Improv
 middleware and can be merged with data from any source, including a
 Transcript search for instance.</p>
 <p>Note:</p>
 <ul>
-<li>The context object is applied as &#39;this&#39; in the scope where the template is
+<li>The data object is applied as &#39;this&#39; in the scope where the template is
 rendered, e.g. <code>this.user.name</code> is the value at <em>user.name</em> path.</li>
 <li><em>Don&#39;t</em> use back-ticks when declaring strings, or it will render
 immediately.</li>
@@ -171,7 +171,7 @@ middleware. It should be initialised with a robot via <code>.use</code>.</li>
 <h2 id="functions">Functions</h2>
 <dl>
 <dt><a href="#use">use(robot)</a> ⇒ <code><a href="#Improv">Improv</a></code></dt>
-<dd><p>Setup middleware and improv context collection in the brain.</p>
+<dd><p>Setup middleware and improv data collection in the brain.</p>
 <p>This is the main interface to get either a new or existing instance.
 If the robot is new but an instance exists (e.g. in tests) then Improv will
 attach the new robot but keep existing config and extensions.</p>
@@ -179,32 +179,42 @@ attach the new robot but keep existing config and extensions.</p>
 <dt><a href="#configure">configure([options])</a> ⇒ <code>Object</code></dt>
 <dd><p>Configure the Improv instance</p>
 </dd>
-<dt><a href="#extend">extend(dataFunc)</a> ⇒ <code><a href="#Improv">Improv</a></code></dt>
-<dd><p>Add extra functions to provide further context. They are called with the
-current context whenever a template is rendered and should return extra
-key/values to merge with context and/or override keys of existing data.</p>
+<dt><a href="#extend">extend(dataFunc, [dataPath])</a> ⇒ <code><a href="#Improv">Improv</a></code></dt>
+<dd><p>Add function to extend current data when rendering a template. Should return
+key/values to merge and/or override keys of existing data.</p>
+<p>If given a path argument, the extension function will only be called when the
+template string being rendered contains that path. This can prevent slow or
+expensive requests from running when their data isn&#39;t required.</p>
+<p>Extensions can set properties within current data model or return a new
+object, the keys and values will be deep merged so either will work.</p>
 </dd>
-<dt><a href="#mergeData">mergeData([user])</a> ⇒ <code>Object</code></dt>
-<dd><p>Provdies current context to messages merged with any data reutrn by added
-extensions and a user object (if provideed).</p>
+<dt><a href="#matchPaths">matchPaths(strings)</a> ⇒ <code>array</code></dt>
+<dd><p>Search an array of strings for template expressions with <code>this.</code> data path.</p>
 </dd>
-<dt><a href="#parse">parse(strings, context)</a> ⇒ <code>array</code></dt>
-<dd><p>Merge templated messages with context data (replace unknown as configured).
-Called by middleware after context data gathered and possibly extended.</p>
-<p>Pre-renders each expression individually to catch and replace any unknowns.
-Failed expressions will be replaced with fallback unless a full replacement
-is configured, to replace the entire string.</p>
+<dt><a href="#mergeData">mergeData(context, [paths])</a> ⇒ <code>Object</code></dt>
+<dd><p>Provdies current data to messages merged with response context any extra data
+returned by added extensions.</p>
+</dd>
+<dt><a href="#parse">parse(context)</a> ⇒ <code>array</code></dt>
+<dd><p>Replace expressions in sent string if they match the format of a data at a
+path bound to &#39;this&#39;, with the data at that path after collecting from all
+sources.</p>
+</dd>
+<dt><a href="#render">render(string, match, callData)</a> ⇒ <code>string</code></dt>
+<dd><p>Convert string containing expression to an interpolation template and call
+with supplied data bound to &#39;this&#39;.</p>
+<p>Pre-renders expressions to catch and replace any unknowns. Failed expressions
+will be replaced with fallback unless a full replacement is configured, to
+replace the entire string.</p>
 </dd>
 <dt><a href="#middleware">middleware(context, next, done)</a></dt>
-<dd><p>Middleware checks for template tags and parses if required.</p>
+<dd><p>Middleware parses template expressions, replacing with data if required.</p>
 </dd>
-<dt><a href="#warn">warn()</a></dt>
-<dd></dd>
 <dt><a href="#remember">remember(path, value)</a> ⇒ <code>Object</code></dt>
 <dd><p>Add data to context on the fly</p>
 </dd>
 <dt><a href="#forget">forget(path)</a> ⇒ <code>Object</code></dt>
-<dd><p>Remove data from context on the fly</p>
+<dd><p>Remove data from data on the fly</p>
 </dd>
 <dt><a href="#reset">reset()</a></dt>
 <dd><p>Wipte slate for tests to reinitialise without existing instance or context</p>
@@ -213,16 +223,16 @@ is configured, to replace the entire string.</p>
 
 <p><a name="Improv"></a></p>
 <h2 id="improv">Improv</h2>
-<p>Improv parses message templates at runtime with context from user attributes,
+<p>Improv parses message templates at runtime with data from user attributes,
 pre-populated data and/or custom extensions.</p>
 <p>e.g. “hello ${ this.user.name }” will render with the value at the user.name
-path in current context.</p>
+path in current data.</p>
 <p>Message strings containing expressions are automatically rendered by Improv
 middleware and can be merged with data from any source, including a
 Transcript search for instance.</p>
 <p>Note:</p>
 <ul>
-<li>The context object is applied as ‘this’ in the scope where the template is
+<li>The data object is applied as ‘this’ in the scope where the template is
 rendered, e.g. <code>this.user.name</code> is the value at <em>user.name</em> path.</li>
 <li><em>Don’t</em> use back-ticks when declaring strings, or it will render
 immediately.</li>
@@ -254,14 +264,11 @@ middleware. It should be initialised with a robot via <code>.use</code>.</li>
 <hr>
 <p><a name="use"></a></p>
 <h2 id="use-robot-code-improv-code-improv-">use(robot) ⇒ <a href="#Improv"><code>Improv</code></a></h2>
-<p>Setup middleware and improv context collection in the brain.</p>
+<p>Setup middleware and improv data collection in the brain.</p>
 <p>This is the main interface to get either a new or existing instance.
 If the robot is new but an instance exists (e.g. in tests) then Improv will
 attach the new robot but keep existing config and extensions.</p>
-<p><strong>Kind</strong>: global function<br><strong>Returns</strong>: <a href="#Improv"><code>Improv</code></a> - The instance - really only accessed by tests<br><strong>Todo</strong></p>
-<ul>
-<li>[ ] Test persistant context save/load from brain with a data store.</li>
-</ul>
+<p><strong>Kind</strong>: global function<br><strong>Returns</strong>: <a href="#Improv"><code>Improv</code></a> - The instance - really only accessed by tests  </p>
 <table>
 <thead>
 <tr>
@@ -300,7 +307,7 @@ attach the new robot but keep existing config and extensions.</p>
 <tr>
 <td>[options.save]</td>
 <td><code>boolean</code></td>
-<td>Keep context collection in hubot brain</td>
+<td>Keep data collection in hubot brain</td>
 </tr>
 <tr>
 <td>[options.fallback]</td>
@@ -313,23 +320,22 @@ attach the new robot but keep existing config and extensions.</p>
 <td>Replace all messages containing unknowns, overrides fallback</td>
 </tr>
 <tr>
-<td>[options.app]</td>
-<td><code>Object</code></td>
-<td>Data object with app context attributes to merge into tempaltes</td>
-</tr>
-<tr>
 <td>[options.admins]</td>
 <td><code>array</code></td>
-<td>Array of usernames authorised to populate context data</td>
+<td>Array of usernames authorised to populate data</td>
 </tr>
 </tbody>
 </table>
 <hr>
 <p><a name="extend"></a></p>
-<h2 id="extend-datafunc-code-improv-code-improv-">extend(dataFunc) ⇒ <a href="#Improv"><code>Improv</code></a></h2>
-<p>Add extra functions to provide further context. They are called with the
-current context whenever a template is rendered and should return extra
-key/values to merge with context and/or override keys of existing data.</p>
+<h2 id="extend-datafunc-datapath-code-improv-code-improv-">extend(dataFunc, [dataPath]) ⇒ <a href="#Improv"><code>Improv</code></a></h2>
+<p>Add function to extend current data when rendering a template. Should return
+key/values to merge and/or override keys of existing data.</p>
+<p>If given a path argument, the extension function will only be called when the
+template string being rendered contains that path. This can prevent slow or
+expensive requests from running when their data isn’t required.</p>
+<p>Extensions can set properties within current data model or return a new
+object, the keys and values will be deep merged so either will work.</p>
 <p><strong>Kind</strong>: global function<br><strong>Returns</strong>: <a href="#Improv"><code>Improv</code></a> - The instance for chaining  </p>
 <table>
 <thead>
@@ -343,55 +349,36 @@ key/values to merge with context and/or override keys of existing data.</p>
 <tr>
 <td>dataFunc</td>
 <td><code>function</code></td>
-<td>Receives current context, to return more data</td>
+<td>Receives current data, to return more</td>
+</tr>
+<tr>
+<td>[dataPath]</td>
+<td><code>string</code></td>
+<td>Scope for running the extension (optional)</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Example</strong> <em>(extend context with user transcript history)</em>  </p>
+<p><strong>Example</strong> <em>(extend data with user transcript history)</em>  </p>
 <pre><code class="lang-js">
 improv.use(robot)
-improv.extend(<span class="hljs-function">(<span class="hljs-params">context</span>) =&gt;</span> {
-  context.user.favColor = <span class="hljs-string">'always blue'</span>
-  <span class="hljs-keyword">return</span> context
-})
+improv.extend(<span class="hljs-function">(<span class="hljs-params">data</span>) =&gt;</span> {
+  data.user.favColor = <span class="hljs-string">'always blue'</span>
+  <span class="hljs-keyword">return</span> data
+}, <span class="hljs-string">'user.favColor'</span>)
 robot.send({ <span class="hljs-attr">user</span>: user }, <span class="hljs-string">'I know your favorite color is ${ this.user.favColor }'</span>)
-<span class="hljs-comment">// ^ middleware will render template with the values and user in context</span>
+<span class="hljs-comment">// ^ middleware will render template with the values and user in data</span>
+<span class="hljs-comment">// ^ by providing the path, it will only be run when specifically required</span>
 </code></pre>
 <hr>
-<p><a name="mergeData"></a></p>
-<h2 id="mergedata-user-code-object-code-">mergeData([user]) ⇒ <code>Object</code></h2>
-<p>Provdies current context to messages merged with any data reutrn by added
-extensions and a user object (if provideed).</p>
-<p><strong>Kind</strong>: global function<br><strong>Returns</strong>: <code>Object</code> - Context and user data, with any extensions merged<br><strong>Todo</strong></p>
-<ul>
-<li>[ ] Allow tagging other user’s data by merge with robot.brain.userForId</li>
-</ul>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>[user]</td>
-<td><code>Object</code></td>
-<td>User (usually from middleware context)</td>
-</tr>
-</tbody>
-</table>
-<hr>
-<p><a name="parse"></a></p>
-<h2 id="parse-strings-context-code-array-code-">parse(strings, context) ⇒ <code>array</code></h2>
-<p>Merge templated messages with context data (replace unknown as configured).
-Called by middleware after context data gathered and possibly extended.</p>
-<p>Pre-renders each expression individually to catch and replace any unknowns.
-Failed expressions will be replaced with fallback unless a full replacement
-is configured, to replace the entire string.</p>
-<p><strong>Kind</strong>: global function<br><strong>Returns</strong>: <code>array</code> - Strings populated with context values  </p>
-<table>
+<p><a name="matchPaths"></a></p>
+<h2 id="matchpaths-strings-code-array-code-">matchPaths(strings) ⇒ <code>array</code></h2>
+<p>Search an array of strings for template expressions with <code>this.</code> data path.</p>
+<p><strong>Kind</strong>: global function<br><strong>Returns</strong>: <code>array</code> - Path matches objects\n</p>
+<pre><code>                    - [<span class="hljs-number">0</span>]: expression including braces, e.g. <span class="hljs-string">`<span class="hljs-subst">${ ... }</span>`</span>
+                    - [<span class="hljs-number">1</span>]: the path, e.g. this.path.to.data
+                    - index: index <span class="hljs-keyword">of</span> expression <span class="hljs-keyword">in</span> string
+                    - input: string containing the matched path  
+</code></pre><table>
 <thead>
 <tr>
 <th>Param</th>
@@ -403,19 +390,109 @@ is configured, to replace the entire string.</p>
 <tr>
 <td>strings</td>
 <td><code>array</code></td>
-<td>One or more strings being posted</td>
+<td>Strings to search (usually from middleware)</td>
 </tr>
+</tbody>
+</table>
+<hr>
+<p><a name="mergeData"></a></p>
+<h2 id="mergedata-context-paths-code-object-code-">mergeData(context, [paths]) ⇒ <code>Object</code></h2>
+<p>Provdies current data to messages merged with response context any extra data
+returned by added extensions.</p>
+<p><strong>Kind</strong>: global function<br><strong>Returns</strong>: <code>Object</code> - Data, middleware context and any extensions merged  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
 <tr>
 <td>context</td>
 <td><code>Object</code></td>
-<td>Template data, reference as ‘this’ for interpolation</td>
+<td>Data provided at runtime to merge with improv data (usually from middleware)</td>
+</tr>
+<tr>
+<td>[paths]</td>
+<td><code>array</code></td>
+<td>Paths required, to filter out unnecessary extensions</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><a name="parse"></a></p>
+<h2 id="parse-context-code-array-code-">parse(context) ⇒ <code>array</code></h2>
+<p>Replace expressions in sent string if they match the format of a data at a
+path bound to ‘this’, with the data at that path after collecting from all
+sources.</p>
+<p><strong>Kind</strong>: global function<br><strong>Returns</strong>: <code>array</code> - Strings populated with context values  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>context</td>
+<td><code>object</code></td>
+<td>Context object (usually from middleware)</td>
+</tr>
+<tr>
+<td>context.strings</td>
+<td><code>array</code></td>
+<td>One or more strings being posted</td>
+</tr>
+<tr>
+<td>context.response</td>
+<td><code>object</code></td>
+<td>Response object being replied to</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><a name="render"></a></p>
+<h2 id="render-string-match-calldata-code-string-code-">render(string, match, callData) ⇒ <code>string</code></h2>
+<p>Convert string containing expression to an interpolation template and call
+with supplied data bound to ‘this’.</p>
+<p>Pre-renders expressions to catch and replace any unknowns. Failed expressions
+will be replaced with fallback unless a full replacement is configured, to
+replace the entire string.</p>
+<p><strong>Kind</strong>: global function<br><strong>Returns</strong>: <code>string</code> - The result of rendering match input with given data  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>string</td>
+<td><code>string</code></td>
+<td>The string to replace expressions within</td>
+</tr>
+<tr>
+<td>match</td>
+<td><code>object</code></td>
+<td>RegExp result where string contained an expression</td>
+</tr>
+<tr>
+<td>callData</td>
+<td><code>object</code></td>
+<td>Data to become ‘this’ when rendering expressions</td>
 </tr>
 </tbody>
 </table>
 <hr>
 <p><a name="middleware"></a></p>
 <h2 id="middleware-context-next-done-">middleware(context, next, done)</h2>
-<p>Middleware checks for template tags and parses if required.</p>
+<p>Middleware parses template expressions, replacing with data if required.</p>
 <p><strong>Kind</strong>: global function  </p>
 <table>
 <thead>
@@ -444,20 +521,10 @@ is configured, to replace the entire string.</p>
 </tbody>
 </table>
 <hr>
-<p><a name="warn"></a></p>
-<h2 id="warn-">warn()</h2>
-<p><strong>Kind</strong>: global function<br><strong>Todo</strong></p>
-<ul>
-<li>[ ] ask configured admins to provide context for any unknowns</li>
-</ul>
-<hr>
 <p><a name="remember"></a></p>
 <h2 id="remember-path-value-code-object-code-">remember(path, value) ⇒ <code>Object</code></h2>
 <p>Add data to context on the fly</p>
-<p><strong>Kind</strong>: global function<br><strong>Returns</strong>: <code>Object</code> - The module exports for chaining<br><strong>Todo</strong></p>
-<ul>
-<li>[ ] Save to brain on update if configured to save</li>
-</ul>
+<p><strong>Kind</strong>: global function<br><strong>Returns</strong>: <code>Object</code> - The module exports for chaining  </p>
 <table>
 <thead>
 <tr>
@@ -482,11 +549,8 @@ is configured, to replace the entire string.</p>
 <hr>
 <p><a name="forget"></a></p>
 <h2 id="forget-path-code-object-code-">forget(path) ⇒ <code>Object</code></h2>
-<p>Remove data from context on the fly</p>
-<p><strong>Kind</strong>: global function<br><strong>Returns</strong>: <code>Object</code> - The module exports for chaining<br><strong>Todo</strong></p>
-<ul>
-<li>[ ] Clear from brain on update if configured to save</li>
-</ul>
+<p>Remove data from data on the fly</p>
+<p><strong>Kind</strong>: global function<br><strong>Returns</strong>: <code>Object</code> - The module exports for chaining  </p>
 <table>
 <thead>
 <tr>

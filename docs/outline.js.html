@@ -155,11 +155,7 @@ prior bit, or with a listen attribute to become effectively a global entry
 point to a scene.</p>
 <p>A subsequent bit can even lead back to it’s own parent or any other bit,
 creating a mesh of possible conversational pathways.</p>
-<p><strong>Kind</strong>: global class<br><strong>Todo</strong></p>
-<ul>
-<li>[ ] Add bit attribute for callback function as a key of extended response</li>
-<li>[ ] Add bit attribute for director whitelist/blacklist names and/or auth function</li>
-</ul>
+<p><strong>Kind</strong>: global class  </p>
 <ul>
 <li><a href="#Outline">Outline</a><ul>
 <li><a href="#new_Outline_new">new Outline(bits, [options], [key])</a></li>
@@ -190,6 +186,11 @@ creating a mesh of possible conversational pathways.</p>
 <td>Attributes to setup bits</td>
 </tr>
 <tr>
+<td>bits[].key</td>
+<td><code>string</code></td>
+<td>Key for scene and/or dialogue running the bit (required)</td>
+</tr>
+<tr>
 <td>bits[].send</td>
 <td><code>array</code></td>
 <td>String/s to send when doing bit (minimum requirement)</td>
@@ -213,11 +214,6 @@ creating a mesh of possible conversational pathways.</p>
 <td>[bits[].scene]</td>
 <td><code>string</code></td>
 <td>Scope for the scene (only used if it has a listen type)</td>
-</tr>
-<tr>
-<td>[bits[].key]</td>
-<td><code>string</code></td>
-<td>Key for scene and/or dialogue running the bit</td>
 </tr>
 <tr>
 <td>[bits[].options]</td>
@@ -355,10 +351,7 @@ outline.getSceneArgs().map(<span class="hljs-function">(<span class="hljs-params
 <p><a name="Outline+bitCondition"></a></p>
 <h3 id="outline-bitcondition-key-code-regexp-code-">outline.bitCondition(key) ⇒ <code>RegExp</code></h3>
 <p>Convert a bit’s condition attribute into a regex.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Outline"><code>Outline</code></a><br><strong>Returns</strong>: <code>RegExp</code> - The pattern for the bit’s listener<br><strong>Todo</strong></p>
-<ul>
-<li>[ ] Use <code>conditioner-regex</code> to convert array of conditions to pattern</li>
-</ul>
+<p><strong>Kind</strong>: instance method of <a href="#Outline"><code>Outline</code></a><br><strong>Returns</strong>: <code>RegExp</code> - The pattern for the bit’s condition  </p>
 <table>
 <thead>
 <tr>
