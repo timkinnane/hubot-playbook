@@ -167,7 +167,7 @@ scene. The scope of audience can be:</p>
 <li><a href="#Scene+respond">.respond()</a></li>
 <li><a href="#Scene+whoSpeaks">.whoSpeaks(res)</a> ⇒ <code>string</code></li>
 <li><a href="#Scene+registerMiddleware">.registerMiddleware(piece)</a></li>
-<li><a href="#Scene+processEnter">.processEnter(context, [done])</a> ⇒ <code>Dialogue</code></li>
+<li><a href="#Scene+processEnter">.processEnter(context, [done])</a> ⇒ <code>Promise</code></li>
 <li><a href="#Scene+exit">.exit(res, [status])</a> ⇒ <code>boolean</code></li>
 <li><a href="#Scene+exitAll">.exitAll()</a></li>
 <li><a href="#Scene+getDialogue">.getDialogue(participants)</a> ⇒ <code>Dialogue</code></li>
@@ -253,8 +253,12 @@ scene. The scope of audience can be:</p>
 <hr>
 <p><a name="Scene+listen"></a></p>
 <h3 id="scene-listen-type-regex-callback-">scene.listen(type, regex, callback)</h3>
-<p>Add listener that enters the audience into the scene with callback, to then
-add dialogue branches or process response as required.</p>
+<p>Add listener that enters the audience into the scene with callback to add
+dialogue branches or process response as required.</p>
+<p>Enter callback provides full middleware context, but for consistency with
+other listener callbacks, response is extracted and given as the first
+argument, full context is second.</p>
+<p>Middleware may prevent callback, e.g. from Director if user denied access.</p>
 <p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a>  </p>
 <table>
 <thead>
@@ -274,12 +278,12 @@ add dialogue branches or process response as required.</p>
 <tr>
 <td>regex</td>
 <td><code>RegExp</code></td>
-<td>Matcher for listener (accepts string, will cast as RegExp)</td>
+<td>Matcher for listener (accepts string)</td>
 </tr>
 <tr>
 <td>callback</td>
 <td><code>function</code></td>
-<td>Called when matched, with Response and Dialogue as arguments</td>
+<td>Called with response and middleware context                             after listener matched and scene entered</td>
 </tr>
 </tbody>
 </table>
@@ -351,14 +355,14 @@ pipeline. Called with:</p>
 </table>
 <hr>
 <p><a name="Scene+processEnter"></a></p>
-<h3 id="scene-processenter-context-done-code-dialogue-code-">scene.processEnter(context, [done]) ⇒ <code>Dialogue</code></h3>
+<h3 id="scene-processenter-context-done-code-promise-code-">scene.processEnter(context, [done]) ⇒ <code>Promise</code></h3>
 <p>Engage the participants in dialogue. A new Dialogue instance is created and
 all further messages from the audience in this scene’s scope will be passed
 to that dialogue, untill they are exited from the scene.</p>
 <p>Would usually be invoked as the final piece of enter middleware, after
 stack execution is triggered by a scene listener but could be called
 directly to force audience into a scene unprompted.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a><br><strong>Returns</strong>: <code>Dialogue</code> - The final dialogue  </p>
+<p><strong>Kind</strong>: instance method of <a href="#Scene"><code>Scene</code></a><br><strong>Returns</strong>: <code>Promise</code> - Resolves with callback called in next tick queue  </p>
 <table>
 <thead>
 <tr>

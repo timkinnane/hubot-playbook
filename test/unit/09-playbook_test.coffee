@@ -95,16 +95,16 @@ describe 'Playbook', ->
         .then ->
           playbook.scenes[0].should.be.instanceof playbook.Scene
 
-      it 'resolves with a dialogue', ->
+      it 'resolves with a context object', ->
+        keys = ['response', 'participants', 'options', 'arguments', 'dialogue']
         playbook.sceneEnter pretend.response 'tester', 'test'
-        .then (dialogue) ->
-          dialogue.should.be.instanceof playbook.Dialogue
+        .then (result) -> result.should.have.all.keys keys...
 
       it 'enters scene, engaging user (stores against id)', ->
         playbook.sceneEnter pretend.response 'tester', 'test'
-        .then (dialogue) ->
+        .then (context) ->
           playbook.scenes[0].engaged[pretend.users.tester.id]
-          .should.eql dialogue
+          .should.eql context.dialogue
 
     context 'with type and options args', ->
 
@@ -120,8 +120,8 @@ describe 'Playbook', ->
         playbook.sceneEnter res,
           scope: 'room'
           sendReplies: false
-        .then (dialogue) ->
-          dialogue.config.sendReplies.should.be.false
+        .then (context) ->
+          context.dialogue.config.sendReplies.should.be.false
 
   describe '.sceneListen', ->
 
@@ -288,7 +288,7 @@ describe 'Playbook', ->
     context 'extended using transcript reocrds', ->
 
       it 'merge the recorded answers with attribute tags', -> co ->
-        dialogue = yield playbook.sceneEnter pretend.response 'tester', 'test'
+        {dialogue} = yield playbook.sceneEnter pretend.response 'tester', 'test'
         transcript = playbook.transcribe dialogue, events: ['match']
         playbook.improv.extend (data) ->
           userId = data.user.id

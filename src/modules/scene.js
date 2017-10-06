@@ -69,12 +69,19 @@ class Scene extends Base {
   }
 
   /**
-   * Add listener that enters the audience into the scene with callback, to then
-   * add dialogue branches or process response as required.
+   * Add listener that enters the audience into the scene with callback to add
+   * dialogue branches or process response as required.
+   *
+   * Enter callback provides full middleware context, but for consistency with
+   * other listener callbacks, response is extracted and given as the first
+   * argument, full context is second.
+   *
+   * Middleware may prevent callback, e.g. from Director if user denied access.
    *
    * @param  {String} type       The listener type: hear|respond
-   * @param  {RegExp} regex      Matcher for listener (accepts string, will cast as RegExp)
-   * @param  {Function} callback Called when matched, with Response and Dialogue as arguments
+   * @param  {RegExp} regex      Matcher for listener (accepts string)
+   * @param  {Function} callback Called with response and middleware context
+   *                             after listener matched and scene entered
    *
    * @example
    * let scene = new Scene(robot, { scope: 'user' })
@@ -89,12 +96,9 @@ class Scene extends Base {
     if (!_.isRegExp(regex)) this.error('Invalid regex for listener')
     if (!_.isFunction(callback)) this.error('Invalid callback for listener')
 
-    // setup listener with scene as attribute for later/external reference
-    // may fail if enter hooks override (from Director)
-    this.robot[type](regex, {id: this.id, scene: this}, res => {
-      this.enter(res, (context) => {
-        if (context.dialogue) callback(context.response, context)
-      })
+    this.robot[type](regex, { id: this.id }, (res) => {
+      this.enter(res, (context) => callback(context.response, context))
+      .catch((err) => this.log.debug(`Scene enter interrupted for ${regex} listener: ${err}`))
     })
   }
 
@@ -141,24 +145,47 @@ class Scene extends Base {
   }
 
   /*
-   * Trrgger scene enter middleware to begin, calling optional callback if/when
+   * Trigger scene enter middleware to begin, calling optional callback if/when
    * pipeline completes. Processing may reject promise, so should be caught.
+   *
+   * If middleware succeeds the callback is called. If the callback doesn't set
+   * up dialogue paths to carry forward an interaction, there's nothing left for
+   * the scene to do and it will exit immediately. This may be helpful for
+   * one-time interactions that make use of the scene for it's access control
+   * middleware and transcript record.
+   *
+   * The returned promise resolves when middleware completes *before* the final
+   * callback, to allow yielding instead of using callback to add dialogue path,
+   * so the path exists when the callback checks to see if it should exit.
    *
    * @param  {Response} res        Hubot Response object
    * @param  {Object} [options]    Dialogue options merged with scene config
    * @param  {*} args              Any additional args for Dialogue constructor
-   * @param  {Function} [callback] Called after middleware with final context
+   * @param  {Function} [callback] Called if middleware completed entry, with final context
    * @return {Promise}             Resolves with new Dialogue middleware completes
   */
   enter (res, ...args) {
     const participants = this.whoSpeaks(res)
     if (this.inDialogue(participants)) return Promise.reject(new Error('Already engaged'))
 
-    let callback // not required (undefined by default)
-    if (_.isFunction(args[ args.length - 1 ])) callback = args.pop()
-
+    // pull-out relevant arguments (any remaining are added to context)
+    let callback = (_.isFunction(args[ args.length - 1 ]))
+      ? args.pop()
+      : () => null
     let options = _.isObject(args[0]) ? args.shift() : {}
     options = _.defaults({}, this.config, options)
+
+    // setup middleware completion / failure handlers
+    let next = this.processEnter.bind(this)
+    let done = (context) => {
+      if (context.dialogue) { // middleware succeeded and set up dialogue
+        Promise.resolve(callback(context))
+        .then(() => process.nextTick(() => {
+          if (context.dialogue.path !== null) return
+          this.exit(context.response, 'no path')
+        }))
+      }
+    }
 
     // setup context and execute middleware stack, calling processEnter as
     // final step if pipeline is allowed to complete
@@ -167,7 +194,7 @@ class Scene extends Base {
       participants: participants,
       options: options,
       arguments: args
-    }, this.processEnter.bind(this), callback)
+    }, next, done)
   }
 
   /**
@@ -185,7 +212,7 @@ class Scene extends Base {
    * @param  {Object} [context.options]    Options object given to dialogue
    * @param  {Array}  [context.arguments]  Additional arguments given to dialogue
    * @param  {Function} [done]             Optional final callback after processed - given context
-   * @return {Dialogue}                    The final dialogue
+   * @return {Promise}                     Resolves with callback called in next tick queue
    */
   processEnter (context, done) {
     let args = Array.from(context.arguments)
@@ -203,8 +230,7 @@ class Scene extends Base {
     this.emit('enter', context.response, dialogue)
     this.log.info(`Engaging ${this.config.scope} ${context.participants} in dialogue`)
     context.dialogue = dialogue
-    process.nextTick(() => done(context))
-    return dialogue
+    return process.nextTick(done, context)
   }
 
   /**

@@ -539,31 +539,29 @@ describe 'Director', ->
       scene = new Scene pretend.robot
       director.directScene scene
       res = pretend.response 'tester', 'test'
-      scene.enter res
-      .then -> director.process.should.have.calledWith res
+      scene.enter res # won't be alllowed without adding names
+      .catch -> director.process.should.have.calledWith res
 
     context 'user allowed', ->
 
-      it 'allowed scene enter, resolves with Dialogue', ->
+      it 'allowed scene enter, resolves with context', ->
         director = new Director pretend.robot
         scene = new Scene pretend.robot
+        keys = ['response', 'participants', 'options', 'arguments', 'dialogue']
         director.directScene scene
         director.names = ['tester']
         scene.enter pretend.response 'tester', 'test'
-        .then (result) ->
-          scene.processEnter.should.have.calledOnce
-          result.should.be.instanceof Dialogue
+        .then (result) -> result.should.have.all.keys keys...
 
     context 'user denied', ->
 
-      it 'preempts scene enter, resolves undefined instead', ->
+      it 'preempts scene enter, rejects promise', ->
         director = new Director pretend.robot
         scene = new Scene pretend.robot
         director.directScene scene
         scene.enter pretend.response 'tester', 'test'
-        .then (result) ->
-          scene.processEnter.should.not.have.called
-          should.not.exist result
+        .then () -> throw new Error 'promise should have caught'
+        .catch (err) -> err.should.be.instanceof Error
 
     context 'with multiple scenes, only one directed', ->
 
@@ -574,8 +572,9 @@ describe 'Director', ->
         director.directScene sceneA
         resA = pretend.response 'tester', 'let me in A'
         resB = pretend.response 'tester', 'let me in A'
-        yield sceneA.enter resA
-        yield sceneB.enter resB
+        try
+          yield sceneA.enter resA
+          yield sceneB.enter resB
         director.process.should.have.calledOnce
         director.process.should.have.calledWithExactly resA
 

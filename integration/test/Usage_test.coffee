@@ -147,6 +147,7 @@ describe 'Playbook demo', ->
 
     beforeEach ->
       pretend.start().read 'scripts/knock-and-enter-user.coffee'
+      pretend.log.level = 'silent'
       @director = pretend.user 'director'
       @nima = pretend.user 'nima'
       @pema = pretend.user 'pema'
@@ -199,6 +200,7 @@ describe 'Playbook demo', ->
 
     beforeEach ->
       pretend.start().read 'scripts/knock-and-enter-room.coffee'
+      pretend.log.level = 'silent'
       @director = pretend.user 'director'
       @nima = pretend.user 'nima'
       @pema = pretend.user 'pema'

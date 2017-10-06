@@ -277,7 +277,7 @@ describe 'Transcript', ->
         events: [ 'enter', 'match', 'send' ]
       scene = new Scene pretend.robot
       transcript.recordScene scene
-      dialogue = yield scene.enter res
+      {dialogue} = yield scene.enter res
       dialogue.addBranch /test/, 'response'
       yield dialogue.receive res
       records = transcript.recordEvent.args.map((record) -> _.take(record, 2))

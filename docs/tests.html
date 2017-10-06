@@ -348,11 +348,11 @@ body {
 <body>
     <div id="mocha">
         <ul id="stats">
-            <li class="passes">passes: <em>349</em></li>
+            <li class="passes">passes: <em>352</em></li>
             <li class="failures">failures: <em>0</em></li>
-            <li class="duration">duration: <em>3.1s</em></li>
+            <li class="duration">duration: <em>2.7s</em></li>
         </ul>
-        <ul id="report"><li class="suite"><h1>Diagnostics</h1><ul><li class="suite"><h1>script sets up a &quot;respond&quot; and a &quot;hear&quot; listener</h1><ul><li class="test pass fast"><h2>robot.respond called once to set up listener<span class="duration">1ms</span></h2><pre><code>return pretend.robot.respond.should.have.calledOnce;</code></pre></li><li class="test pass fast"><h2>registers a respond listener with RegExp and function<span class="duration">0ms</span></h2><pre><code>return pretend.robot.respond.getCall(0).should.have.calledWithMatch(sinon.match.regexp, sinon.match.func);</code></pre></li><li class="test pass fast"><h2>robot.hear called twice (by respond then directly)<span class="duration">0ms</span></h2><pre><code>return pretend.robot.hear.should.have.calledTwice;</code></pre></li><li class="test pass fast"><h2>registers a hear listener with RegExp and callback (no options)<span class="duration">0ms</span></h2><pre><code>return pretend.robot.hear.getCall(1).should.have.calledWithMatch(sinon.match.regexp, sinon.match.func);</code></pre></li><li class="test pass fast"><h2>robbot has two listeners<span class="duration">0ms</span></h2><pre><code>return pretend.robot.listeners.length.should.equal(2);</code></pre></li></ul></li><li class="suite"><h1>bot responds to a matching message</h1><ul><li class="test pass fast"><h2>bot creates response<span class="duration">0ms</span></h2><pre><code>return pretend.responses.listen.length.should.equal(1);</code></pre></li><li class="test pass fast"><h2>bot calls listener callback with response<span class="duration">1ms</span></h2><pre><code>return this.cb.should.have.calledWithMatch(sinon.match(matchRes));</code></pre></li></ul></li><li class="suite"><h1>bot hears a matching message</h1><ul><li class="test pass fast"><h2>bot creates response<span class="duration">0ms</span></h2><pre><code>return pretend.responses.listen.length.should.equal(1);</code></pre></li><li class="test pass fast"><h2>bot calls listener callback with response<span class="duration">0ms</span></h2><pre><code>return this.cb.should.have.calledWithMatch(sinon.match(matchRes));</code></pre></li></ul></li><li class="suite"><h1>bot responds to its alias</h1><ul><li class="test pass fast"><h2>calls callback with response<span class="duration">11ms</span></h2><pre><code>return co(function*() {
+        <ul id="report"><li class="suite"><h1>Diagnostics</h1><ul><li class="suite"><h1>script sets up a &quot;respond&quot; and a &quot;hear&quot; listener</h1><ul><li class="test pass fast"><h2>robot.respond called once to set up listener<span class="duration">1ms</span></h2><pre><code>return pretend.robot.respond.should.have.calledOnce;</code></pre></li><li class="test pass fast"><h2>registers a respond listener with RegExp and function<span class="duration">1ms</span></h2><pre><code>return pretend.robot.respond.getCall(0).should.have.calledWithMatch(sinon.match.regexp, sinon.match.func);</code></pre></li><li class="test pass fast"><h2>robot.hear called twice (by respond then directly)<span class="duration">0ms</span></h2><pre><code>return pretend.robot.hear.should.have.calledTwice;</code></pre></li><li class="test pass fast"><h2>registers a hear listener with RegExp and callback (no options)<span class="duration">0ms</span></h2><pre><code>return pretend.robot.hear.getCall(1).should.have.calledWithMatch(sinon.match.regexp, sinon.match.func);</code></pre></li><li class="test pass fast"><h2>robbot has two listeners<span class="duration">0ms</span></h2><pre><code>return pretend.robot.listeners.length.should.equal(2);</code></pre></li></ul></li><li class="suite"><h1>bot responds to a matching message</h1><ul><li class="test pass fast"><h2>bot creates response<span class="duration">0ms</span></h2><pre><code>return pretend.responses.listen.length.should.equal(1);</code></pre></li><li class="test pass fast"><h2>bot calls listener callback with response<span class="duration">0ms</span></h2><pre><code>return this.cb.should.have.calledWithMatch(sinon.match(matchRes));</code></pre></li></ul></li><li class="suite"><h1>bot hears a matching message</h1><ul><li class="test pass fast"><h2>bot creates response<span class="duration">0ms</span></h2><pre><code>return pretend.responses.listen.length.should.equal(1);</code></pre></li><li class="test pass fast"><h2>bot calls listener callback with response<span class="duration">1ms</span></h2><pre><code>return this.cb.should.have.calledWithMatch(sinon.match(matchRes));</code></pre></li></ul></li><li class="suite"><h1>bot responds to its alias</h1><ul><li class="test pass fast"><h2>calls callback with response<span class="duration">9ms</span></h2><pre><code>return co(function*() {
   var cb;
   pretend.start({
     alias: 'buddy'
@@ -360,14 +360,14 @@ body {
   cb = sinon.spy(pretend.robot.listeners[0], 'callback');
   yield pretend.user('jimbo').send('buddy which version');
   return cb.should.have.calledWithMatch(sinon.match(matchRes));
-});</code></pre></li></ul></li><li class="suite"><h1>user asks for version number</h1><ul><li class="test pass fast"><h2>replies to tester with a version number<span class="duration">3ms</span></h2><pre><code>return co(function*() {
+});</code></pre></li></ul></li><li class="suite"><h1>user asks for version number</h1><ul><li class="test pass fast"><h2>replies to tester with a version number<span class="duration">2ms</span></h2><pre><code>return co(function*() {
   yield pretend.user('jimbo').send('hubot which version are you on?');
   return pretend.messages[1][1].should.match(/jimbo .*\d+.\d+.\d+/);
-});</code></pre></li></ul></li><li class="suite"><h1>user asks different ways if Hubot is listening</h1><ul><li class="test pass fast"><h2>replies to each confirming Hubot listening<span class="duration">5ms</span></h2><pre><code>return co(function*() {
+});</code></pre></li></ul></li><li class="suite"><h1>user asks different ways if Hubot is listening</h1><ul><li class="test pass fast"><h2>replies to each confirming Hubot listening<span class="duration">3ms</span></h2><pre><code>return co(function*() {
   yield pretend.user('jimbo').send('Are any Hubots listening?');
   yield pretend.user('jimbo').send('Is there a bot listening?');
   return pretend.messages[1].should.eql(pretend.messages[3]);
-});</code></pre></li></ul></li></ul></li><li class="suite"><h1>Base</h1><ul><li class="suite"><h1>.constructor</h1><ul><li class="suite"><h1>with name, robot and options and key</h1><ul><li class="test pass fast"><h2>stores the robot<span class="duration">0ms</span></h2><pre><code>return this.base.robot.should.eql(pretend.robot);</code></pre></li><li class="test pass fast"><h2>calls configure with options<span class="duration">1ms</span></h2><pre><code>return this.base.configure.should.have.calledWith({
+});</code></pre></li></ul></li></ul></li><li class="suite"><h1>Base</h1><ul><li class="suite"><h1>.constructor</h1><ul><li class="suite"><h1>with name, robot and options and key</h1><ul><li class="test pass fast"><h2>stores the robot<span class="duration">1ms</span></h2><pre><code>return this.base.robot.should.eql(pretend.robot);</code></pre></li><li class="test pass fast"><h2>calls configure with options<span class="duration">0ms</span></h2><pre><code>return this.base.configure.should.have.calledWith({
   test: 'testing'
 });</code></pre></li><li class="test pass fast"><h2>sets key attribute<span class="duration">0ms</span></h2><pre><code>return this.base.key.should.equal('basey-mcbase');</code></pre></li></ul></li><li class="suite"><h1>without robot</h1><ul><li class="test pass fast"><h2>runs error handler<span class="duration">0ms</span></h2><pre><code>return Base.prototype.error.should.have.calledOnce;</code></pre></li></ul></li><li class="suite"><h1>without name</h1><ul><li class="test pass fast"><h2>runs error handler<span class="duration">0ms</span></h2><pre><code>return Base.prototype.error.should.have.calledOnce;</code></pre></li></ul></li></ul></li><li class="suite"><h1>.log</h1><ul><li class="test pass fast"><h2>writes log on the given level<span class="duration">1ms</span></h2><pre><code>var base;
 base = new Base('test', pretend.robot);
@@ -411,7 +411,7 @@ this.base.defaults({
 });
 return this.base.config.should.eql({
   setting: true
-});</code></pre></li></ul></li><li class="suite"><h1>.emit</h1><ul><li class="test pass fast"><h2>emits event via the robot with instance as first arg<span class="duration">0ms</span></h2><pre><code>this.base = new Base('module', pretend.robot);
+});</code></pre></li></ul></li><li class="suite"><h1>.emit</h1><ul><li class="test pass fast"><h2>emits event via the robot with instance as first arg<span class="duration">1ms</span></h2><pre><code>this.base = new Base('module', pretend.robot);
 this.eventSpy = sinon.spy();
 pretend.robot.on('mockEvent', this.eventSpy);
 this.base.emit('mockEvent', {
@@ -437,7 +437,7 @@ return path.closed.should.be[&quot;false&quot;];</code></pre></li></ul></li><li 
 sinon.spy(Path.prototype, 'addBranch');
 path = new Path(pretend.robot, [/ok/, 'OK, ok!']);
 path.addBranch.args.should.eql([[/ok/, 'OK, ok!']]);
-return Path.prototype.addBranch.restore();</code></pre></li><li class="test pass fast"><h2>is not closed<span class="duration">1ms</span></h2><pre><code>var path;
+return Path.prototype.addBranch.restore();</code></pre></li><li class="test pass fast"><h2>is not closed<span class="duration">0ms</span></h2><pre><code>var path;
 path = new Path(pretend.robot, [/ok/, 'OK, ok!']);
 return path.closed.should.be[&quot;false&quot;];</code></pre></li></ul></li><li class="suite"><h1>with undefined branches and options</h1><ul><li class="test pass fast"><h2>does not call .addBranch<span class="duration">0ms</span></h2><pre><code>var path;
 sinon.spy(Path.prototype, 'addBranch');
@@ -447,13 +447,13 @@ path = new Path(pretend.robot);
 return path.closed.should.be[&quot;true&quot;];</code></pre></li></ul></li><li class="suite"><h1>with bad arguments for branch</h1><ul><li class="test pass fast"><h2>throws<span class="duration">0ms</span></h2><pre><code>try {
   this.path = new Path(pretend.robot, 'breakme.jpg');
 } catch (error) {}
-return Path.constructor.should[&quot;throw&quot;];</code></pre></li></ul></li></ul></li><li class="suite"><h1>.addBranch</h1><ul><li class="test pass fast"><h2>creates branch object<span class="duration">1ms</span></h2><pre><code>var path;
+return Path.constructor.should[&quot;throw&quot;];</code></pre></li></ul></li></ul></li><li class="suite"><h1>.addBranch</h1><ul><li class="test pass fast"><h2>creates branch object<span class="duration">0ms</span></h2><pre><code>var path;
 path = new Path(pretend.robot);
 path.addBranch(/.*/, 'foo', function() {});
 return path.branches[0].should.be.an('object');</code></pre></li><li class="test pass fast"><h2>branch has valid regex<span class="duration">0ms</span></h2><pre><code>var path;
 path = new Path(pretend.robot);
 path.addBranch(/.*/, 'foo', function() {});
-return path.branches[0].regex.should.be[&quot;instanceof&quot;](RegExp);</code></pre></li><li class="test pass fast"><h2>accepts a string that can be cast as RegExp<span class="duration">1ms</span></h2><pre><code>var path;
+return path.branches[0].regex.should.be[&quot;instanceof&quot;](RegExp);</code></pre></li><li class="test pass fast"><h2>accepts a string that can be cast as RegExp<span class="duration">0ms</span></h2><pre><code>var path;
 path = new Path(pretend.robot);
 path.addBranch('/.*/ig', 'foo', function() {});
 return path.branches[0].regex.should.be[&quot;instanceof&quot;](RegExp);</code></pre></li><li class="test pass fast"><h2>calls getHandler with strings and callback<span class="duration">1ms</span></h2><pre><code>var callback, path;
@@ -461,7 +461,7 @@ path = new Path(pretend.robot);
 callback = function() {};
 sinon.stub(path, 'getHandler');
 path.addBranch(/.*/, 'foo', callback);
-return path.getHandler.should.have.calledWithExactly('foo', callback);</code></pre></li><li class="test pass fast"><h2>calls getHandler with just stirngs<span class="duration">1ms</span></h2><pre><code>var path;
+return path.getHandler.should.have.calledWithExactly('foo', callback);</code></pre></li><li class="test pass fast"><h2>calls getHandler with just stirngs<span class="duration">0ms</span></h2><pre><code>var path;
 path = new Path(pretend.robot);
 sinon.stub(path, 'getHandler');
 path.addBranch(/.*/, ['foo', 'bar']);
@@ -470,7 +470,7 @@ path = new Path(pretend.robot);
 callback = function() {};
 sinon.stub(path, 'getHandler');
 path.addBranch(/.*/, callback);
-return path.getHandler.should.have.calledWithExactly(void 0, callback);</code></pre></li><li class="test pass fast"><h2>branch stores handler<span class="duration">1ms</span></h2><pre><code>var lasthandler, path;
+return path.getHandler.should.have.calledWithExactly(void 0, callback);</code></pre></li><li class="test pass fast"><h2>branch stores handler<span class="duration">0ms</span></h2><pre><code>var lasthandler, path;
 path = new Path(pretend.robot);
 sinon.spy(path, 'getHandler');
 path.addBranch(/.*/, 'foo', function() {});
@@ -483,7 +483,7 @@ path = new Path(pretend.robot);
 try {
   path.addBranch('derp');
 } catch (error) {}
-return path.addBranch.should[&quot;throw&quot;];</code></pre></li><li class="test pass fast"><h2>throws with insufficient args<span class="duration">0ms</span></h2><pre><code>var path;
+return path.addBranch.should[&quot;throw&quot;];</code></pre></li><li class="test pass fast"><h2>throws with insufficient args<span class="duration">1ms</span></h2><pre><code>var path;
 path = new Path(pretend.robot);
 try {
   path.addBranch(/.*/);
@@ -510,7 +510,7 @@ mockRes = {
   reply: sinon.spy()
 };
 handler(mockRes);
-return callback.should.have.calledWithExactly(mockRes);</code></pre></li><li class="test pass fast"><h2>sends strings with dialogue if it has one<span class="duration">1ms</span></h2><pre><code>var handler, mockRes, path;
+return callback.should.have.calledWithExactly(mockRes);</code></pre></li><li class="test pass fast"><h2>sends strings with dialogue if it has one<span class="duration">0ms</span></h2><pre><code>var handler, mockRes, path;
 path = new Path(pretend.robot);
 handler = path.getHandler(['foo', 'bar']);
 mockRes = {
@@ -520,7 +520,7 @@ mockRes = {
   }
 };
 handler(mockRes);
-return mockRes.dialogue.send.should.have.calledWith('foo', 'bar');</code></pre></li><li class="test pass fast"><h2>uses response reply if there is no dialogue<span class="duration">1ms</span></h2><pre><code>var handler, mockRes, path;
+return mockRes.dialogue.send.should.have.calledWith('foo', 'bar');</code></pre></li><li class="test pass fast"><h2>uses response reply if there is no dialogue<span class="duration">0ms</span></h2><pre><code>var handler, mockRes, path;
 path = new Path(pretend.robot);
 handler = path.getHandler(['foo', 'bar']);
 mockRes = {
@@ -565,13 +565,13 @@ return mockRes.reply.should.have.calledWith('foo', 'bar');</code></pre></li><li 
     expectedMatch = 'door 1'.match(_this.path.branches[0].regex);
     return pretend.lastListen().match.should.eql(expectedMatch);
   };
-})(this));</code></pre></li><li class="test pass fast"><h2>closes the path<span class="duration">1ms</span></h2><pre><code>return co((function(_this) {
+})(this));</code></pre></li><li class="test pass fast"><h2>closes the path<span class="duration">2ms</span></h2><pre><code>return co((function(_this) {
   return function*() {
     yield pretend.user('sam').send('door 2');
     yield _this.path.match(pretend.lastListen());
     return _this.path.closed.should.be[&quot;true&quot;];
   };
-})(this));</code></pre></li><li class="test pass fast"><h2>calls the handler for matching branch with res<span class="duration">1ms</span></h2><pre><code>return co((function(_this) {
+})(this));</code></pre></li><li class="test pass fast"><h2>calls the handler for matching branch with res<span class="duration">2ms</span></h2><pre><code>return co((function(_this) {
   return function*() {
     var res;
     _this.path.branches[1].handler = sinon.stub();
@@ -594,20 +594,20 @@ return mockRes.reply.should.have.calledWith('foo', 'bar');</code></pre></li><li 
     expectedMatch = 'door 1 and door 2'.match(_this.path.branches[0].regex);
     return pretend.lastListen().match.should.eql(expectedMatch);
   };
-})(this));</code></pre></li><li class="test pass fast"><h2>calls the first matching branch handler<span class="duration">3ms</span></h2><pre><code>return co((function(_this) {
+})(this));</code></pre></li><li class="test pass fast"><h2>calls the first matching branch handler<span class="duration">2ms</span></h2><pre><code>return co((function(_this) {
   return function*() {
     var result;
     yield pretend.user('sam').send('door 1 and door 2');
     result = (yield _this.path.match(pretend.lastListen()));
     return result.should.have.property('winner', false);
   };
-})(this));</code></pre></li><li class="test pass fast"><h2>closes the path<span class="duration">2ms</span></h2><pre><code>return co((function(_this) {
+})(this));</code></pre></li><li class="test pass fast"><h2>closes the path<span class="duration">1ms</span></h2><pre><code>return co((function(_this) {
   return function*() {
     yield pretend.user('sam').send('door 1 and door 2');
     yield _this.path.match(pretend.lastListen());
     return _this.path.closed.should.be[&quot;true&quot;];
   };
-})(this));</code></pre></li></ul></li><li class="suite"><h1>with mismatching string and no catch</h1><ul><li class="test pass fast"><h2>returns undefined<span class="duration">9ms</span></h2><pre><code>return co((function(_this) {
+})(this));</code></pre></li></ul></li><li class="suite"><h1>with mismatching string and no catch</h1><ul><li class="test pass fast"><h2>returns undefined<span class="duration">1ms</span></h2><pre><code>return co((function(_this) {
   return function*() {
     var result;
     yield pretend.user('sam').send('door X');
@@ -620,19 +620,19 @@ return mockRes.reply.should.have.calledWith('foo', 'bar');</code></pre></li><li 
     yield _this.path.match(pretend.lastListen());
     return chai.expect(pretend.lastListen().match).to.be[&quot;null&quot;];
   };
-})(this));</code></pre></li><li class="test pass fast"><h2>path stays open<span class="duration">4ms</span></h2><pre><code>return co((function(_this) {
+})(this));</code></pre></li><li class="test pass fast"><h2>path stays open<span class="duration">1ms</span></h2><pre><code>return co((function(_this) {
   return function*() {
     yield pretend.user('sam').send('door X');
     yield _this.path.match(pretend.lastListen());
     return _this.path.closed.should.be[&quot;false&quot;];
   };
-})(this));</code></pre></li><li class="test pass fast"><h2>emits mismatch with res<span class="duration">3ms</span></h2><pre><code>return co((function(_this) {
+})(this));</code></pre></li><li class="test pass fast"><h2>emits mismatch with res<span class="duration">2ms</span></h2><pre><code>return co((function(_this) {
   return function*() {
     yield pretend.user('sam').send('door X');
     yield _this.path.match(pretend.lastListen());
     return _this.mismatch.should.have.calledWith(sinon.match(resMatch));
   };
-})(this));</code></pre></li></ul></li><li class="suite"><h1>with mismatching string and catch message</h1><ul><li class="test pass fast"><h2>returns the response from send<span class="duration">3ms</span></h2><pre><code>return co((function(_this) {
+})(this));</code></pre></li></ul></li><li class="suite"><h1>with mismatching string and catch message</h1><ul><li class="test pass fast"><h2>returns the response from send<span class="duration">2ms</span></h2><pre><code>return co((function(_this) {
   return function*() {
     var result;
     _this.path.configure({
@@ -642,7 +642,7 @@ return mockRes.reply.should.have.calledWith('foo', 'bar');</code></pre></li><li 
     result = (yield _this.path.match(pretend.lastListen()));
     return result.strings.should.eql(['no, wrong door']);
   };
-})(this));</code></pre></li><li class="test pass fast"><h2>emits catch with res<span class="duration">6ms</span></h2><pre><code>return co((function(_this) {
+})(this));</code></pre></li><li class="test pass fast"><h2>emits catch with res<span class="duration">4ms</span></h2><pre><code>return co((function(_this) {
   return function*() {
     _this.path.configure({
       catchMessage: 'no, wrong door'
@@ -651,7 +651,7 @@ return mockRes.reply.should.have.calledWith('foo', 'bar');</code></pre></li><li 
     yield _this.path.match(pretend.lastListen());
     return _this[&quot;catch&quot;].should.have.calledWith(sinon.match(resMatch));
   };
-})(this));</code></pre></li></ul></li><li class="suite"><h1>with mismatching string and catch callback</h1><ul><li class="test pass fast"><h2>returns the result of the callback<span class="duration">5ms</span></h2><pre><code>return co((function(_this) {
+})(this));</code></pre></li></ul></li><li class="suite"><h1>with mismatching string and catch callback</h1><ul><li class="test pass fast"><h2>returns the result of the callback<span class="duration">2ms</span></h2><pre><code>return co((function(_this) {
   return function*() {
     var result;
     _this.path.configure({
@@ -674,7 +674,7 @@ return mockRes.reply.should.have.calledWith('foo', 'bar');</code></pre></li><li 
     yield _this.path.match(pretend.lastListen());
     return _this[&quot;catch&quot;].should.have.calledWith(sinon.match(resMatch));
   };
-})(this));</code></pre></li></ul></li></ul></li></ul></li><li class="suite"><h1>Dialogue</h1><ul><li class="suite"><h1>constructor</h1><ul><li class="test pass fast"><h2>has null path<span class="duration">0ms</span></h2><pre><code>var dialogue;
+})(this));</code></pre></li></ul></li></ul></li></ul></li><li class="suite"><h1>Dialogue</h1><ul><li class="suite"><h1>constructor</h1><ul><li class="test pass fast"><h2>has null path<span class="duration">1ms</span></h2><pre><code>var dialogue;
 dialogue = new Dialogue(testRes);
 return should.equal(dialogue.path, null);</code></pre></li><li class="test pass fast"><h2>is not ended<span class="duration">0ms</span></h2><pre><code>var dialogue;
 dialogue = new Dialogue(testRes);
@@ -682,7 +682,7 @@ return dialogue.ended.should.be[&quot;false&quot;];</code></pre></li><li class="
 process.env.DIALOGUE_TIMEOUT = 500;
 dialogue = new Dialogue(testRes);
 dialogue.config.timeout.should.equal(500);
-return delete process.env.DIALOGUE_TIMEOUT;</code></pre></li></ul></li><li class="suite"><h1>.end</h1><ul><li class="suite"><h1>before messages received</h1><ul><li class="test pass fast"><h2>emits end with initial response<span class="duration">1ms</span></h2><pre><code>var dialogue, end;
+return delete process.env.DIALOGUE_TIMEOUT;</code></pre></li></ul></li><li class="suite"><h1>.end</h1><ul><li class="suite"><h1>before messages received</h1><ul><li class="test pass fast"><h2>emits end with initial response<span class="duration">0ms</span></h2><pre><code>var dialogue, end;
 dialogue = new Dialogue(testRes);
 end = sinon.spy();
 dialogue.on('end', end);
@@ -690,7 +690,7 @@ dialogue.end();
 return end.should.have.calledWith(testRes);</code></pre></li><li class="test pass fast"><h2>sets ended to true<span class="duration">0ms</span></h2><pre><code>var dialogue;
 dialogue = new Dialogue(testRes);
 dialogue.end();
-return dialogue.ended.should.be[&quot;true&quot;];</code></pre></li><li class="test pass fast"><h2>returns true<span class="duration">1ms</span></h2><pre><code>var dialogue;
+return dialogue.ended.should.be[&quot;true&quot;];</code></pre></li><li class="test pass fast"><h2>returns true<span class="duration">0ms</span></h2><pre><code>var dialogue;
 dialogue = new Dialogue(testRes);
 return dialogue.end().should.be[&quot;true&quot;];</code></pre></li></ul></li><li class="suite"><h1>after messages received</h1><ul><li class="test pass fast"><h2>emits end with latest response (containing dialogue)<span class="duration">0ms</span></h2><pre><code>var dialogue, end;
 dialogue = new Dialogue(testRes);
@@ -710,7 +710,7 @@ dialogue.clearTimeout.should.have.calledOnce;
 return dialogue.onTimeout.should.not.have.called;</code></pre></li></ul></li><li class="suite"><h1>when already ended</h1><ul><li class="test pass fast"><h2>returns false<span class="duration">0ms</span></h2><pre><code>var dialogue;
 dialogue = new Dialogue(testRes);
 dialogue.end();
-return dialogue.end().should.be[&quot;false&quot;];</code></pre></li><li class="test pass fast"><h2>should only emit end event once<span class="duration">0ms</span></h2><pre><code>var dialogue, end;
+return dialogue.end().should.be[&quot;false&quot;];</code></pre></li><li class="test pass fast"><h2>should only emit end event once<span class="duration">1ms</span></h2><pre><code>var dialogue, end;
 dialogue = new Dialogue(testRes);
 end = sinon.spy();
 dialogue.on('end', end);
@@ -728,7 +728,7 @@ return end.should.have.calledOnce;</code></pre></li></ul></li></ul></li><li clas
   dialogue.on('send', sendSpy);
   yield dialogue.send('test');
   return sendSpy.should.have.calledWith(sinon.match(matchRes));
-});</code></pre></li><li class="test pass fast"><h2>also emits with strings, methdod and original res<span class="duration">0ms</span></h2><pre><code>return co(function*() {
+});</code></pre></li><li class="test pass fast"><h2>also emits with strings, methdod and original res<span class="duration">1ms</span></h2><pre><code>return co(function*() {
   var dialogue, sendSpy;
   dialogue = new Dialogue(testRes);
   sendSpy = sinon.spy();
@@ -746,7 +746,7 @@ return end.should.have.calledOnce;</code></pre></li></ul></li></ul></li><li clas
   });
   yield dialogue.send('test');
   return pretend.messages.pop().should.eql(['testing', 'hubot', '@tester test']);
-});</code></pre></li></ul></li></ul></li><li class="suite"><h1>.onTimeout</h1><ul><li class="suite"><h1>default method</h1><ul><li class="test pass fast"><h2>sends timeout message to room<span class="duration">0ms</span></h2><pre><code>function* () {
+});</code></pre></li></ul></li></ul></li><li class="suite"><h1>.onTimeout</h1><ul><li class="suite"><h1>default method</h1><ul><li class="test pass fast"><h2>sends timeout message to room<span class="duration">1ms</span></h2><pre><code>function* () {
           var dialogue, nextMessage;
           nextMessage = pretend.observer.next();
           dialogue = new Dialogue(testRes, {
@@ -764,7 +764,7 @@ timeout = sinon.spy();
 dialogue.onTimeout(timeout);
 dialogue.startTimeout();
 clock.tick(20);
-return dialogue.onTimeout.should.have.calledOnce;</code></pre></li><li class="test pass fast"><h2>does not send the default timeout message<span class="duration">1ms</span></h2><pre><code>var dialogue, timeout;
+return dialogue.onTimeout.should.have.calledOnce;</code></pre></li><li class="test pass fast"><h2>does not send the default timeout message<span class="duration">0ms</span></h2><pre><code>var dialogue, timeout;
 dialogue = new Dialogue(testRes, {
   timeout: 10
 });
@@ -772,7 +772,7 @@ timeout = sinon.spy();
 dialogue.onTimeout(timeout);
 dialogue.startTimeout();
 clock.tick(20);
-return dialogue.send.should.not.have.called;</code></pre></li></ul></li><li class="suite"><h1>method override (by assignment)</h1><ul><li class="test pass fast"><h2>calls the override method<span class="duration">1ms</span></h2><pre><code>var dialogue;
+return dialogue.send.should.not.have.called;</code></pre></li></ul></li><li class="suite"><h1>method override (by assignment)</h1><ul><li class="test pass fast"><h2>calls the override method<span class="duration">0ms</span></h2><pre><code>var dialogue;
 dialogue = new Dialogue(testRes, {
   timeout: 10
 });
@@ -791,7 +791,7 @@ dialogue.startTimeout();
 try {
   clock.tick(20);
 } catch (error) {}
-return override.should[&quot;throw&quot;];</code></pre></li></ul></li></ul></li><li class="suite"><h1>.startTimeout</h1><ul><li class="test pass fast"><h2>emits timeout event<span class="duration">1ms</span></h2><pre><code>var dialogue, timeoutEvent, timeoutMethod;
+return override.should[&quot;throw&quot;];</code></pre></li></ul></li></ul></li><li class="suite"><h1>.startTimeout</h1><ul><li class="test pass fast"><h2>emits timeout event<span class="duration">0ms</span></h2><pre><code>var dialogue, timeoutEvent, timeoutMethod;
 dialogue = new Dialogue(testRes, {
   timeout: 10
 });
@@ -827,7 +827,7 @@ dialogue = new Dialogue(testRes, {
 dialogue.onTimeout = sinon.spy();
 dialogue.startTimeout();
 clock.tick(20);
-return dialogue.onTimeout.should.have.calledOnce;</code></pre></li><li class="test pass fast"><h2>calls .end<span class="duration">1ms</span></h2><pre><code>var dialogue;
+return dialogue.onTimeout.should.have.calledOnce;</code></pre></li><li class="test pass fast"><h2>calls .end<span class="duration">0ms</span></h2><pre><code>var dialogue;
 dialogue = new Dialogue(testRes, {
   timeout: 10,
   timeoutText: null
@@ -844,7 +844,7 @@ return dialogue.end.should.have.calledOnce;</code></pre></li></ul></li><li class
   dialogue = new Dialogue(testRes);
   path = (yield dialogue.addPath('Turn left or right?', [[/left/, 'Ok, going left!'], [/right/, 'Ok, going right!']], 'which-way'));
   return path.key.should.eql('which-way');
-});</code></pre></li><li class="test pass fast"><h2>sends the prompt<span class="duration">1ms</span></h2><pre><code>return co(function*() {
+});</code></pre></li><li class="test pass fast"><h2>sends the prompt<span class="duration">0ms</span></h2><pre><code>return co(function*() {
   var dialogue, path;
   dialogue = new Dialogue(testRes);
   path = (yield dialogue.addPath('Turn left or right?', [[/left/, 'Ok, going left!'], [/right/, 'Ok, going right!']], 'which-way'));
@@ -854,7 +854,7 @@ return dialogue.end.should.have.calledOnce;</code></pre></li></ul></li><li class
   dialogue = new Dialogue(testRes);
   path = (yield dialogue.addPath('Turn left or right?', [[/left/, 'Ok, going left!'], [/right/, 'Ok, going right!']], 'which-way'));
   return dialogue.startTimeout.should.have.calledOnce;
-});</code></pre></li></ul></li><li class="suite"><h1>with branches only</h1><ul><li class="test pass fast"><h2>returns new Path instance<span class="duration">1ms</span></h2><pre><code>return co(function*() {
+});</code></pre></li></ul></li><li class="suite"><h1>with branches only</h1><ul><li class="test pass fast"><h2>returns new Path instance<span class="duration">0ms</span></h2><pre><code>return co(function*() {
   var dialogue, path;
   dialogue = new Dialogue(testRes);
   path = (yield dialogue.addPath([[/1/, 'You get cake!'], [/2/, 'You get cake!']]));
@@ -864,7 +864,7 @@ return dialogue.end.should.have.calledOnce;</code></pre></li></ul></li><li class
   dialogue = new Dialogue(testRes);
   path = (yield dialogue.addPath([[/1/, 'You get cake!'], [/2/, 'You get cake!']]));
   return dialogue.send.should.not.have.called;
-});</code></pre></li><li class="test pass fast"><h2>starts timeout<span class="duration">1ms</span></h2><pre><code>return co(function*() {
+});</code></pre></li><li class="test pass fast"><h2>starts timeout<span class="duration">0ms</span></h2><pre><code>return co(function*() {
   var dialogue, path;
   dialogue = new Dialogue(testRes);
   path = (yield dialogue.addPath([[/1/, 'You get cake!'], [/2/, 'You get cake!']]));
@@ -920,7 +920,7 @@ return dialogue.startTimeout.should.have.calledOnce;</code></pre></li></ul></li>
   dialogue.end();
   result = (yield dialogue.receive(testRes));
   return result.should.be[&quot;false&quot;];
-});</code></pre></li><li class="test pass fast"><h2>does not call the handler<span class="duration">1ms</span></h2><pre><code>return co(function*() {
+});</code></pre></li><li class="test pass fast"><h2>does not call the handler<span class="duration">0ms</span></h2><pre><code>return co(function*() {
   var callback, dialogue;
   dialogue = new Dialogue(testRes);
   callback = sinon.spy();
@@ -941,7 +941,7 @@ return dialogue.startTimeout.should.have.calledOnce;</code></pre></li></ul></li>
   clock.tick(20);
   dialogue.clearTimeout.should.have.calledOnce;
   return dialogue.onTimeout.should.not.have.called;
-});</code></pre></li><li class="test pass fast"><h2>ends dialogue<span class="duration">3ms</span></h2><pre><code>return co(function*() {
+});</code></pre></li><li class="test pass fast"><h2>ends dialogue<span class="duration">2ms</span></h2><pre><code>return co(function*() {
   var dialogue;
   dialogue = new Dialogue(testRes);
   dialogue.addBranch(/foo/, function() {
@@ -949,14 +949,14 @@ return dialogue.startTimeout.should.have.calledOnce;</code></pre></li></ul></li>
   });
   yield dialogue.receive(pretend.response('tester', 'foo'));
   return dialogue.end.should.have.calledOnce;
-});</code></pre></li><li class="test pass fast"><h2>calls the branch handler<span class="duration">3ms</span></h2><pre><code>return co(function*() {
+});</code></pre></li><li class="test pass fast"><h2>calls the branch handler<span class="duration">2ms</span></h2><pre><code>return co(function*() {
   var callback, dialogue;
   dialogue = new Dialogue(testRes);
   callback = sinon.spy();
   dialogue.addBranch(/foo/, 'bar', callback);
   yield dialogue.receive(pretend.response('tester', 'foo'));
   return callback.should.have.calledOnce;
-});</code></pre></li><li class="test pass fast"><h2>sends the branch message<span class="duration">3ms</span></h2><pre><code>return co(function*() {
+});</code></pre></li><li class="test pass fast"><h2>sends the branch message<span class="duration">2ms</span></h2><pre><code>return co(function*() {
   var callback, dialogue;
   dialogue = new Dialogue(testRes);
   callback = sinon.spy();
@@ -979,14 +979,14 @@ return dialogue.startTimeout.should.have.calledOnce;</code></pre></li></ul></li>
   dialogue.path.config.catchMessage = 'huh?';
   yield dialogue.receive(pretend.response('tester', '?'));
   return dialogue.send.should.have.calledWith('huh?');
-});</code></pre></li><li class="test pass fast"><h2>does not clear timeout<span class="duration">3ms</span></h2><pre><code>return co(function*() {
+});</code></pre></li><li class="test pass fast"><h2>does not clear timeout<span class="duration">2ms</span></h2><pre><code>return co(function*() {
   var dialogue;
   dialogue = new Dialogue(testRes);
   dialogue.addBranch(/foo/, function() {});
   dialogue.path.config.catchMessage = 'huh?';
   yield dialogue.receive(pretend.response('tester', '?'));
   return dialogue.clearTimeout.should.not.have.called;
-});</code></pre></li><li class="test pass fast"><h2>does not call end<span class="duration">2ms</span></h2><pre><code>return co(function*() {
+});</code></pre></li><li class="test pass fast"><h2>does not call end<span class="duration">3ms</span></h2><pre><code>return co(function*() {
   var dialogue;
   dialogue = new Dialogue(testRes);
   dialogue.addBranch(/foo/, function() {});
@@ -999,7 +999,7 @@ return dialogue.startTimeout.should.have.calledOnce;</code></pre></li></ul></li>
   dialogue.addBranch(/foo/, function() {});
   yield dialogue.receive(pretend.response('tester', '?'));
   return dialogue.clearTimeout.should.not.have.called;
-});</code></pre></li><li class="test pass fast"><h2>does not call end<span class="duration">3ms</span></h2><pre><code>return co(function*() {
+});</code></pre></li><li class="test pass fast"><h2>does not call end<span class="duration">2ms</span></h2><pre><code>return co(function*() {
   var dialogue;
   dialogue = new Dialogue(testRes);
   dialogue.addBranch(/foo/, function() {});
@@ -1050,7 +1050,7 @@ return pretend.robot.receiveMiddleware.should.have.calledOnce;</code></pre></li>
 scene = new Scene(pretend.robot, {
   sendReplies: true
 });
-return scene.config.sendReplies.should.be[&quot;true&quot;];</code></pre></li></ul></li><li class="suite"><h1>with room scope option</h1><ul><li class="test pass fast"><h2>accepts given room scope<span class="duration">1ms</span></h2><pre><code>var scene;
+return scene.config.sendReplies.should.be[&quot;true&quot;];</code></pre></li></ul></li><li class="suite"><h1>with room scope option</h1><ul><li class="test pass fast"><h2>accepts given room scope<span class="duration">0ms</span></h2><pre><code>var scene;
 scene = new Scene(pretend.robot, {
   scope: 'room'
 });
@@ -1062,44 +1062,48 @@ return scene.config.sendReplies.should.be[&quot;true&quot;];</code></pre></li></
   new Scene(pretend.robot, {
     scope: 'monkey'
   });
-} catch (error) {}
-return Scene.prototype.constructor.should[&quot;throw&quot;];</code></pre></li></ul></li></ul></li><li class="suite"><h1>.listen</h1><ul><li class="test pass fast"><h2>accepts a string that can be cast as RegExp<span class="duration">1ms</span></h2><pre><code>var scene;
+} catch (error1) {}
+return Scene.prototype.constructor.should[&quot;throw&quot;];</code></pre></li></ul></li></ul></li><li class="suite"><h1>.listen</h1><ul><li class="test pass fast"><h2>accepts a string that can be cast as RegExp<span class="duration">0ms</span></h2><pre><code>var scene;
 scene = new Scene(pretend.robot);
 scene.listen('hear', '/test/i', function() {
   return null;
 });
-return pretend.robot.listeners.pop().regex.should.eql(/test/i);</code></pre></li><li class="suite"><h1>with hear type and message matching regex</h1><ul><li class="test pass fast"><h2>registers a robot hear listener with scene as attribute<span class="duration">0ms</span></h2><pre><code>var scene;
+return pretend.robot.listeners.pop().regex.should.eql(/test/i);</code></pre></li><li class="suite"><h1>with hear type and message matching regex</h1><ul><li class="test pass fast"><h2>registers a robot hear listener with same id as scene<span class="duration">1ms</span></h2><pre><code>var scene;
 scene = new Scene(pretend.robot);
 scene.listen('hear', /test/, function() {
   return null;
 });
-return pretend.robot.hear.should.have.calledWithMatch(sinon.match.regexp, sinon.match.has('scene', scene, sinon.match.func));</code></pre></li><li class="test pass fast"><h2>calls callback from listener when matched<span class="duration">4ms</span></h2><pre><code>return co(function*() {
+return pretend.robot.hear.should.have.calledWithMatch(sinon.match.regexp, sinon.match({
+  id: scene.id
+}), sinon.match.func);</code></pre></li><li class="test pass fast"><h2>calls callback from listener when matched<span class="duration">3ms</span></h2><pre><code>return co(function*() {
   var callback, scene;
   scene = new Scene(pretend.robot);
   callback = sinon.spy();
   scene.listen('hear', /test/, callback);
   yield pretend.user('tester').send('test');
   return callback.should.have.calledOnce;
-});</code></pre></li><li class="test pass fast"><h2>callback should receive res and dialogue<span class="duration">6ms</span></h2><pre><code>var callback, scene;
+});</code></pre></li><li class="test pass fast"><h2>callback should receive res and dialogue<span class="duration">2ms</span></h2><pre><code>var callback, scene;
 scene = new Scene(pretend.robot);
 callback = sinon.spy();
 scene.listen('hear', /test/, callback);
 return pretend.user('tester').send('test').then(function() {
   return callback.should.have.calledWith(matchRes);
-});</code></pre></li></ul></li><li class="suite"><h1>with respond type and message matching regex</h1><ul><li class="test pass fast"><h2>registers a robot respond listener with scene as attribute<span class="duration">3ms</span></h2><pre><code>var callback, id, scene;
+});</code></pre></li></ul></li><li class="suite"><h1>with respond type and message matching regex</h1><ul><li class="test pass fast"><h2>registers a robot hear listener with same id as scene<span class="duration">2ms</span></h2><pre><code>var callback, id, scene;
 scene = new Scene(pretend.robot);
 callback = sinon.spy();
 id = scene.listen('respond', /test/, callback);
 return pretend.user('tester').send('hubot test').then(function() {
-  return pretend.robot.respond.should.have.calledWithMatch(sinon.match.regexp, sinon.match.has('scene', scene, sinon.match.func));
-});</code></pre></li><li class="test pass fast"><h2>calls callback from listener when matched<span class="duration">3ms</span></h2><pre><code>return co(function*() {
+  return pretend.robot.respond.should.have.calledWithMatch(sinon.match.regexp, sinon.match({
+    id: scene.id
+  }), sinon.match.func);
+});</code></pre></li><li class="test pass fast"><h2>calls callback from listener when matched<span class="duration">1ms</span></h2><pre><code>return co(function*() {
   var callback, id, scene;
   scene = new Scene(pretend.robot);
   callback = sinon.spy();
   id = scene.listen('respond', /test/, callback);
   yield pretend.user('tester').send('hubot test');
   return callback.should.have.calledOnce;
-});</code></pre></li><li class="test pass fast"><h2>callback should receive res and dialogue<span class="duration">3ms</span></h2><pre><code>return co(function*() {
+});</code></pre></li><li class="test pass fast"><h2>callback should receive res and dialogue<span class="duration">2ms</span></h2><pre><code>return co(function*() {
   var callback, id, scene;
   scene = new Scene(pretend.robot);
   callback = sinon.spy();
@@ -1112,38 +1116,38 @@ try {
   scene.listen('smell', /test/, function() {
     return null;
   });
-} catch (error) {}
-return scene.listen.should[&quot;throw&quot;];</code></pre></li></ul></li><li class="suite"><h1>with an invalid regex</h1><ul><li class="test pass fast"><h2>throws<span class="duration">0ms</span></h2><pre><code>var scene;
+} catch (error1) {}
+return scene.listen.should[&quot;throw&quot;];</code></pre></li></ul></li><li class="suite"><h1>with an invalid regex</h1><ul><li class="test pass fast"><h2>throws<span class="duration">1ms</span></h2><pre><code>var scene;
 scene = new Scene(pretend.robot);
 try {
   scene.listen('hear', 'test', function() {
     return null;
   });
-} catch (error) {}
-return scene.listen.should[&quot;throw&quot;];</code></pre></li></ul></li><li class="suite"><h1>with an invalid callback</h1><ul><li class="test pass fast"><h2>throws<span class="duration">0ms</span></h2><pre><code>var scene;
+} catch (error1) {}
+return scene.listen.should[&quot;throw&quot;];</code></pre></li></ul></li><li class="suite"><h1>with an invalid callback</h1><ul><li class="test pass fast"><h2>throws<span class="duration">1ms</span></h2><pre><code>var scene;
 scene = new Scene(pretend.robot);
 try {
   scene.listen('hear', /test/, {
     not: 'a function '
   });
-} catch (error) {}
-return scene.listen.should[&quot;throw&quot;];</code></pre></li></ul></li></ul></li><li class="suite"><h1>.hear</h1><ul><li class="test pass fast"><h2>calls .listen with hear listen type and arguments<span class="duration">1ms</span></h2><pre><code>var expectedArgs, ref, scene;
+} catch (error1) {}
+return scene.listen.should[&quot;throw&quot;];</code></pre></li></ul></li></ul></li><li class="suite"><h1>.hear</h1><ul><li class="test pass fast"><h2>calls .listen with hear listen type and arguments<span class="duration">0ms</span></h2><pre><code>var expectedArgs, ref, scene;
 scene = new Scene(pretend.robot);
 scene.hear(/test/, function() {
   return null;
 });
 expectedArgs = ['hear', /test/, sinon.match.func];
-return (ref = scene.listen.getCall(0).should.have).calledWith.apply(ref, expectedArgs);</code></pre></li></ul></li><li class="suite"><h1>.respond</h1><ul><li class="test pass fast"><h2>calls .listen with respond listen type and arguments<span class="duration">0ms</span></h2><pre><code>var expectedArgs, ref, scene;
+return (ref = scene.listen.getCall(0).should.have).calledWith.apply(ref, expectedArgs);</code></pre></li></ul></li><li class="suite"><h1>.respond</h1><ul><li class="test pass fast"><h2>calls .listen with respond listen type and arguments<span class="duration">1ms</span></h2><pre><code>var expectedArgs, ref, scene;
 scene = new Scene(pretend.robot);
 scene.respond(/test/, function() {
   return null;
 });
 expectedArgs = ['respond', /test/, sinon.match.func];
-return (ref = scene.listen.getCall(0).should.have).calledWith.apply(ref, expectedArgs);</code></pre></li></ul></li><li class="suite"><h1>.whoSpeaks</h1><ul><li class="suite"><h1>user scene</h1><ul><li class="test pass fast"><h2>returns the ID of engaged user<span class="duration">1ms</span></h2><pre><code>var scene;
+return (ref = scene.listen.getCall(0).should.have).calledWith.apply(ref, expectedArgs);</code></pre></li></ul></li><li class="suite"><h1>.whoSpeaks</h1><ul><li class="suite"><h1>user scene</h1><ul><li class="test pass fast"><h2>returns the ID of engaged user<span class="duration">0ms</span></h2><pre><code>var scene;
 scene = new Scene(pretend.robot, {
   scope: 'user'
 });
-return scene.whoSpeaks(pretend.lastReceive()).should.equal('user_111');</code></pre></li></ul></li><li class="suite"><h1>room sceene</h1><ul><li class="test pass fast"><h2>returns the room ID<span class="duration">1ms</span></h2><pre><code>var scene;
+return scene.whoSpeaks(pretend.lastReceive()).should.equal('user_111');</code></pre></li></ul></li><li class="suite"><h1>room sceene</h1><ul><li class="test pass fast"><h2>returns the room ID<span class="duration">0ms</span></h2><pre><code>var scene;
 scene = new Scene(pretend.robot, {
   scope: 'room'
 });
@@ -1164,22 +1168,36 @@ piece = function(notEnoughArgs) {
 scene = new Scene(pretend.robot);
 try {
   scene.registerMiddleware(piece);
-} catch (error) {}
+} catch (error1) {}
 scene.registerMiddleware.should[&quot;throw&quot;];
-return scene.enterMiddleware.stack.length.should.equal(0);</code></pre></li></ul></li><li class="suite"><h1>.enter</h1><ul><li class="test pass fast"><h2>returns a promise (then-able)<span class="duration">0ms</span></h2><pre><code>var promise, scene;
+return scene.enterMiddleware.stack.length.should.equal(0);</code></pre></li></ul></li><li class="suite"><h1>.enter</h1><ul><li class="test pass fast"><h2>returns a promise (then-able)<span class="duration">1ms</span></h2><pre><code>var promise, scene;
 scene = new Scene(pretend.robot);
 promise = scene.enter(pretend.lastReceive());
-return promise.then.should.be.a('function');</code></pre></li><li class="test pass fast"><h2>calls .processEnter with context<span class="duration">0ms</span></h2><pre><code>return co(function*() {
+return promise.then.should.be.a('function');</code></pre></li><li class="test pass fast"><h2>calls .processEnter with context<span class="duration">1ms</span></h2><pre><code>return co(function*() {
   var scene;
   scene = new Scene(pretend.robot);
   yield scene.enter(pretend.lastReceive());
   return scene.processEnter.should.have.calledOnce;
-});</code></pre></li><li class="test pass fast"><h2>resolves with created dialogue<span class="duration">0ms</span></h2><pre><code>return co(function*() {
-  var result, scene;
+});</code></pre></li><li class="test pass fast"><h2>resolves after callback called<span class="duration">1ms</span></h2><pre><code>return co(function*() {
+  var callback, result, scene;
   scene = new Scene(pretend.robot);
-  result = (yield scene.enter(pretend.lastReceive()));
-  return result.should.be[&quot;instanceof&quot;](Dialogue);
-});</code></pre></li><li class="suite"><h1>with callback</h1><ul><li class="test pass fast"><h2>calls callback with final enter process context<span class="duration">1ms</span></h2><pre><code>var callback, keys, scene;
+  callback = sinon.spy();
+  result = (yield scene.enter(pretend.lastReceive(), callback));
+  return callback.should.have.calledOnce;
+});</code></pre></li><li class="test pass fast"><h2>exits (after event loop) if no dialogue paths added<span class="duration">0ms</span></h2><pre><code>return co(function*() {
+  var scene;
+  scene = new Scene(pretend.robot);
+  yield scene.enter(pretend.lastReceive());
+  yield setImmediatePromise();
+  return scene.exit.should.have.calledWith(pretend.lastReceive(), 'no path');
+});</code></pre></li><li class="test pass fast"><h2>can use dialogue after yielding to prevent exit<span class="duration">1ms</span></h2><pre><code>return co(function*() {
+  var context, scene;
+  scene = new Scene(pretend.robot);
+  context = (yield scene.enter(pretend.lastReceive()));
+  context.dialogue.addBranch(matchAny, '');
+  yield setImmediatePromise();
+  return scene.exit.should.not.have.called;
+});</code></pre></li><li class="suite"><h1>with callback (no middleware)</h1><ul><li class="test pass fast"><h2>calls callback with final enter process context<span class="duration">1ms</span></h2><pre><code>var callback, keys, scene;
 scene = new Scene(pretend.robot);
 keys = ['response', 'participants', 'options', 'arguments', 'dialogue'];
 callback = function(result) {
@@ -1187,15 +1205,16 @@ callback = function(result) {
   (ref = result.should.have.all).keys.apply(ref, keys);
   return done();
 };
-scene.enter(pretend.lastReceive(), callback);</code></pre></li></ul></li><li class="suite"><h1>with passing middleware</h1><ul><li class="test pass fast"><h2>completes processing to resolve with dialogue<span class="duration">0ms</span></h2><pre><code>return co(function*() {
-  var result, scene;
+scene.enter(pretend.lastReceive(), callback);</code></pre></li></ul></li><li class="suite"><h1>with passing middleware</h1><ul><li class="test pass fast"><h2>completes processing to resolve with context<span class="duration">1ms</span></h2><pre><code>return co(function*() {
+  var keys, ref, result, scene;
   scene = new Scene(pretend.robot);
+  keys = ['response', 'participants', 'options', 'arguments', 'dialogue'];
   scene.registerMiddleware(function(context, next, done) {
     return next();
   });
   result = (yield scene.enter(pretend.lastReceive()));
-  return result.should.be[&quot;instanceof&quot;](Dialogue);
-});</code></pre></li><li class="test pass fast"><h2>calls callback with final enter process context<span class="duration">2ms</span></h2><pre><code>var callback, keys, scene;
+  return (ref = result.should.have.all).keys.apply(ref, keys);
+});</code></pre></li><li class="test pass fast"><h2>calls callback with final enter process context<span class="duration">5ms</span></h2><pre><code>var callback, keys, scene;
 scene = new Scene(pretend.robot);
 keys = ['response', 'participants', 'options', 'arguments', 'dialogue'];
 callback = function(result) {
@@ -1206,13 +1225,27 @@ callback = function(result) {
 scene.registerMiddleware(function(context, next, done) {
   return next();
 });
-scene.enter(pretend.lastReceive(), callback);</code></pre></li></ul></li><li class="suite"><h1>with blocking middleware</h1><ul><li class="test pass fast"><h2>does not complete or call .processEnter<span class="duration">0ms</span></h2><pre><code>return co(function*() {
-  var scene;
+scene.enter(pretend.lastReceive(), callback);</code></pre></li></ul></li><li class="suite"><h1>with blocking middleware</h1><ul><li class="test pass fast"><h2>rejects promise<span class="duration">1ms</span></h2><pre><code>var scene;
+scene = new Scene(pretend.robot);
+scene.registerMiddleware(function(context, next, done) {
+  return done();
+});
+return scene.enter(pretend.lastReceive()).then(function() {
+  throw new Error('promise should have caught');
+})[&quot;catch&quot;](function(err) {
+  err.should.be[&quot;instanceof&quot;](Error);
+  return err.should.have.property('message', 'Middleware piece called done');
+});</code></pre></li><li class="test pass fast"><h2>does not complete or call .processEnter<span class="duration">0ms</span></h2><pre><code>return co(function*() {
+  var error, scene;
   scene = new Scene(pretend.robot);
   scene.registerMiddleware(function(context, next, done) {
     return done();
   });
-  yield scene.enter(pretend.lastReceive());
+  try {
+    yield scene.enter(pretend.lastReceive());
+  } catch (error1) {
+    error = error1;
+  }
   return scene.processEnter.should.not.have.called;
 });</code></pre></li></ul></li><li class="suite"><h1>with custom done function override</h1><ul><li class="test pass fast"><h2>completes processing and calls custom done<span class="duration">1ms</span></h2><pre><code>return co(function*() {
   var custom, scene;
@@ -1244,7 +1277,7 @@ scene.enter(pretend.lastReceive(), function(result) {
   result.trace.should.eql(['A', 'B', 'C']);
   return done();
 });</code></pre></li><li class="test pass fast"><h2>does not process enter if any middleware blocks<span class="duration">0ms</span></h2><pre><code>return co(function*() {
-  var scene;
+  var error, scene;
   scene = new Scene(pretend.robot);
   scene.registerMiddleware(function(context, next, done) {
     return next();
@@ -1255,23 +1288,27 @@ scene.enter(pretend.lastReceive(), function(result) {
   scene.registerMiddleware(function(context, next, done) {
     return next();
   });
-  yield scene.enter(pretend.lastReceive());
+  try {
+    yield scene.enter(pretend.lastReceive());
+  } catch (error1) {
+    error = error1;
+  }
   return scene.processEnter.should.not.have.called;
-});</code></pre></li></ul></li><li class="suite"><h1>user scene</h1><ul><li class="test pass fast"><h2>saves engaged Dialogue instance with user ID<span class="duration">1ms</span></h2><pre><code>return co(function*() {
+});</code></pre></li></ul></li><li class="suite"><h1>user scene</h1><ul><li class="test pass fast"><h2>saves engaged Dialogue instance with user ID<span class="duration">0ms</span></h2><pre><code>return co(function*() {
   var scene;
   scene = new Scene(pretend.robot, {
     scope: 'user'
   });
   yield scene.enter(pretend.lastReceive());
   return scene.engaged['user_111'].should.be[&quot;instanceof&quot;](Dialogue);
-});</code></pre></li></ul></li><li class="suite"><h1>room scene</h1><ul><li class="test pass fast"><h2>saves engaged Dialogue instance with room key<span class="duration">1ms</span></h2><pre><code>return co(function*() {
+});</code></pre></li></ul></li><li class="suite"><h1>room scene</h1><ul><li class="test pass fast"><h2>saves engaged Dialogue instance with room key<span class="duration">0ms</span></h2><pre><code>return co(function*() {
   var scene;
   scene = new Scene(pretend.robot, {
     scope: 'room'
   });
   yield scene.enter(pretend.lastReceive());
   return scene.engaged['testing'].should.be[&quot;instanceof&quot;](Dialogue);
-});</code></pre></li></ul></li><li class="suite"><h1>direct scene</h1><ul><li class="test pass fast"><h2>saves engaged Dialogue instance with composite key<span class="duration">1ms</span></h2><pre><code>return co(function*() {
+});</code></pre></li></ul></li><li class="suite"><h1>direct scene</h1><ul><li class="test pass fast"><h2>saves engaged Dialogue instance with composite key<span class="duration">0ms</span></h2><pre><code>return co(function*() {
   var scene;
   scene = new Scene(pretend.robot, {
     scope: 'direct'
@@ -1284,56 +1321,58 @@ scene.enter(pretend.lastReceive(), function(result) {
           dialogue = (yield scene.enter(pretend.lastReceive(), {
             timeout: 100,
             timeoutText: 'foo'
-          }));
+          })).dialogue;
           dialogue.config.timeout.should.equal(100);
           return dialogue.config.timeoutText.should.equal('foo');
-        }</code></pre></li></ul></li><li class="suite"><h1>dialogue allowed to timeout after branch added</h1><ul><li class="test pass fast"><h2>calls .exit first on &quot;timeout&quot;<span class="duration">1ms</span></h2><pre><code>var scene;
+        }</code></pre></li></ul></li><li class="suite"><h1>dialogue allowed to timeout after branch added</h1><ul><li class="test pass fast"><h2>calls .exit first on &quot;timeout&quot;<span class="duration">14ms</span></h2><pre><code>var res, scene;
 scene = new Scene(pretend.robot);
-scene.enter(pretend.lastReceive(), {
+res = pretend.lastReceive();
+scene.enter(res, {
   timeout: 10,
   timeoutText: null
-}).then(function(dialogue) {
-  dialogue.on('end', function() {
-    scene.exit.getCall(0).should.have.calledWith(pretend.lastReceive(), 'timeout');
+}).then(function(context) {
+  context.dialogue.on('end', function() {
+    scene.exit.should.have.calledWith(res, 'timeout');
     return done();
   });
-  dialogue.startTimeout();
-  return clock.tick(11);
-});</code></pre></li><li class="test pass fast"><h2>calls .exit again on &quot;incomplete&quot;<span class="duration">1ms</span></h2><pre><code>var scene;
+  context.dialogue.addBranch(matchAny, '');
+  return wait(20);
+});</code></pre></li><li class="test pass fast"><h2>calls .exit again on &quot;incomplete&quot;<span class="duration">13ms</span></h2><pre><code>var res, scene;
 scene = new Scene(pretend.robot);
-scene.enter(pretend.lastReceive(), {
+res = pretend.lastReceive();
+scene.enter(res, {
   timeout: 10,
   timeoutText: null
-}).then(function(dialogue) {
-  dialogue.on('end', function() {
-    scene.exit.getCall(1).should.have.calledWith(pretend.lastReceive(), 'incomplete');
+}).then(function(context) {
+  context.dialogue.on('end', function() {
+    scene.exit.should.have.calledWith(res, 'incomplete');
     return done();
   });
-  dialogue.startTimeout();
-  return clock.tick(11);
-});</code></pre></li></ul></li><li class="suite"><h1>dialogue completed (by message matching branch)</h1><ul><li class="test pass fast"><h2>calls .exit once only<span class="duration">1ms</span></h2><pre><code>return co(function*() {
-  var dialogue, scene;
+  context.dialogue.addBranch(matchAny, '');
+  return wait(20);
+});</code></pre></li></ul></li><li class="suite"><h1>dialogue completed (by message matching branch)</h1><ul><li class="test pass fast"><h2>calls .exit once only<span class="duration">2ms</span></h2><pre><code>return co(function*() {
+  var context, scene;
   scene = new Scene(pretend.robot);
-  dialogue = (yield scene.enter(pretend.lastReceive()));
-  dialogue.addBranch(matchAny, '');
+  context = (yield scene.enter(pretend.lastReceive()));
+  context.dialogue.addBranch(matchAny, '');
   yield pretend.user('tester').send('test');
   yield pretend.user('tester').send('testing again');
   return scene.exit.should.have.calledOnce;
-});</code></pre></li><li class="test pass fast"><h2>calls .exit once with last (matched) res and &quot;complete&quot;<span class="duration">2ms</span></h2><pre><code>return co(function*() {
-  var dialogue, scene;
+});</code></pre></li><li class="test pass fast"><h2>calls .exit once with last (matched) res and &quot;complete&quot;<span class="duration">1ms</span></h2><pre><code>return co(function*() {
+  var context, scene;
   scene = new Scene(pretend.robot);
-  dialogue = (yield scene.enter(pretend.lastReceive()));
-  dialogue.addBranch(matchAny, '');
+  context = (yield scene.enter(pretend.lastReceive()));
+  context.dialogue.addBranch(matchAny, '');
   yield pretend.user('tester').send('test');
   yield pretend.user('tester').send('testing again');
-  return scene.exit.should.have.calledWith(dialogue.res, 'complete');
-});</code></pre></li></ul></li><li class="suite"><h1>re-enter currently engaged participants</h1><ul><li class="test pass fast"><h2>returns error the second time<span class="duration">7ms</span></h2><pre><code>return co(function*() {
+  return scene.exit.should.have.calledWith(context.dialogue.res, 'complete');
+});</code></pre></li></ul></li><li class="suite"><h1>re-enter currently engaged participants</h1><ul><li class="test pass fast"><h2>returns error the second time<span class="duration">1ms</span></h2><pre><code>return co(function*() {
   var resultA, resultB, scene;
   scene = new Scene(pretend.robot);
   resultA = (yield scene.enter(pretend.lastReceive()));
   try {
     resultB = (yield scene.enter(pretend.lastReceive()));
-  } catch (error) {}
+  } catch (error1) {}
   return scene.enter.should[&quot;throw&quot;];
 });</code></pre></li><li class="test pass fast"><h2>rejected enter can be caught<span class="duration">1ms</span></h2><pre><code>var scene;
 scene = new Scene(pretend.robot);
@@ -1343,163 +1382,170 @@ scene.enter(pretend.lastReceive()).then(function() {
     return done();
   });
 });</code></pre></li></ul></li><li class="suite"><h1>re-enter previously engaged participants</h1><ul><li class="test pass fast"><h2>returns Dialogue instance (as per normal)<span class="duration">1ms</span></h2><pre><code>return co(function*() {
-  var dialogueA, dialogueB, scene;
+  var dialogue, scene;
   scene = new Scene(pretend.robot);
-  dialogueA = (yield scene.enter(pretend.lastReceive()));
+  yield scene.enter(pretend.lastReceive());
   scene.exit(pretend.lastReceive());
-  dialogueB = (yield scene.enter(pretend.lastReceive()));
-  return dialogueB.should.be[&quot;instanceof&quot;](Dialogue);
-});</code></pre></li></ul></li></ul></li><li class="suite"><h1>.exit</h1><ul><li class="suite"><h1>with user in scene, called manually</h1><ul><li class="test pass fast"><h2>does not call onTimeout on dialogue<span class="duration">2ms</span></h2><pre><code>return co(function*() {
+  dialogue = (yield scene.enter(pretend.lastReceive())).dialogue;
+  return dialogue.should.be[&quot;instanceof&quot;](Dialogue);
+});</code></pre></li></ul></li></ul></li><li class="suite"><h1>.exit</h1><ul><li class="suite"><h1>with user in scene, called manually</h1><ul><li class="test pass fast"><h2>does not call onTimeout on dialogue<span class="duration">25ms</span></h2><pre><code>return co(function*() {
   var dialogue, scene, timeout;
   scene = new Scene(pretend.robot);
   dialogue = (yield scene.enter(pretend.lastReceive(), {
     timeout: 10
-  }));
+  })).dialogue;
   dialogue.addBranch(matchAny, '');
   timeout = sinon.spy();
   dialogue.onTimeout(timeout);
   scene.exit(pretend.lastReceive(), 'testing exits');
-  clock.tick(11);
+  yield wait(20);
   return timeout.should.not.have.called;
 });</code></pre></li><li class="test pass fast"><h2>removes the dialogue instance from engaged array<span class="duration">1ms</span></h2><pre><code>return co(function*() {
-  var scene;
-  scene = new Scene(pretend.robot);
-  yield scene.enter(pretend.lastReceive(), {
-    timeout: 10
-  });
-  scene.exit(pretend.lastReceive(), 'testing exits');
-  return should.not.exist(scene.engaged['user_111']);
-});</code></pre></li><li class="test pass fast"><h2>returns true<span class="duration">0ms</span></h2><pre><code>return co(function*() {
-  var scene;
-  scene = new Scene(pretend.robot);
-  yield scene.enter(pretend.lastReceive(), {
-    timeout: 10
-  });
-  scene.exit(pretend.lastReceive(), 'testing exits');
-  clock.tick(11);
-  return scene.exit.returnValues.pop().should.be[&quot;true&quot;];
-});</code></pre></li><li class="test pass fast"><h2>logged the reason<span class="duration">0ms</span></h2><pre><code>return co(function*() {
-  var scene;
-  scene = new Scene(pretend.robot);
-  scene.id = 'scene_111';
-  yield scene.enter(pretend.lastReceive(), {
-    timeout: 10
-  });
-  scene.exit(pretend.lastReceive(), 'testing exits');
-  clock.tick(11);
-  return pretend.logs.pop().should.eql(['info', 'Disengaged user user_111 (testing exits) (id: scene_111)']);
-});</code></pre></li><li class="test pass fast"><h2>dialogue does not continue receiving after scene exit<span class="duration">1ms</span></h2><pre><code>return co(function*() {
   var dialogue, scene;
   scene = new Scene(pretend.robot);
   dialogue = (yield scene.enter(pretend.lastReceive(), {
     timeout: 10
-  }));
+  })).dialogue;
+  dialogue.addBranch(matchAny, '');
+  scene.exit(pretend.lastReceive(), 'testing exits');
+  return should.not.exist(scene.engaged['user_111']);
+});</code></pre></li><li class="test pass fast"><h2>returns true<span class="duration">25ms</span></h2><pre><code>return co(function*() {
+  var dialogue, scene;
+  scene = new Scene(pretend.robot);
+  dialogue = (yield scene.enter(pretend.lastReceive(), {
+    timeout: 10
+  })).dialogue;
+  dialogue.addBranch(matchAny, '');
+  scene.exit(pretend.lastReceive(), 'testing exits');
+  yield wait(20);
+  return scene.exit.returnValues.pop().should.be[&quot;true&quot;];
+});</code></pre></li><li class="test pass fast"><h2>logged the reason<span class="duration">26ms</span></h2><pre><code>return co(function*() {
+  var dialogue, scene;
+  scene = new Scene(pretend.robot);
+  scene.id = 'scene_111';
+  dialogue = (yield scene.enter(pretend.lastReceive(), {
+    timeout: 10
+  })).dialogue;
+  dialogue.addBranch(matchAny, '');
+  scene.exit(pretend.lastReceive(), 'testing exits');
+  yield wait(20);
+  return pretend.logs.pop().should.eql(['info', 'Disengaged user user_111 (testing exits) (id: scene_111)']);
+});</code></pre></li><li class="test pass fast"><h2>dialogue does not continue receiving after scene exit<span class="duration">21ms</span></h2><pre><code>return co(function*() {
+  var dialogue, scene;
+  scene = new Scene(pretend.robot);
+  dialogue = (yield scene.enter(pretend.lastReceive(), {
+    timeout: 10
+  })).dialogue;
   dialogue.addBranch(matchAny, '');
   dialogue.receive = sinon.spy();
   scene.exit(pretend.lastReceive(), 'tester');
   pretend.user('tester').send('test');
-  clock.tick(11);
+  yield wait(20);
   return dialogue.receive.should.not.have.called;
-});</code></pre></li></ul></li><li class="suite"><h1>with user in scene, called from events</h1><ul><li class="test pass fast"><h2>gets called twice (on timeout and end)<span class="duration">1ms</span></h2><pre><code>var scene;
+});</code></pre></li></ul></li><li class="suite"><h1>with user in scene, called from events</h1><ul><li class="test pass fast"><h2>gets called twice (on timeout and end)<span class="duration">14ms</span></h2><pre><code>var scene;
 scene = new Scene(pretend.robot);
 scene.enter(pretend.lastReceive(), {
   timeout: 10
-}).then(function(dialogue) {
-  dialogue.on('end', function() {
+}).then(function(context) {
+  context.dialogue.on('end', function() {
     scene.exit.should.have.calledTwice;
     return done();
   });
-  dialogue.addBranch(matchAny, '');
-  return clock.tick(11);
-});</code></pre></li><li class="test pass fast"><h2>returns true the first time<span class="duration">2ms</span></h2><pre><code>var scene;
+  context.dialogue.addBranch(matchAny, '');
+  return wait(20);
+});</code></pre></li><li class="test pass fast"><h2>returns true the first time<span class="duration">14ms</span></h2><pre><code>var scene;
 scene = new Scene(pretend.robot);
 scene.enter(pretend.lastReceive(), {
   timeout: 10
-}).then(function(dialogue) {
-  dialogue.on('end', function() {
+}).then(function(context) {
+  context.dialogue.on('end', function() {
     scene.exit.getCall(0).should.have.returned(true);
     return done();
   });
-  dialogue.addBranch(matchAny, '');
-  return clock.tick(11);
-});</code></pre></li><li class="test pass fast"><h2>returns false the second time (because already disengaged)<span class="duration">1ms</span></h2><pre><code>var scene;
+  context.dialogue.addBranch(matchAny, '');
+  return wait(20);
+});</code></pre></li><li class="test pass fast"><h2>returns false the second time (because already disengaged)<span class="duration">13ms</span></h2><pre><code>var scene;
 scene = new Scene(pretend.robot);
 scene.enter(pretend.lastReceive(), {
   timeout: 10
-}).then(function(dialogue) {
-  dialogue.on('end', function() {
+}).then(function(context) {
+  context.dialogue.on('end', function() {
     scene.exit.getCall(1).should.have.returned(false);
     return done();
   });
-  dialogue.addBranch(matchAny, '');
-  return clock.tick(11);
+  context.dialogue.addBranch(matchAny, '');
+  return wait(20);
 });</code></pre></li></ul></li><li class="suite"><h1>user not in scene, called manually</h1><ul><li class="test pass fast"><h2>returns false<span class="duration">0ms</span></h2><pre><code>var scene;
 scene = new Scene(pretend.robot);
 scene.exit(pretend.lastReceive(), 'testing exits');
 return scene.exit.returnValues.pop().should.be[&quot;false&quot;];</code></pre></li></ul></li></ul></li><li class="suite"><h1>.exitAll</h1><ul><li class="suite"><h1>with two users in scene</h1><ul><li class="test pass fast"><h2>created two dialogues<span class="duration">4ms</span></h2><pre><code>return co(function*() {
-  var dialogueA, dialogueB, scene;
+  var A, B, scene;
   scene = new Scene(pretend.robot);
-  dialogueB = (yield scene.enter(pretend.response('A', 'test')));
-  dialogueA = (yield scene.enter(pretend.response('B', 'test')));
+  A = (yield scene.enter(pretend.response('A', 'test')));
+  B = (yield scene.enter(pretend.response('B', 'test')));
   scene.exitAll();
-  dialogueA.should.be[&quot;instanceof&quot;](Dialogue);
-  return dialogueB.should.be[&quot;instanceof&quot;](Dialogue);
-});</code></pre></li><li class="test pass fast"><h2>calls clearTimeout on both dialogues<span class="duration">4ms</span></h2><pre><code>return co(function*() {
-  var dialogueA, dialogueB, scene;
+  A.dialogue.should.be[&quot;instanceof&quot;](Dialogue);
+  return B.dialogue.should.be[&quot;instanceof&quot;](Dialogue);
+});</code></pre></li><li class="test pass fast"><h2>calls clearTimeout on both dialogues<span class="duration">5ms</span></h2><pre><code>return co(function*() {
+  var A, B, resA, resB, scene;
   scene = new Scene(pretend.robot);
-  dialogueB = (yield scene.enter(pretend.response('A', 'test')));
-  dialogueA = (yield scene.enter(pretend.response('B', 'test')));
-  dialogueA.clearTimeout = sinon.spy();
-  dialogueB.clearTimeout = sinon.spy();
+  resA = pretend.response('A', 'test');
+  resB = pretend.response('B', 'test');
+  A = (yield scene.enter(resA));
+  A.dialogue.addBranch(matchAny, '');
+  B = (yield scene.enter(resB));
+  B.dialogue.addBranch(matchAny, '');
+  A.dialogue.clearTimeout = sinon.spy();
+  B.dialogue.clearTimeout = sinon.spy();
   scene.exitAll();
-  dialogueA.clearTimeout.should.have.calledOnce;
-  return dialogueB.clearTimeout.should.have.calledOnce;
-});</code></pre></li><li class="test pass fast"><h2>has no remaining engaged dialogues<span class="duration">4ms</span></h2><pre><code>return co(function*() {
-  var dialogueA, dialogueB, scene;
+  A.dialogue.clearTimeout.should.have.calledOnce;
+  return B.dialogue.clearTimeout.should.have.calledOnce;
+});</code></pre></li><li class="test pass fast"><h2>has no remaining engaged dialogues<span class="duration">3ms</span></h2><pre><code>return co(function*() {
+  var scene;
   scene = new Scene(pretend.robot);
-  dialogueB = (yield scene.enter(pretend.response('A', 'test')));
-  dialogueA = (yield scene.enter(pretend.response('B', 'test')));
+  yield scene.enter(pretend.response('A', 'test'));
+  yield scene.enter(pretend.response('B', 'test'));
   scene.exitAll();
   return scene.engaged.length.should.equal(0);
 });</code></pre></li></ul></li></ul></li><li class="suite"><h1>.getDialogue</h1><ul><li class="suite"><h1>with user in scene</h1><ul><li class="test pass fast"><h2>returns the matching dialogue<span class="duration">0ms</span></h2><pre><code>return co(function*() {
-  var dialogueA, dialogueB, scene;
+  var dialogue, result, scene;
   scene = new Scene(pretend.robot);
-  dialogueA = (yield scene.enter(pretend.lastReceive()));
-  dialogueB = scene.getDialogue('user_111');
-  return dialogueB.should.eql(dialogueA);
+  dialogue = (yield scene.enter(pretend.lastReceive())).dialogue;
+  result = scene.getDialogue('user_111');
+  return dialogue.should.eql(result);
 });</code></pre></li></ul></li><li class="suite"><h1>no user in scene</h1><ul><li class="test pass fast"><h2>returns undefined<span class="duration">0ms</span></h2><pre><code>var dialogue, scene;
 scene = new Scene(pretend.robot);
 dialogue = scene.getDialogue('user_111');
-return should.not.exist(dialogue);</code></pre></li></ul></li></ul></li><li class="suite"><h1>.inDialogue</h1><ul><li class="suite"><h1>in engaged user scene</h1><ul><li class="test pass fast"><h2>returns true with user ID<span class="duration">0ms</span></h2><pre><code>return co(function*() {
+return should.not.exist(dialogue);</code></pre></li></ul></li></ul></li><li class="suite"><h1>.inDialogue</h1><ul><li class="suite"><h1>in engaged user scene</h1><ul><li class="test pass fast"><h2>returns true with user ID<span class="duration">1ms</span></h2><pre><code>return co(function*() {
   var scene;
   scene = new Scene(pretend.robot);
   yield scene.enter(pretend.lastReceive());
   return scene.inDialogue('user_111').should.be[&quot;true&quot;];
-});</code></pre></li><li class="test pass fast"><h2>returns false with room name<span class="duration">1ms</span></h2><pre><code>return co(function*() {
+});</code></pre></li><li class="test pass fast"><h2>returns false with room name<span class="duration">0ms</span></h2><pre><code>return co(function*() {
   var scene;
   scene = new Scene(pretend.robot);
   yield scene.enter(pretend.lastReceive());
   return scene.inDialogue('testing').should.be[&quot;false&quot;];
-});</code></pre></li></ul></li><li class="suite"><h1>participant not in scene</h1><ul><li class="test pass fast"><h2>returns false<span class="duration">0ms</span></h2><pre><code>return co(function*() {
+});</code></pre></li></ul></li><li class="suite"><h1>participant not in scene</h1><ul><li class="test pass fast"><h2>returns false<span class="duration">1ms</span></h2><pre><code>return co(function*() {
   var scene;
   scene = new Scene(pretend.robot);
   yield scene.enter(pretend.lastReceive());
   return scene.inDialogue('user_222').should.be[&quot;false&quot;];
-});</code></pre></li></ul></li><li class="suite"><h1>room scene, in scene</h1><ul><li class="test pass fast"><h2>returns true with roomname<span class="duration">0ms</span></h2><pre><code>return co(function*() {
+});</code></pre></li></ul></li><li class="suite"><h1>room scene, in scene</h1><ul><li class="test pass fast"><h2>returns true with roomname<span class="duration">1ms</span></h2><pre><code>return co(function*() {
   var scene;
   scene = new Scene(pretend.robot, {
     scope: 'room'
   });
   yield scene.enter(pretend.lastReceive());
   return scene.inDialogue('testing').should.be[&quot;true&quot;];
-});</code></pre></li><li class="test pass fast"><h2>returns false with user ID<span class="duration">1ms</span></h2><pre><code>return co(function*() {
+});</code></pre></li><li class="test pass fast"><h2>returns false with user ID<span class="duration">0ms</span></h2><pre><code>return co(function*() {
   var scene;
   scene = new Scene(pretend.robot, {
     scope: 'room'
   });
   yield scene.enter(pretend.lastReceive());
   return scene.inDialogue('user_111').should.be[&quot;false&quot;];
-});</code></pre></li></ul></li><li class="suite"><h1>direct scene, in scene</h1><ul><li class="test pass fast"><h2>returns true with userID_roomID<span class="duration">0ms</span></h2><pre><code>return co(function*() {
+});</code></pre></li></ul></li><li class="suite"><h1>direct scene, in scene</h1><ul><li class="test pass fast"><h2>returns true with userID_roomID<span class="duration">1ms</span></h2><pre><code>return co(function*() {
   var scene;
   scene = new Scene(pretend.robot, {
     scope: 'direct'
@@ -1513,7 +1559,7 @@ return should.not.exist(dialogue);</code></pre></li></ul></li></ul></li><li clas
   });
   yield scene.enter(pretend.lastReceive());
   return scene.inDialogue('testing').should.be[&quot;false&quot;];
-});</code></pre></li><li class="test pass fast"><h2>returns false with user ID<span class="duration">0ms</span></h2><pre><code>return co(function*() {
+});</code></pre></li><li class="test pass fast"><h2>returns false with user ID<span class="duration">1ms</span></h2><pre><code>return co(function*() {
   var scene;
   scene = new Scene(pretend.robot, {
     scope: 'direct'
@@ -1524,19 +1570,19 @@ return should.not.exist(dialogue);</code></pre></li></ul></li></ul></li><li clas
   type: 'whitelist',
   scope: 'username',
   deniedReply: &quot;403 Sorry.&quot;
-});</code></pre></li></ul></li><li class="suite"><h1>with env var for names</h1><ul><li class="suite"><h1>whitelist type, username scope</h1><ul><li class="test pass fast"><h2>stores the whitelisted usernames from env<span class="duration">0ms</span></h2><pre><code>return this.director.names.should.eql(['Emmanuel']);</code></pre></li></ul></li><li class="suite"><h1>whitelist type, room scope</h1><ul><li class="test pass fast"><h2>stores the whitelisted rooms from env<span class="duration">1ms</span></h2><pre><code>return this.director.names.should.eql(['Capital']);</code></pre></li></ul></li><li class="suite"><h1>blacklist type, username scope</h1><ul><li class="test pass fast"><h2>stores the blacklisted usernames from env<span class="duration">0ms</span></h2><pre><code>return this.director.names.should.eql(['Winston', 'Julia', 'Syme']);</code></pre></li></ul></li><li class="suite"><h1>blacklist type, room scope</h1><ul><li class="test pass fast"><h2>stores the blacklisted rooms from env<span class="duration">0ms</span></h2><pre><code>return this.director.names.should.eql(['Labour']);</code></pre></li></ul></li></ul></li><li class="suite"><h1>with invalid option for type</h1><ul><li class="test pass fast"><h2>should throw error<span class="duration">0ms</span></h2><pre><code>return Director.prototype.constructor.should[&quot;throw&quot;];</code></pre></li></ul></li><li class="suite"><h1>with invalid option for scope</h1><ul><li class="test pass fast"><h2>should throw error<span class="duration">0ms</span></h2><pre><code>return Director.prototype.constructor.should[&quot;throw&quot;];</code></pre></li></ul></li><li class="suite"><h1>without key, with authorise function and options</h1><ul><li class="test pass fast"><h2>uses options<span class="duration">0ms</span></h2><pre><code>return this.director.config.scope.should.equal('room');</code></pre></li><li class="test pass fast"><h2>uses authorise function<span class="duration">0ms</span></h2><pre><code>return this.director.authorise.should.eql(this.authorise);</code></pre></li></ul></li></ul></li><li class="suite"><h1>.add</h1><ul><li class="suite"><h1>given array of names</h1><ul><li class="test pass fast"><h2>stores them in the names array<span class="duration">0ms</span></h2><pre><code>return this.director.names.should.eql(['pema', 'nima']);</code></pre></li></ul></li><li class="suite"><h1>given single name</h1><ul><li class="test pass fast"><h2>stores it in the names array<span class="duration">0ms</span></h2><pre><code>return this.director.names.should.eql(['pema']);</code></pre></li></ul></li><li class="suite"><h1>given array of names, some existing</h1><ul><li class="test pass fast"><h2>adds any missing, not duplicating existing<span class="duration">0ms</span></h2><pre><code>return this.director.names.should.eql(['yeon', 'juan', 'pema']);</code></pre></li></ul></li></ul></li><li class="suite"><h1>.remove</h1><ul><li class="suite"><h1>given array of names</h1><ul><li class="test pass fast"><h2>removes them from the names array<span class="duration">0ms</span></h2><pre><code>return this.director.names.should.eql(['yeon', 'juan']);</code></pre></li></ul></li><li class="suite"><h1>with single name</h1><ul><li class="test pass fast"><h2>removes it from the names array<span class="duration">0ms</span></h2><pre><code>return this.director.names.should.eql(['yeon', 'juan', 'nima']);</code></pre></li></ul></li><li class="suite"><h1>with array names, some not existing</h1><ul><li class="test pass fast"><h2>removes any missing, ignoring others<span class="duration">1ms</span></h2><pre><code>return this.director.names.should.eql(['yeon']);</code></pre></li></ul></li></ul></li><li class="suite"><h1>.isAllowed</h1><ul><li class="suite"><h1>whitelist without authorise function</h1><ul><li class="suite"><h1>no list</h1><ul><li class="test pass fast"><h2>returns false<span class="duration">1ms</span></h2><pre><code>var director;
+});</code></pre></li></ul></li><li class="suite"><h1>with env var for names</h1><ul><li class="suite"><h1>whitelist type, username scope</h1><ul><li class="test pass fast"><h2>stores the whitelisted usernames from env<span class="duration">0ms</span></h2><pre><code>return this.director.names.should.eql(['Emmanuel']);</code></pre></li></ul></li><li class="suite"><h1>whitelist type, room scope</h1><ul><li class="test pass fast"><h2>stores the whitelisted rooms from env<span class="duration">0ms</span></h2><pre><code>return this.director.names.should.eql(['Capital']);</code></pre></li></ul></li><li class="suite"><h1>blacklist type, username scope</h1><ul><li class="test pass fast"><h2>stores the blacklisted usernames from env<span class="duration">0ms</span></h2><pre><code>return this.director.names.should.eql(['Winston', 'Julia', 'Syme']);</code></pre></li></ul></li><li class="suite"><h1>blacklist type, room scope</h1><ul><li class="test pass fast"><h2>stores the blacklisted rooms from env<span class="duration">0ms</span></h2><pre><code>return this.director.names.should.eql(['Labour']);</code></pre></li></ul></li></ul></li><li class="suite"><h1>with invalid option for type</h1><ul><li class="test pass fast"><h2>should throw error<span class="duration">0ms</span></h2><pre><code>return Director.prototype.constructor.should[&quot;throw&quot;];</code></pre></li></ul></li><li class="suite"><h1>with invalid option for scope</h1><ul><li class="test pass fast"><h2>should throw error<span class="duration">0ms</span></h2><pre><code>return Director.prototype.constructor.should[&quot;throw&quot;];</code></pre></li></ul></li><li class="suite"><h1>without key, with authorise function and options</h1><ul><li class="test pass fast"><h2>uses options<span class="duration">0ms</span></h2><pre><code>return this.director.config.scope.should.equal('room');</code></pre></li><li class="test pass fast"><h2>uses authorise function<span class="duration">0ms</span></h2><pre><code>return this.director.authorise.should.eql(this.authorise);</code></pre></li></ul></li></ul></li><li class="suite"><h1>.add</h1><ul><li class="suite"><h1>given array of names</h1><ul><li class="test pass fast"><h2>stores them in the names array<span class="duration">0ms</span></h2><pre><code>return this.director.names.should.eql(['pema', 'nima']);</code></pre></li></ul></li><li class="suite"><h1>given single name</h1><ul><li class="test pass fast"><h2>stores it in the names array<span class="duration">0ms</span></h2><pre><code>return this.director.names.should.eql(['pema']);</code></pre></li></ul></li><li class="suite"><h1>given array of names, some existing</h1><ul><li class="test pass fast"><h2>adds any missing, not duplicating existing<span class="duration">0ms</span></h2><pre><code>return this.director.names.should.eql(['yeon', 'juan', 'pema']);</code></pre></li></ul></li></ul></li><li class="suite"><h1>.remove</h1><ul><li class="suite"><h1>given array of names</h1><ul><li class="test pass fast"><h2>removes them from the names array<span class="duration">0ms</span></h2><pre><code>return this.director.names.should.eql(['yeon', 'juan']);</code></pre></li></ul></li><li class="suite"><h1>with single name</h1><ul><li class="test pass fast"><h2>removes it from the names array<span class="duration">0ms</span></h2><pre><code>return this.director.names.should.eql(['yeon', 'juan', 'nima']);</code></pre></li></ul></li><li class="suite"><h1>with array names, some not existing</h1><ul><li class="test pass fast"><h2>removes any missing, ignoring others<span class="duration">0ms</span></h2><pre><code>return this.director.names.should.eql(['yeon']);</code></pre></li></ul></li></ul></li><li class="suite"><h1>.isAllowed</h1><ul><li class="suite"><h1>whitelist without authorise function</h1><ul><li class="suite"><h1>no list</h1><ul><li class="test pass fast"><h2>returns false<span class="duration">2ms</span></h2><pre><code>var director;
 director = new Director(pretend.robot);
-return director.isAllowed(pretend.response('tester', 'test')).should.be[&quot;false&quot;];</code></pre></li></ul></li><li class="suite"><h1>has list, username on list</h1><ul><li class="test pass fast"><h2>returns true<span class="duration">2ms</span></h2><pre><code>var director;
+return director.isAllowed(pretend.response('tester', 'test')).should.be[&quot;false&quot;];</code></pre></li></ul></li><li class="suite"><h1>has list, username on list</h1><ul><li class="test pass fast"><h2>returns true<span class="duration">1ms</span></h2><pre><code>var director;
 director = new Director(pretend.robot);
 director.names = ['tester'];
 return director.isAllowed(pretend.response('tester', 'test')).should.be[&quot;true&quot;];</code></pre></li></ul></li><li class="suite"><h1>has list, username not on list</h1><ul><li class="test pass fast"><h2>returns false<span class="duration">1ms</span></h2><pre><code>var director;
 director = new Director(pretend.robot);
 director.names = ['nobody'];
-return director.isAllowed(pretend.response('tester', 'test')).should.be[&quot;false&quot;];</code></pre></li></ul></li></ul></li><li class="suite"><h1>blacklist without authorise function</h1><ul><li class="suite"><h1>no list</h1><ul><li class="test pass fast"><h2>returns true<span class="duration">1ms</span></h2><pre><code>var director;
+return director.isAllowed(pretend.response('tester', 'test')).should.be[&quot;false&quot;];</code></pre></li></ul></li></ul></li><li class="suite"><h1>blacklist without authorise function</h1><ul><li class="suite"><h1>no list</h1><ul><li class="test pass fast"><h2>returns true<span class="duration">2ms</span></h2><pre><code>var director;
 director = new Director(pretend.robot, {
   type: 'blacklist'
 });
-return director.isAllowed(pretend.response('tester', 'test')).should.be[&quot;true&quot;];</code></pre></li></ul></li><li class="suite"><h1>has list, username on list</h1><ul><li class="test pass fast"><h2>returns false<span class="duration">3ms</span></h2><pre><code>var director;
+return director.isAllowed(pretend.response('tester', 'test')).should.be[&quot;true&quot;];</code></pre></li></ul></li><li class="suite"><h1>has list, username on list</h1><ul><li class="test pass fast"><h2>returns false<span class="duration">1ms</span></h2><pre><code>var director;
 director = new Director(pretend.robot, {
   type: 'blacklist'
 });
@@ -1546,14 +1592,14 @@ director = new Director(pretend.robot, {
   type: 'blacklist'
 });
 director.names = ['nobody'];
-return director.isAllowed(pretend.response('tester', 'test')).should.be[&quot;true&quot;];</code></pre></li></ul></li></ul></li><li class="suite"><h1>whitelist with authorise function</h1><ul><li class="suite"><h1>no list</h1><ul><li class="test pass fast"><h2>calls authorise function with username and res<span class="duration">3ms</span></h2><pre><code>var authorise, director, res;
+return director.isAllowed(pretend.response('tester', 'test')).should.be[&quot;true&quot;];</code></pre></li></ul></li></ul></li><li class="suite"><h1>whitelist with authorise function</h1><ul><li class="suite"><h1>no list</h1><ul><li class="test pass fast"><h2>calls authorise function with username and res<span class="duration">1ms</span></h2><pre><code>var authorise, director, res;
 authorise = sinon.spy(function() {
   return 'AUTHORISE';
 });
 director = new Director(pretend.robot, authorise);
 res = pretend.response('tester', 'test');
 director.isAllowed(res);
-return authorise.should.have.calledWith('tester', res);</code></pre></li><li class="test pass fast"><h2>returns value of authorise function<span class="duration">3ms</span></h2><pre><code>var authorise, director;
+return authorise.should.have.calledWith('tester', res);</code></pre></li><li class="test pass fast"><h2>returns value of authorise function<span class="duration">2ms</span></h2><pre><code>var authorise, director;
 authorise = sinon.spy(function() {
   return 'AUTHORISE';
 });
@@ -1564,20 +1610,20 @@ authorise = sinon.spy(function() {
 });
 director = new Director(pretend.robot, authorise);
 director.names = ['tester'];
-return director.isAllowed(pretend.response('tester', 'test')).should.be[&quot;true&quot;];</code></pre></li><li class="test pass fast"><h2>does not call authorise function<span class="duration">3ms</span></h2><pre><code>var authorise, director;
+return director.isAllowed(pretend.response('tester', 'test')).should.be[&quot;true&quot;];</code></pre></li><li class="test pass fast"><h2>does not call authorise function<span class="duration">7ms</span></h2><pre><code>var authorise, director;
 authorise = sinon.spy(function() {
   return 'AUTHORISE';
 });
 director = new Director(pretend.robot, authorise);
 director.names = ['tester'];
 director.isAllowed(pretend.response('tester', 'test'));
-return authorise.should.not.have.been.calledOnce;</code></pre></li></ul></li><li class="suite"><h1>has list, username not on list</h1><ul><li class="test pass fast"><h2>returns value of authorise function<span class="duration">3ms</span></h2><pre><code>var authorise, director;
+return authorise.should.not.have.been.calledOnce;</code></pre></li></ul></li><li class="suite"><h1>has list, username not on list</h1><ul><li class="test pass fast"><h2>returns value of authorise function<span class="duration">1ms</span></h2><pre><code>var authorise, director;
 authorise = sinon.spy(function() {
   return 'AUTHORISE';
 });
 director = new Director(pretend.robot, authorise);
 director.names = ['nobody'];
-return director.isAllowed(pretend.response('tester', 'test')).should.equal('AUTHORISE');</code></pre></li></ul></li></ul></li><li class="suite"><h1>blacklist with authorise function</h1><ul><li class="suite"><h1>no list</h1><ul><li class="test pass fast"><h2>calls authorise function with username and res<span class="duration">2ms</span></h2><pre><code>var authorise, director, res;
+return director.isAllowed(pretend.response('tester', 'test')).should.equal('AUTHORISE');</code></pre></li></ul></li></ul></li><li class="suite"><h1>blacklist with authorise function</h1><ul><li class="suite"><h1>no list</h1><ul><li class="test pass fast"><h2>calls authorise function with username and res<span class="duration">1ms</span></h2><pre><code>var authorise, director, res;
 authorise = sinon.spy(function() {
   return 'AUTHORISE';
 });
@@ -1586,7 +1632,7 @@ director = new Director(pretend.robot, authorise, {
 });
 res = pretend.response('tester', 'test');
 director.isAllowed(res);
-return authorise.should.have.calledWith('tester', res);</code></pre></li><li class="test pass fast"><h2>returns value of authorise function<span class="duration">3ms</span></h2><pre><code>var authorise, director;
+return authorise.should.have.calledWith('tester', res);</code></pre></li><li class="test pass fast"><h2>returns value of authorise function<span class="duration">1ms</span></h2><pre><code>var authorise, director;
 authorise = sinon.spy(function() {
   return 'AUTHORISE';
 });
@@ -1601,7 +1647,7 @@ director = new Director(pretend.robot, authorise, {
   type: 'blacklist'
 });
 director.names = ['tester'];
-return director.isAllowed(pretend.response('tester', 'test')).should.be[&quot;false&quot;];</code></pre></li><li class="test pass fast"><h2>does not call authorise function<span class="duration">3ms</span></h2><pre><code>var authorise, director;
+return director.isAllowed(pretend.response('tester', 'test')).should.be[&quot;false&quot;];</code></pre></li><li class="test pass fast"><h2>does not call authorise function<span class="duration">2ms</span></h2><pre><code>var authorise, director;
 authorise = sinon.spy(function() {
   return 'AUTHORISE';
 });
@@ -1624,7 +1670,7 @@ director = new Director(pretend.robot, {
   scope: 'room'
 });
 director.names = ['testing'];
-return director.isAllowed(pretend.response('tester', 'test', 'testing')).should.be[&quot;false&quot;];</code></pre></li></ul></li><li class="suite"><h1>room scope, whitelist room</h1><ul><li class="test pass fast"><h2>returns true<span class="duration">1ms</span></h2><pre><code>var director;
+return director.isAllowed(pretend.response('tester', 'test', 'testing')).should.be[&quot;false&quot;];</code></pre></li></ul></li><li class="suite"><h1>room scope, whitelist room</h1><ul><li class="test pass fast"><h2>returns true<span class="duration">2ms</span></h2><pre><code>var director;
 director = new Director(pretend.robot, {
   type: 'whitelist',
   scope: 'room'
@@ -1638,13 +1684,13 @@ director.process(res);
 return director.isAllowed.should.have.calledWith(res);</code></pre></li><li class="test pass fast"><h2>returns a promise<span class="duration">2ms</span></h2><pre><code>var director, scene;
 director = new Director(pretend.robot);
 scene = new Scene(pretend.robot);
-return director.process(pretend.response('tester', 'testing')).then.should.be.a('function');</code></pre></li><li class="test pass fast"><h2>resolves to .isAllowed result<span class="duration">3ms</span></h2><pre><code>return co(function*() {
+return director.process(pretend.response('tester', 'testing')).then.should.be.a('function');</code></pre></li><li class="test pass fast"><h2>resolves to .isAllowed result<span class="duration">2ms</span></h2><pre><code>return co(function*() {
   var director, result, scene;
   director = new Director(pretend.robot);
   scene = new Scene(pretend.robot);
   result = (yield director.process(pretend.response('tester', 'testing')));
   return result.should.equal(director.isAllowed.returnValues.pop());
-});</code></pre></li><li class="suite"><h1>with async auth function</h1><ul><li class="test pass fast"><h2>resolves with auth function result after finished<span class="duration">35ms</span></h2><pre><code>return co(function*() {
+});</code></pre></li><li class="suite"><h1>with async auth function</h1><ul><li class="test pass fast"><h2>resolves with auth function result after finished<span class="duration">33ms</span></h2><pre><code>return co(function*() {
   var authorise, director, result;
   authorise = function() {
     return new Promise(function(resolve, reject) {
@@ -1666,7 +1712,7 @@ return director.process(pretend.response('tester', 'testing')).then.should.be.a(
   res = pretend.response('tester', 'test');
   yield director.process(res);
   return res.reply.should.have.calledWith('DENIED');
-});</code></pre></li></ul></li><li class="suite"><h1>denied without denied reply value</h1><ul><li class="test pass fast"><h2>does not call response reply method<span class="duration">3ms</span></h2><pre><code>return co(function*() {
+});</code></pre></li></ul></li><li class="suite"><h1>denied without denied reply value</h1><ul><li class="test pass fast"><h2>does not call response reply method<span class="duration">2ms</span></h2><pre><code>return co(function*() {
   var director, res;
   director = new Director(pretend.robot);
   res = pretend.response('tester', 'test');
@@ -1692,7 +1738,7 @@ return director.process(pretend.response('tester', 'testing')).then.should.be.a(
   res = pretend.response('tester', 'test');
   yield director.process(res);
   return res.reply.should.not.have.called;
-});</code></pre></li></ul></li></ul></li><li class="suite"><h1>.directMatch</h1><ul><li class="suite"><h1>allowed user sending message matching directed match</h1><ul><li class="test pass fast"><h2>calls .process to perform access checks and reply<span class="duration">2ms</span></h2><pre><code>return co(function*() {
+});</code></pre></li></ul></li></ul></li><li class="suite"><h1>.directMatch</h1><ul><li class="suite"><h1>allowed user sending message matching directed match</h1><ul><li class="test pass fast"><h2>calls .process to perform access checks and reply<span class="duration">1ms</span></h2><pre><code>return co(function*() {
   var director;
   director = new Director(pretend.robot);
   pretend.robot.hear(/let me in/, function() {});
@@ -1700,7 +1746,7 @@ return director.process(pretend.response('tester', 'testing')).then.should.be.a(
   director.names = ['tester'];
   yield pretend.user('tester').send('let me in');
   return director.process.should.have.calledOnce;
-});</code></pre></li><li class="test pass fast"><h2>triggers match callback normally<span class="duration">2ms</span></h2><pre><code>return co(function*() {
+});</code></pre></li><li class="test pass fast"><h2>triggers match callback normally<span class="duration">1ms</span></h2><pre><code>return co(function*() {
   var callback, director;
   director = new Director(pretend.robot);
   callback = sinon.spy();
@@ -1740,7 +1786,7 @@ return director.process(pretend.response('tester', 'testing')).then.should.be.a(
   director.directListener('entry-test');
   yield pretend.user('tester').send('let me in');
   return director.process.should.have.calledOnce;
-});</code></pre></li><li class="test pass fast"><h2>triggers match callback when allowed<span class="duration">2ms</span></h2><pre><code>return co(function*() {
+});</code></pre></li><li class="test pass fast"><h2>triggers match callback when allowed<span class="duration">1ms</span></h2><pre><code>return co(function*() {
   var callback, director;
   director = new Director(pretend.robot);
   callback = sinon.spy();
@@ -1751,7 +1797,7 @@ return director.process(pretend.response('tester', 'testing')).then.should.be.a(
   director.names = ['tester'];
   yield pretend.user('tester').send('let me in');
   return callback.should.have.calledOnce;
-});</code></pre></li><li class="test pass fast"><h2>prevents match callback when denied<span class="duration">3ms</span></h2><pre><code>return co(function*() {
+});</code></pre></li><li class="test pass fast"><h2>prevents match callback when denied<span class="duration">2ms</span></h2><pre><code>return co(function*() {
   var callback, director;
   director = new Director(pretend.robot);
   callback = sinon.spy();
@@ -1761,7 +1807,7 @@ return director.process(pretend.response('tester', 'testing')).then.should.be.a(
   director.directListener('entry-test');
   yield pretend.user('tester').send('let me in');
   return callback.should.not.have.called;
-});</code></pre></li></ul></li><li class="suite"><h1>with unmatched message</h1><ul><li class="test pass fast"><h2>does not call .process because middleware did not match<span class="duration">1ms</span></h2><pre><code>return co(function*() {
+});</code></pre></li></ul></li><li class="suite"><h1>with unmatched message</h1><ul><li class="test pass fast"><h2>does not call .process because middleware did not match<span class="duration">0ms</span></h2><pre><code>return co(function*() {
   var director;
   director = new Director(pretend.robot);
   pretend.robot.hear(/let me in/, {
@@ -1770,29 +1816,31 @@ return director.process(pretend.response('tester', 'testing')).then.should.be.a(
   director.directListener('entry-test');
   yield pretend.user('tester').send('foo');
   return director.process.should.not.have.called;
-});</code></pre></li></ul></li></ul></li><li class="suite"><h1>.directScene</h1><ul><li class="test pass fast"><h2>scene enter middleware calls director .process<span class="duration">5ms</span></h2><pre><code>var director, res, scene;
+});</code></pre></li></ul></li></ul></li><li class="suite"><h1>.directScene</h1><ul><li class="test pass fast"><h2>scene enter middleware calls director .process<span class="duration">2ms</span></h2><pre><code>var director, res, scene;
 director = new Director(pretend.robot);
 scene = new Scene(pretend.robot);
 director.directScene(scene);
 res = pretend.response('tester', 'test');
-return scene.enter(res).then(function() {
+return scene.enter(res)[&quot;catch&quot;](function() {
   return director.process.should.have.calledWith(res);
-});</code></pre></li><li class="suite"><h1>user allowed</h1><ul><li class="test pass fast"><h2>allowed scene enter, resolves with Dialogue<span class="duration">3ms</span></h2><pre><code>var director, scene;
+});</code></pre></li><li class="suite"><h1>user allowed</h1><ul><li class="test pass fast"><h2>allowed scene enter, resolves with context<span class="duration">2ms</span></h2><pre><code>var director, keys, scene;
 director = new Director(pretend.robot);
 scene = new Scene(pretend.robot);
+keys = ['response', 'participants', 'options', 'arguments', 'dialogue'];
 director.directScene(scene);
 director.names = ['tester'];
 return scene.enter(pretend.response('tester', 'test')).then(function(result) {
-  scene.processEnter.should.have.calledOnce;
-  return result.should.be[&quot;instanceof&quot;](Dialogue);
-});</code></pre></li></ul></li><li class="suite"><h1>user denied</h1><ul><li class="test pass fast"><h2>preempts scene enter, resolves undefined instead<span class="duration">2ms</span></h2><pre><code>var director, scene;
+  var ref;
+  return (ref = result.should.have.all).keys.apply(ref, keys);
+});</code></pre></li></ul></li><li class="suite"><h1>user denied</h1><ul><li class="test pass fast"><h2>preempts scene enter, rejects promise<span class="duration">2ms</span></h2><pre><code>var director, scene;
 director = new Director(pretend.robot);
 scene = new Scene(pretend.robot);
 director.directScene(scene);
-return scene.enter(pretend.response('tester', 'test')).then(function(result) {
-  scene.processEnter.should.not.have.called;
-  return should.not.exist(result);
-});</code></pre></li></ul></li><li class="suite"><h1>with multiple scenes, only one directed</h1><ul><li class="test pass fast"><h2>calls process only once for the directed scene<span class="duration">13ms</span></h2><pre><code>return co(function*() {
+return scene.enter(pretend.response('tester', 'test')).then(function() {
+  throw new Error('promise should have caught');
+})[&quot;catch&quot;](function(err) {
+  return err.should.be[&quot;instanceof&quot;](Error);
+});</code></pre></li></ul></li><li class="suite"><h1>with multiple scenes, only one directed</h1><ul><li class="test pass fast"><h2>calls process only once for the directed scene<span class="duration">4ms</span></h2><pre><code>return co(function*() {
   var director, resA, resB, sceneA, sceneB;
   director = new Director(pretend.robot);
   sceneA = new Scene(pretend.robot);
@@ -1800,11 +1848,13 @@ return scene.enter(pretend.response('tester', 'test')).then(function(result) {
   director.directScene(sceneA);
   resA = pretend.response('tester', 'let me in A');
   resB = pretend.response('tester', 'let me in A');
-  yield sceneA.enter(resA);
-  yield sceneB.enter(resB);
+  try {
+    yield sceneA.enter(resA);
+    yield sceneB.enter(resB);
+  } catch (error) {}
   director.process.should.have.calledOnce;
   return director.process.should.have.calledWithExactly(resA);
-});</code></pre></li></ul></li><li class="suite"><h1>allowed user sends message matching scene listener</h1><ul><li class="test pass medium"><h2>allows scene to process entry<span class="duration">38ms</span></h2><pre><code>var callback, director, scene;
+});</code></pre></li></ul></li><li class="suite"><h1>allowed user sends message matching scene listener</h1><ul><li class="test pass medium"><h2>allows scene to process entry<span class="duration">39ms</span></h2><pre><code>var callback, director, scene;
 director = new Director(pretend.robot);
 scene = new Scene(pretend.robot);
 director.directScene(scene);
@@ -1816,7 +1866,7 @@ return setTimeout(function() {
   scene.processEnter.should.have.calledOnce;
   callback.should.have.calledOnce;
   return done();
-}, 35);</code></pre></li></ul></li><li class="suite"><h1>denied user sends message matching scene listener</h1><ul><li class="test pass medium"><h2>prevents the scene from processing entry<span class="duration">41ms</span></h2><pre><code>var callback, director, scene;
+}, 35);</code></pre></li></ul></li><li class="suite"><h1>denied user sends message matching scene listener</h1><ul><li class="test pass medium"><h2>prevents the scene from processing entry<span class="duration">38ms</span></h2><pre><code>var callback, director, scene;
 director = new Director(pretend.robot);
 scene = new Scene(pretend.robot);
 director.directScene(scene);
@@ -1832,7 +1882,7 @@ return setTimeout(function() {
     time: 0,
     event: 'test'
   }
-]);</code></pre></li></ul></li><li class="suite"><h1>with saving disabled</h1><ul><li class="test pass fast"><h2>keeps records in a new empty array<span class="duration">0ms</span></h2><pre><code>return this.transcript.records.should.eql([]);</code></pre></li></ul></li></ul></li><li class="suite"><h1>.recordEvent</h1><ul><li class="suite"><h1>emitted from Hubot/brain</h1><ul><li class="test pass fast"><h2>records event &quot;other&quot; data<span class="duration">0ms</span></h2><pre><code>return this.transcript.records.should.eql([
+]);</code></pre></li></ul></li><li class="suite"><h1>with saving disabled</h1><ul><li class="test pass fast"><h2>keeps records in a new empty array<span class="duration">1ms</span></h2><pre><code>return this.transcript.records.should.eql([]);</code></pre></li></ul></li></ul></li><li class="suite"><h1>.recordEvent</h1><ul><li class="suite"><h1>emitted from Hubot/brain</h1><ul><li class="test pass fast"><h2>records event &quot;other&quot; data<span class="duration">0ms</span></h2><pre><code>return this.transcript.records.should.eql([
   {
     time: 0,
     event: 'mockEvent',
@@ -1866,7 +1916,7 @@ this.transcript.on('record', (function(_this) {
     return done();
   };
 })(this));
-return this.module.emit('mockEvent', res);</code></pre></li><li class="test pass fast"><h2>records default message attributes<span class="duration">4ms</span></h2><pre><code>var res;
+return this.module.emit('mockEvent', res);</code></pre></li><li class="test pass fast"><h2>records default message attributes<span class="duration">3ms</span></h2><pre><code>var res;
 res = pretend.response('tester', 'test', 'testing');
 this.transcript.on('record', (function(_this) {
   return function() {
@@ -1920,10 +1970,10 @@ return this.module.emit('mockEvent', pretend.response('tester', 'test'));</code>
       id: this.module.id
     }
   }
-]);</code></pre></li><li class="test pass fast"><h2>does not throw<span class="duration">0ms</span></h2><pre><code>return this.transcript.recordEvent.should.not[&quot;throw&quot;];</code></pre></li></ul></li></ul></li></ul></li><li class="suite"><h1>.recordAll</h1><ul><li class="suite"><h1>with default event set</h1><ul><li class="test pass fast"><h2>records default events only<span class="duration">0ms</span></h2><pre><code>return this.transcript.recordEvent.args.should.eql([['match'], ['mismatch'], ['catch'], ['send']]);</code></pre></li></ul></li><li class="suite"><h1>with custom event set</h1><ul><li class="test pass fast"><h2>records custom events only<span class="duration">0ms</span></h2><pre><code>return this.transcript.recordEvent.args.should.eql([['foo'], ['bar']]);</code></pre></li></ul></li></ul></li><li class="suite"><h1>.recordDialogue</h1><ul><li class="suite"><h1>with default event set</h1><ul><li class="test pass fast"><h2>attached listener for default events from dialogue and path<span class="duration">0ms</span></h2><pre><code>var expectedEvents;
+]);</code></pre></li><li class="test pass fast"><h2>does not throw<span class="duration">0ms</span></h2><pre><code>return this.transcript.recordEvent.should.not[&quot;throw&quot;];</code></pre></li></ul></li></ul></li></ul></li><li class="suite"><h1>.recordAll</h1><ul><li class="suite"><h1>with default event set</h1><ul><li class="test pass fast"><h2>records default events only<span class="duration">0ms</span></h2><pre><code>return this.transcript.recordEvent.args.should.eql([['match'], ['mismatch'], ['catch'], ['send']]);</code></pre></li></ul></li><li class="suite"><h1>with custom event set</h1><ul><li class="test pass fast"><h2>records custom events only<span class="duration">0ms</span></h2><pre><code>return this.transcript.recordEvent.args.should.eql([['foo'], ['bar']]);</code></pre></li></ul></li></ul></li><li class="suite"><h1>.recordDialogue</h1><ul><li class="suite"><h1>with default event set</h1><ul><li class="test pass fast"><h2>attached listener for default events from dialogue and path<span class="duration">1ms</span></h2><pre><code>var expectedEvents;
 expectedEvents = this.transcript.config.events;
 expectedEvents.push('path');
-return _.keys(pretend.robot._events).should.have.members(expectedEvents);</code></pre></li><li class="test pass fast"><h2>calls the listener when event emited from dialogue path<span class="duration">0ms</span></h2><pre><code>return this.transcript.recordEvent.should.have.calledWith('match', this.dialogue.path);</code></pre></li></ul></li><li class="suite"><h1>with custom event set</h1><ul><li class="test pass fast"><h2>attached listener for default events from dialogue and path<span class="duration">0ms</span></h2><pre><code>return _.keys(pretend.robot._events).should.have.members(['match', 'mismatch', 'end', 'path']);</code></pre></li><li class="test pass fast"><h2>calls the listener when event emited from dialogue<span class="duration">0ms</span></h2><pre><code>return this.transcript.recordEvent.should.have.calledWith('end', this.dialogue);</code></pre></li><li class="test pass fast"><h2>calls the listener when event emited from path<span class="duration">0ms</span></h2><pre><code>return this.transcript.recordEvent.should.have.calledWith('match', this.dialogue.path);</code></pre></li><li class="test pass fast"><h2>does not call with any unconfigured events<span class="duration">0ms</span></h2><pre><code>return this.transcript.recordEvent.should.not.have.calledWith('send', this.dialogue);</code></pre></li></ul></li></ul></li><li class="suite"><h1>.recordScene</h1><ul><li class="test pass fast"><h2>records events emitted by scene, its dialogues and paths<span class="duration">6ms</span></h2><pre><code>return co(function*() {
+return _.keys(pretend.robot._events).should.have.members(expectedEvents);</code></pre></li><li class="test pass fast"><h2>calls the listener when event emited from dialogue path<span class="duration">0ms</span></h2><pre><code>return this.transcript.recordEvent.should.have.calledWith('match', this.dialogue.path);</code></pre></li></ul></li><li class="suite"><h1>with custom event set</h1><ul><li class="test pass fast"><h2>attached listener for default events from dialogue and path<span class="duration">0ms</span></h2><pre><code>return _.keys(pretend.robot._events).should.have.members(['match', 'mismatch', 'end', 'path']);</code></pre></li><li class="test pass fast"><h2>calls the listener when event emited from dialogue<span class="duration">0ms</span></h2><pre><code>return this.transcript.recordEvent.should.have.calledWith('end', this.dialogue);</code></pre></li><li class="test pass fast"><h2>calls the listener when event emited from path<span class="duration">0ms</span></h2><pre><code>return this.transcript.recordEvent.should.have.calledWith('match', this.dialogue.path);</code></pre></li><li class="test pass fast"><h2>does not call with any unconfigured events<span class="duration">0ms</span></h2><pre><code>return this.transcript.recordEvent.should.not.have.calledWith('send', this.dialogue);</code></pre></li></ul></li></ul></li><li class="suite"><h1>.recordScene</h1><ul><li class="test pass fast"><h2>records events emitted by scene, its dialogues and paths<span class="duration">4ms</span></h2><pre><code>return co(function*() {
   var dialogue, records, res, scene, transcript;
   res = pretend.response('tester', 'test');
   removeListeners(pretend.robot);
@@ -1933,14 +1983,14 @@ return _.keys(pretend.robot._events).should.have.members(expectedEvents);</code>
   });
   scene = new Scene(pretend.robot);
   transcript.recordScene(scene);
-  dialogue = (yield scene.enter(res));
+  dialogue = (yield scene.enter(res)).dialogue;
   dialogue.addBranch(/test/, 'response');
   yield dialogue.receive(res);
   records = transcript.recordEvent.args.map(function(record) {
     return _.take(record, 2);
   });
   return records.should.eql([['enter', scene], ['match', dialogue.path], ['send', dialogue]]);
-});</code></pre></li></ul></li><li class="suite"><h1>.recordDirector</h1><ul><li class="test pass fast"><h2>attached listeners for director events<span class="duration">1ms</span></h2><pre><code>var director, transcript;
+});</code></pre></li></ul></li><li class="suite"><h1>.recordDirector</h1><ul><li class="test pass fast"><h2>attached listeners for director events<span class="duration">0ms</span></h2><pre><code>var director, transcript;
 removeListeners(pretend.robot);
 transcript = new Transcript(pretend.robot, {
   save: false
@@ -1949,7 +1999,7 @@ director = new Director(pretend.robot, {
   type: 'blacklist'
 });
 transcript.recordDirector(director);
-return _.keys(pretend.robot._events).should.eql(['allow', 'deny']);</code></pre></li><li class="test pass fast"><h2>records events emitted by director<span class="duration">4ms</span></h2><pre><code>return co(function*() {
+return _.keys(pretend.robot._events).should.eql(['allow', 'deny']);</code></pre></li><li class="test pass fast"><h2>records events emitted by director<span class="duration">3ms</span></h2><pre><code>return co(function*() {
   var director, res, transcript;
   removeListeners(pretend.robot);
   transcript = new Transcript(pretend.robot, {
@@ -1965,7 +2015,7 @@ return _.keys(pretend.robot._events).should.eql(['allow', 'deny']);</code></pre>
   director.config.type = 'whitelist';
   yield director.process(res);
   return transcript.recordEvent.args.should.eql([['deny', director, res], ['allow', director, res]]);
-});</code></pre></li></ul></li><li class="suite"><h1>.findRecords</h1><ul><li class="suite"><h1>with record subset matcher</h1><ul><li class="test pass fast"><h2>returns records matching given attributes<span class="duration">1ms</span></h2><pre><code>return this.transcript.findRecords({
+});</code></pre></li></ul></li><li class="suite"><h1>.findRecords</h1><ul><li class="suite"><h1>with record subset matcher</h1><ul><li class="test pass fast"><h2>returns records matching given attributes<span class="duration">0ms</span></h2><pre><code>return this.transcript.findRecords({
   message: {
     user: {
       name: 'jon'
@@ -2015,20 +2065,20 @@ let testString = 'Test'
 let testMatch = testString.match(/test/i)
 _.isRegExp(outline.bitCondition('testing')).should.equal(true)
 testString.match(outline.bitCondition('testing')).should.eql(testMatch)
-// console.log(bits[0].condition, testString.match(outline.bitCondition('testing')))</code></pre></li></ul></li><li class="suite"><h1>with simple word only string</h1><ul><li class="test pass fast"><h2>creates a valid (case-insensative) regex from word<span class="duration">0ms</span></h2><pre><code>let bits = [{ key: 'testing', condition: 'test' }]
+// console.log(bits[0].condition, testString.match(outline.bitCondition('testing')))</code></pre></li></ul></li><li class="suite"><h1>with simple word only string</h1><ul><li class="test pass fast"><h2>creates a valid (case-insensative) regex from word<span class="duration">1ms</span></h2><pre><code>let bits = [{ key: 'testing', condition: 'test' }]
 let outline = new Outline(pretend.robot, bits)
 let testString = 'Test'
 let testMatch = testString.match(/test/i)
 _.isRegExp(outline.bitCondition('testing')).should.equal(true)
 testString.match(outline.bitCondition('testing')).should.eql(testMatch)
-// console.log(bits[0].condition, testString.match(outline.bitCondition('testing')))</code></pre></li></ul></li></ul></li></ul></li><li class="suite"><h1>Improv</h1><ul><li class="suite"><h1>singleton</h1><ul><li class="test pass fast"><h2>sequential use returns existing instance<span class="duration">1ms</span></h2><pre><code>var improvA, improvB;
+// console.log(bits[0].condition, testString.match(outline.bitCondition('testing')))</code></pre></li></ul></li></ul></li></ul></li><li class="suite"><h1>Improv</h1><ul><li class="suite"><h1>singleton</h1><ul><li class="test pass fast"><h2>sequential use returns existing instance<span class="duration">0ms</span></h2><pre><code>var improvA, improvB;
 improvA = improv.use(pretend.robot);
 improvB = improv.use(pretend.robot);
 return improvA.should.eql(improvB);</code></pre></li><li class="test pass fast"><h2>instance persists after test robot shutdown<span class="duration">0ms</span></h2><pre><code>return improv.instance.should.exist;</code></pre></li><li class="test pass fast"><h2>use after clear returns new instance<span class="duration">0ms</span></h2><pre><code>var improvA, improvB;
 improvA = improv.use(pretend.robot);
 improv.reset();
 improvB = improv.use(pretend.robot);
-return improvA.should.not.eql(improvB);</code></pre></li><li class="test pass fast"><h2>overwrite robot when reused<span class="duration">0ms</span></h2><pre><code>return improv.use(pretend.robot).robot.should.eql(pretend.robot);</code></pre></li><li class="test pass fast"><h2>configuration merges existing config<span class="duration">1ms</span></h2><pre><code>improv.configure({
+return improvA.should.not.eql(improvB);</code></pre></li><li class="test pass fast"><h2>overwrite robot when reused<span class="duration">0ms</span></h2><pre><code>return improv.use(pretend.robot).robot.should.eql(pretend.robot);</code></pre></li><li class="test pass fast"><h2>configuration merges existing config<span class="duration">0ms</span></h2><pre><code>improv.configure({
   foo: 'bar'
 });
 improv.configure({
@@ -2037,7 +2087,7 @@ improv.configure({
 return improv.instance.config.should.include({
   foo: 'bar',
   baz: 'qux'
-});</code></pre></li></ul></li><li class="suite"><h1>instance</h1><ul><li class="suite"><h1>.use</h1><ul><li class="test pass fast"><h2>attaches response middleware to robot<span class="duration">0ms</span></h2><pre><code>return pretend.robot.responseMiddleware.should.have.calledOnce;</code></pre></li></ul></li><li class="suite"><h1>.extend</h1><ul><li class="suite"><h1>with function only</h1><ul><li class="test pass fast"><h2>stores function in extensions array with undefined path<span class="duration">0ms</span></h2><pre><code>var func;
+});</code></pre></li></ul></li><li class="suite"><h1>instance</h1><ul><li class="suite"><h1>.use</h1><ul><li class="test pass fast"><h2>attaches response middleware to robot<span class="duration">0ms</span></h2><pre><code>return pretend.robot.responseMiddleware.should.have.calledOnce;</code></pre></li></ul></li><li class="suite"><h1>.extend</h1><ul><li class="suite"><h1>with function only</h1><ul><li class="test pass fast"><h2>stores function in extensions array with undefined path<span class="duration">1ms</span></h2><pre><code>var func;
 func = sinon.spy();
 improv.extend(func);
 return improv.extensions.should.eql([
@@ -2082,7 +2132,7 @@ return improv.data.should.eql({
     name: 'Hub',
     lang: 'en'
   }
-});</code></pre></li></ul></li><li class="suite"><h1>.mergeData</h1><ul><li class="suite"><h1>with data passed as option</h1><ul><li class="test pass fast"><h2>merges data with context<span class="duration">0ms</span></h2><pre><code>improv.data.site = {
+});</code></pre></li></ul></li><li class="suite"><h1>.mergeData</h1><ul><li class="suite"><h1>with data passed as option</h1><ul><li class="test pass fast"><h2>merges data with context<span class="duration">1ms</span></h2><pre><code>improv.data.site = {
   name: 'Hub'
 };
 return improv.mergeData({
@@ -2092,7 +2142,7 @@ return improv.mergeData({
   site: {
     name: 'Hub'
   }
-});</code></pre></li></ul></li><li class="suite"><h1>with data loaded from brain</h1><ul><li class="test pass fast"><h2>merges data with user data<span class="duration">0ms</span></h2><pre><code>improv.configure({
+});</code></pre></li></ul></li><li class="suite"><h1>with data loaded from brain</h1><ul><li class="test pass fast"><h2>merges data with user data<span class="duration">1ms</span></h2><pre><code>improv.configure({
   save: true
 });
 pretend.robot.brain.set('improv', {
@@ -2140,7 +2190,7 @@ return improv.mergeData({
     name: 'frendo',
     type: 'human'
   }
-});</code></pre></li><li class="suite"><h1>with paths argument matching extension</h1><ul><li class="test pass fast"><h2>merges extension with existing data<span class="duration">0ms</span></h2><pre><code>var func;
+});</code></pre></li><li class="suite"><h1>with paths argument matching extension</h1><ul><li class="test pass fast"><h2>merges extension with existing data<span class="duration">1ms</span></h2><pre><code>var func;
 func = function() {
   return {
     test: {
@@ -2174,7 +2224,7 @@ return improv.extend(func, 'test.foo').mergeData({
     foo: 'bar',
     baz: 'qux'
   }
-});</code></pre></li></ul></li><li class="suite"><h1>with paths that don't match extension</h1><ul><li class="test pass fast"><h2>returns extension data only<span class="duration">0ms</span></h2><pre><code>var func;
+});</code></pre></li></ul></li><li class="suite"><h1>with paths that don't match extension</h1><ul><li class="test pass fast"><h2>returns extension data only<span class="duration">1ms</span></h2><pre><code>var func;
 func = function() {
   return {
     test: {
@@ -2190,7 +2240,7 @@ return improv.extend(func, 'test.foo').mergeData({
   test: {
     baz: 'qux'
   }
-});</code></pre></li></ul></li></ul></li></ul></li><li class="suite"><h1>.parse</h1><ul><li class="suite"><h1>with data</h1><ul><li class="test pass fast"><h2>populates message template with data at path<span class="duration">1ms</span></h2><pre><code>improv.data = {
+});</code></pre></li></ul></li></ul></li></ul></li><li class="suite"><h1>.parse</h1><ul><li class="suite"><h1>with data</h1><ul><li class="test pass fast"><h2>populates message template with data at path<span class="duration">0ms</span></h2><pre><code>improv.data = {
   site: 'The Hub'
 };
 return improv.parse({
@@ -2208,7 +2258,7 @@ improv.data = {
 string = 'hey ${ this.user.name }, pay ${ this.product.price }';
 return improv.parse({
   strings: [string]
-}).should.eql(['hey unknown, pay $55']);</code></pre></li><li class="test pass fast"><h2>replaces entire string as configured<span class="duration">1ms</span></h2><pre><code>var string;
+}).should.eql(['hey unknown, pay $55']);</code></pre></li><li class="test pass fast"><h2>replaces entire string as configured<span class="duration">0ms</span></h2><pre><code>var string;
 improv.configure({
   replacement: '¯\\_(ツ)_/¯'
 });
@@ -2220,14 +2270,14 @@ improv.data = {
 string = 'hey ${ this.user.name }, pay ${ this.product.price }';
 return improv.parse({
   strings: [string]
-}).should.eql(['¯\\_(ツ)_/¯']);</code></pre></li></ul></li></ul></li><li class="suite"><h1>.middleware</h1><ul><li class="suite"><h1>with series of hubot sends</h1><ul><li class="test pass fast"><h2>rendered messages with data<span class="duration">0ms</span></h2><pre><code>return co(function*() {
+}).should.eql(['¯\\_(ツ)_/¯']);</code></pre></li></ul></li></ul></li><li class="suite"><h1>.middleware</h1><ul><li class="suite"><h1>with series of hubot sends</h1><ul><li class="test pass fast"><h2>rendered messages with data<span class="duration">1ms</span></h2><pre><code>return co(function*() {
   improv.data.site = {
     name: 'The Hub'
   };
   yield pretend.lastListen().send('hello you');
   yield pretend.lastListen().send('hi ${ this.user.name }');
   return pretend.messages.should.eql([['testing', 'tester', 'test'], ['testing', 'hubot', 'hello you'], ['testing', 'hubot', 'hi tester']]);
-});</code></pre></li></ul></li><li class="suite"><h1>with multiple strings</h1><ul><li class="test pass fast"><h2>renders each message with data<span class="duration">1ms</span></h2><pre><code>return co(function*() {
+});</code></pre></li></ul></li><li class="suite"><h1>with multiple strings</h1><ul><li class="test pass fast"><h2>renders each message with data<span class="duration">0ms</span></h2><pre><code>return co(function*() {
   improv.data.site = {
     name: 'The Hub'
   };
@@ -2244,36 +2294,39 @@ return improv.parse({
 playbook = require('../../src');
 return playbook.foo.should.equal('bar');</code></pre></li><li class="suite"><h1>.reset</h1><ul><li class="test pass fast"><h2>returns new instance<span class="duration">0ms</span></h2><pre><code>playbook.foo = 'bar';
 playbook = playbook.reset();
-return should.not.exist(playbook.foo);</code></pre></li></ul></li><li class="suite"><h1>.use</h1><ul><li class="test pass fast"><h2>attaches robot<span class="duration">7ms</span></h2><pre><code>pretend.start();
-return playbook.use(pretend.robot).should.have.property('robot', pretend.robot);</code></pre></li><li class="test pass fast"><h2>inherits robot log<span class="duration">5ms</span></h2><pre><code>pretend.start();
-return playbook.use(pretend.robot).should.have.property('log', pretend.log);</code></pre></li></ul></li></ul></li><li class="suite"><h1>Playbook</h1><ul><li class="suite"><h1>dialogue</h1><ul><li class="test pass fast"><h2>creates Dialogue instance<span class="duration">3ms</span></h2><pre><code>return playbook.dialogue(pretend.response('tester', 'test')).should.be[&quot;instanceof&quot;](playbook.Dialogue);</code></pre></li><li class="test pass fast"><h2>stores it in the dialogues array<span class="duration">2ms</span></h2><pre><code>var dialogue;
+return should.not.exist(playbook.foo);</code></pre></li></ul></li><li class="suite"><h1>.use</h1><ul><li class="test pass fast"><h2>attaches robot<span class="duration">5ms</span></h2><pre><code>pretend.start();
+return playbook.use(pretend.robot).should.have.property('robot', pretend.robot);</code></pre></li><li class="test pass fast"><h2>inherits robot log<span class="duration">4ms</span></h2><pre><code>pretend.start();
+return playbook.use(pretend.robot).should.have.property('log', pretend.log);</code></pre></li></ul></li></ul></li><li class="suite"><h1>Playbook</h1><ul><li class="suite"><h1>dialogue</h1><ul><li class="test pass fast"><h2>creates Dialogue instance<span class="duration">2ms</span></h2><pre><code>return playbook.dialogue(pretend.response('tester', 'test')).should.be[&quot;instanceof&quot;](playbook.Dialogue);</code></pre></li><li class="test pass fast"><h2>stores it in the dialogues array<span class="duration">1ms</span></h2><pre><code>var dialogue;
 dialogue = playbook.dialogue(pretend.response('tester', 'test'));
-return playbook.dialogues[0].should.eql(dialogue);</code></pre></li></ul></li><li class="suite"><h1>scene</h1><ul><li class="test pass fast"><h2>makes a Scene :P<span class="duration">1ms</span></h2><pre><code>return playbook.scene().should.be[&quot;instanceof&quot;](playbook.Scene);</code></pre></li><li class="test pass fast"><h2>stores it in the scenes array<span class="duration">0ms</span></h2><pre><code>var scene;
+return playbook.dialogues[0].should.eql(dialogue);</code></pre></li></ul></li><li class="suite"><h1>scene</h1><ul><li class="test pass fast"><h2>makes a Scene :P<span class="duration">0ms</span></h2><pre><code>return playbook.scene().should.be[&quot;instanceof&quot;](playbook.Scene);</code></pre></li><li class="test pass fast"><h2>stores it in the scenes array<span class="duration">0ms</span></h2><pre><code>var scene;
 scene = playbook.scene();
 return playbook.scenes[0].should.eql(scene);</code></pre></li></ul></li><li class="suite"><h1>.sceneEnter</h1><ul><li class="suite"><h1>without type or args (other than response)</h1><ul><li class="test pass fast"><h2>makes scene with default user type<span class="duration">2ms</span></h2><pre><code>return playbook.sceneEnter(pretend.response('tester', 'test', 'testing')).then(function() {
   return playbook.scenes[0].should.be[&quot;instanceof&quot;](playbook.Scene);
-});</code></pre></li><li class="test pass fast"><h2>resolves with a dialogue<span class="duration">2ms</span></h2><pre><code>return playbook.sceneEnter(pretend.response('tester', 'test')).then(function(dialogue) {
-  return dialogue.should.be[&quot;instanceof&quot;](playbook.Dialogue);
-});</code></pre></li><li class="test pass fast"><h2>enters scene, engaging user (stores against id)<span class="duration">2ms</span></h2><pre><code>return playbook.sceneEnter(pretend.response('tester', 'test')).then(function(dialogue) {
-  return playbook.scenes[0].engaged[pretend.users.tester.id].should.eql(dialogue);
-});</code></pre></li></ul></li><li class="suite"><h1>with type and options args</h1><ul><li class="test pass fast"><h2>used the given room type<span class="duration">2ms</span></h2><pre><code>var res;
+});</code></pre></li><li class="test pass fast"><h2>resolves with a context object<span class="duration">2ms</span></h2><pre><code>var keys;
+keys = ['response', 'participants', 'options', 'arguments', 'dialogue'];
+return playbook.sceneEnter(pretend.response('tester', 'test')).then(function(result) {
+  var ref;
+  return (ref = result.should.have.all).keys.apply(ref, keys);
+});</code></pre></li><li class="test pass fast"><h2>enters scene, engaging user (stores against id)<span class="duration">2ms</span></h2><pre><code>return playbook.sceneEnter(pretend.response('tester', 'test')).then(function(context) {
+  return playbook.scenes[0].engaged[pretend.users.tester.id].should.eql(context.dialogue);
+});</code></pre></li></ul></li><li class="suite"><h1>with type and options args</h1><ul><li class="test pass fast"><h2>used the given room type<span class="duration">1ms</span></h2><pre><code>var res;
 res = pretend.response('tester', 'test', 'testing');
 return playbook.sceneEnter(res, {
   scope: 'room',
   sendReplies: false
 }).then(function() {
   return playbook.scenes[0].config.scope.should.equal('room');
-});</code></pre></li><li class="test pass fast"><h2>passed the scene options to dialogue<span class="duration">2ms</span></h2><pre><code>var res;
+});</code></pre></li><li class="test pass fast"><h2>passed the scene options to dialogue<span class="duration">1ms</span></h2><pre><code>var res;
 res = pretend.response('tester', 'test', 'testing');
 return playbook.sceneEnter(res, {
   scope: 'room',
   sendReplies: false
-}).then(function(dialogue) {
-  return dialogue.config.sendReplies.should.be[&quot;false&quot;];
-});</code></pre></li></ul></li></ul></li><li class="suite"><h1>.sceneListen</h1><ul><li class="suite"><h1>with scene args</h1><ul><li class="test pass fast"><h2>creates Scene instance<span class="duration">0ms</span></h2><pre><code>return this.scene.should.be[&quot;instanceof&quot;](playbook.Scene);</code></pre></li><li class="test pass fast"><h2>passed args to the scene<span class="duration">0ms</span></h2><pre><code>return playbook.scene.should.have.calledWith({
+}).then(function(context) {
+  return context.dialogue.config.sendReplies.should.be[&quot;false&quot;];
+});</code></pre></li></ul></li></ul></li><li class="suite"><h1>.sceneListen</h1><ul><li class="suite"><h1>with scene args</h1><ul><li class="test pass fast"><h2>creates Scene instance<span class="duration">1ms</span></h2><pre><code>return this.scene.should.be[&quot;instanceof&quot;](playbook.Scene);</code></pre></li><li class="test pass fast"><h2>passed args to the scene<span class="duration">0ms</span></h2><pre><code>return playbook.scene.should.have.calledWith({
   sendReplies: false,
   scope: 'room'
-});</code></pre></li><li class="test pass fast"><h2>calls .listen on the scene with type, regex and callback<span class="duration">0ms</span></h2><pre><code>return this.listen.should.have.calledWith('hear', /test/, sinon.match.func);</code></pre></li></ul></li><li class="suite"><h1>without scene args</h1><ul><li class="test pass fast"><h2>creates Scene instance<span class="duration">0ms</span></h2><pre><code>return this.scene.should.be[&quot;instanceof&quot;](playbook.Scene);</code></pre></li><li class="test pass fast"><h2>passed no args to the scene<span class="duration">0ms</span></h2><pre><code>return playbook.scene.getCall(0).should.have.calledWith();</code></pre></li><li class="test pass fast"><h2>calls .listen on the scene with type, regex and callback<span class="duration">1ms</span></h2><pre><code>return this.listen.should.have.calledWith('hear', /test/, sinon.match.func);</code></pre></li></ul></li></ul></li><li class="suite"><h1>.sceneHear</h1><ul><li class="test pass fast"><h2>calls .sceneListen with hear type and any other args<span class="duration">0ms</span></h2><pre><code>var args, ref;
+});</code></pre></li><li class="test pass fast"><h2>calls .listen on the scene with type, regex and callback<span class="duration">0ms</span></h2><pre><code>return this.listen.should.have.calledWith('hear', /test/, sinon.match.func);</code></pre></li></ul></li><li class="suite"><h1>without scene args</h1><ul><li class="test pass fast"><h2>creates Scene instance<span class="duration">1ms</span></h2><pre><code>return this.scene.should.be[&quot;instanceof&quot;](playbook.Scene);</code></pre></li><li class="test pass fast"><h2>passed no args to the scene<span class="duration">0ms</span></h2><pre><code>return playbook.scene.getCall(0).should.have.calledWith();</code></pre></li><li class="test pass fast"><h2>calls .listen on the scene with type, regex and callback<span class="duration">0ms</span></h2><pre><code>return this.listen.should.have.calledWith('hear', /test/, sinon.match.func);</code></pre></li></ul></li></ul></li><li class="suite"><h1>.sceneHear</h1><ul><li class="test pass fast"><h2>calls .sceneListen with hear type and any other args<span class="duration">0ms</span></h2><pre><code>var args, ref;
 args = [
   'hear', /test/, {
     scope: 'room'
@@ -2285,7 +2338,7 @@ args = [
     scope: 'room'
   }, sinon.match.func
 ];
-return (ref = playbook.sceneListen.getCall(0).should.have).calledWith.apply(ref, args);</code></pre></li></ul></li><li class="suite"><h1>.director</h1><ul><li class="test pass fast"><h2>creates and returns director<span class="duration">0ms</span></h2><pre><code>return this.director.should.be[&quot;instanceof&quot;](playbook.Director);</code></pre></li><li class="test pass fast"><h2>stores it in the directors array<span class="duration">0ms</span></h2><pre><code>return playbook.directors[0].should.eql(this.director);</code></pre></li></ul></li><li class="suite"><h1>.transcript</h1><ul><li class="test pass fast"><h2>creates and returns transcript<span class="duration">0ms</span></h2><pre><code>return this.transcript.should.be[&quot;instanceof&quot;](playbook.Transcript);</code></pre></li><li class="test pass fast"><h2>stores it in the transcripts array<span class="duration">0ms</span></h2><pre><code>return playbook.transcripts[0].should.eql(this.transcript);</code></pre></li></ul></li><li class="suite"><h1>.transcribe</h1><ul><li class="test pass fast"><h2>creates transcripts for each module<span class="duration">0ms</span></h2><pre><code>return playbook.transcript.should.have.calledThrice;</code></pre></li><li class="test pass fast"><h2>records events from given instances in brain<span class="duration">0ms</span></h2><pre><code>return pretend.robot.brain.get('transcripts').should.eql([
+return (ref = playbook.sceneListen.getCall(0).should.have).calledWith.apply(ref, args);</code></pre></li></ul></li><li class="suite"><h1>.director</h1><ul><li class="test pass fast"><h2>creates and returns director<span class="duration">0ms</span></h2><pre><code>return this.director.should.be[&quot;instanceof&quot;](playbook.Director);</code></pre></li><li class="test pass fast"><h2>stores it in the directors array<span class="duration">0ms</span></h2><pre><code>return playbook.directors[0].should.eql(this.director);</code></pre></li></ul></li><li class="suite"><h1>.transcript</h1><ul><li class="test pass fast"><h2>creates and returns transcript<span class="duration">0ms</span></h2><pre><code>return this.transcript.should.be[&quot;instanceof&quot;](playbook.Transcript);</code></pre></li><li class="test pass fast"><h2>stores it in the transcripts array<span class="duration">1ms</span></h2><pre><code>return playbook.transcripts[0].should.eql(this.transcript);</code></pre></li></ul></li><li class="suite"><h1>.transcribe</h1><ul><li class="test pass fast"><h2>creates transcripts for each module<span class="duration">0ms</span></h2><pre><code>return playbook.transcript.should.have.calledThrice;</code></pre></li><li class="test pass fast"><h2>records events from given instances in brain<span class="duration">0ms</span></h2><pre><code>return pretend.robot.brain.get('transcripts').should.eql([
   {
     time: 0,
     event: 'deny',
@@ -2306,18 +2359,18 @@ return (ref = playbook.sceneListen.getCall(0).should.have).calledWith.apply(ref,
     },
     strings: ['test']
   }
-]);</code></pre></li></ul></li><li class="suite"><h1>.improvise</h1><ul><li class="test pass fast"><h2>returns the improv singleton<span class="duration">0ms</span></h2><pre><code>return playbook.improvise().should.eql(playbook.improv);</code></pre></li><li class="suite"><h1>with non-improv playbook</h1><ul><li class="test pass fast"><h2>does not parse messages<span class="duration">3ms</span></h2><pre><code>return co(function*() {
+]);</code></pre></li></ul></li><li class="suite"><h1>.improvise</h1><ul><li class="test pass fast"><h2>returns the improv singleton<span class="duration">0ms</span></h2><pre><code>return playbook.improvise().should.eql(playbook.improv);</code></pre></li><li class="suite"><h1>with non-improv playbook</h1><ul><li class="test pass fast"><h2>does not parse messages<span class="duration">2ms</span></h2><pre><code>return co(function*() {
   var res;
   res = pretend.response('tester', 'test');
   yield res.send('hello ${this.user.name}');
   return pretend.messages.pop().should.eql(['hubot', 'hello ${this.user.name}']);
-});</code></pre></li><li class="test pass fast"><h2>parses after called<span class="duration">4ms</span></h2><pre><code>return co(function*() {
+});</code></pre></li><li class="test pass fast"><h2>parses after called<span class="duration">3ms</span></h2><pre><code>return co(function*() {
   var res;
   res = pretend.response('tester', 'test');
   playbook.improvise();
   yield res.send('hello ${ this.user.name }');
   return pretend.messages.pop().should.eql(['hubot', 'hello tester']);
-});</code></pre></li></ul></li><li class="suite"><h1>using custom data transforms</h1><ul><li class="test pass fast"><h2>parses messages with extended context<span class="duration">3ms</span></h2><pre><code>return co(function*() {
+});</code></pre></li></ul></li><li class="suite"><h1>using custom data transforms</h1><ul><li class="test pass fast"><h2>parses messages with extended context<span class="duration">2ms</span></h2><pre><code>return co(function*() {
   var res;
   res = pretend.response('tester', 'test');
   playbook.improv.extend(function(data) {
@@ -2326,9 +2379,9 @@ return (ref = playbook.sceneListen.getCall(0).should.have).calledWith.apply(ref,
   });
   yield res.send('hello ${ this.user.name }');
   return pretend.messages.pop().should.eql(['hubot', 'hello TESTER']);
-});</code></pre></li></ul></li><li class="suite"><h1>extended using transcript reocrds</h1><ul><li class="test pass fast"><h2>merge the recorded answers with attribute tags<span class="duration">4ms</span></h2><pre><code>return co(function*() {
+});</code></pre></li></ul></li><li class="suite"><h1>extended using transcript reocrds</h1><ul><li class="test pass fast"><h2>merge the recorded answers with attribute tags<span class="duration">3ms</span></h2><pre><code>return co(function*() {
   var dialogue, transcript;
-  dialogue = (yield playbook.sceneEnter(pretend.response('tester', 'test')));
+  dialogue = (yield playbook.sceneEnter(pretend.response('tester', 'test'))).dialogue;
   transcript = playbook.transcribe(dialogue, {
     events: ['match']
   });
@@ -2355,9 +2408,9 @@ return exit.should.have.calledOnce;</code></pre></li><li class="test pass fast">
 dialogue = playbook.dialogue(pretend.response('tester', 'test'));
 end = sinon.spy(dialogue, 'end');
 playbook.shutdown();
-return end.should.have.calledOnce;</code></pre></li></ul></li><li class="suite"><h1>.reset</h1><ul><li class="test pass fast"><h2>shuts down<span class="duration">0ms</span></h2><pre><code>sinon.spy(playbook, 'shutdown');
+return end.should.have.calledOnce;</code></pre></li></ul></li><li class="suite"><h1>.reset</h1><ul><li class="test pass fast"><h2>shuts down<span class="duration">1ms</span></h2><pre><code>sinon.spy(playbook, 'shutdown');
 playbook.reset();
-return playbook.shutdown.should.have.calledOnce;</code></pre></li><li class="test pass fast"><h2>returns re-initialised instance<span class="duration">1ms</span></h2><pre><code>playbook = playbook.reset();
+return playbook.shutdown.should.have.calledOnce;</code></pre></li><li class="test pass fast"><h2>returns re-initialised instance<span class="duration">0ms</span></h2><pre><code>playbook = playbook.reset();
 return should.not.exist(playbook.robot);</code></pre></li></ul></li></ul></li><ul>
     </div>
     <script>
