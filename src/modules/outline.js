@@ -18,7 +18,7 @@ require('../utils/string-to-regex')
  *
  * @param {string/Object[]} bits      Attributes to setup bits
  * @param {string} bits[].key         Key for scene and/or dialogue running the bit (required)
- * @param {array}  bits[].send        String/s to send when doing bit (minimum requirement)
+ * @param {array}  [bits[].send]      String/s to send when doing bit (minimum requirement)
  * @param {string} [bits[].catch]     To send if response unmatched by listeners
  * @param {string} [bits[].condition] Converted to regex for listener to trigger bit
  * @param {string} [bits[].listen]    Type of listener (hear/respond) for scene entry bit
@@ -33,7 +33,10 @@ class Outline extends Base {
     super('outline', robot, ...args)
     this.scenes = []
     this.bits = {}
-    for (let bit of bits) this.bits[bit.key] = bit
+    for (let bit of bits) {
+      if (bit.key === undefined) this.error('missing key for bit')
+      this.bits[bit.key] = bit
+    }
     _.filter(this.bits, 'listen').map((bit) => this.setupScene(bit))
   }
 

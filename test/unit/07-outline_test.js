@@ -1,7 +1,7 @@
 const _ = require('lodash')
 const sinon = require('sinon')
 const chai = require('chai')
-chai.should()
+const should = chai.should()
 chai.use(require('sinon-chai'))
 const pretend = require('hubot-pretend')
 
@@ -10,11 +10,29 @@ const Outline = require('../../src/modules/outline')
 describe('Outline', () => {
   beforeEach(() => {
     pretend.start()
+    pretend.log.level = 'silent'
     Object.getOwnPropertyNames(Outline.prototype).map((key) => sinon.spy(Outline.prototype, key))
   })
   afterEach(() => {
     pretend.shutdown()
     Object.getOwnPropertyNames(Outline.prototype).map((key) => Outline.prototype[key].restore())
+  })
+
+  describe('constructor', () => {
+    context('with bit missing a key', () => {
+      it('throws an error', () => {
+        let bits = [{ condition: /test/i, send: 'testing' }]
+        let outline, err
+        try {
+          outline = new Outline(pretend.robot, bits)
+        } catch (e) {
+          err = e
+        }
+        err.should.be.instanceof(Error)
+        err.message.should.match(/key/)
+        should.not.exist(outline)
+      })
+    })
   })
 
   describe('.bitCondition', () => {
