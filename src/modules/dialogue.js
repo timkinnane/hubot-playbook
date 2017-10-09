@@ -48,7 +48,7 @@ class Dialogue extends Base {
   */
   end () {
     if (this.ended) return false
-    if (this.countdown !== undefined) this.clearTimeout()
+    if (!_.isNil(this.countdown)) this.clearTimeout()
     if (this.path != null) {
       this.log.debug(`Dialog ended ${this.path.closed ? '' : 'in'}complete`)
     } else {
@@ -105,7 +105,7 @@ class Dialogue extends Base {
    * Catches the onTimeout method because it can be overriden and may throw.
   */
   startTimeout () {
-    if (this.countdown !== undefined) this.clearTimeout()
+    if (!_.isNil(this.countdown)) this.clearTimeout()
     this.countdown = setTimeout(() => {
       this.emit('timeout', this.res)
       try {

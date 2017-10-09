@@ -66,7 +66,7 @@ class Base {
    */
   appendLogDetails (text) {
     let details = `id: ${this.id}`
-    if (this.key !== undefined) details += `, key: ${this.key}`
+    if (!_.isNil(this.key)) details += `, key: ${this.key}`
     return `${text} (${details})`
   }
 
@@ -78,10 +78,10 @@ class Base {
   error (err) {
     if (_.isString(err)) {
       let text = `${this.id || 'constructor'}: ${err}`
-      if (this.key !== undefined) text += ` (key: ${this.key})`
+      if (!_.isNil(this.key)) text += ` (key: ${this.key})`
       err = new Error(text)
     }
-    if (this.robot != null) this.robot.emit('error', err)
+    if (this.robot !== null) this.robot.emit('error', err)
     throw err
   }
 

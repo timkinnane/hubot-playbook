@@ -163,10 +163,10 @@ function mergeData (context, paths) {
 
   // provide existing data to extensions, if path requires it
   return extensions.reduce((merged, extension) => {
-    let extensionRequired = (extension.path !== undefined)
+    let extensionRequired = !_.isNil(extension.path)
       ? _.some(paths, (path) => extension.path.indexOf(path) !== -1)
       : true
-    if (extension.path === undefined || extensionRequired) {
+    if (_.isNil(extension.path) || extensionRequired) {
       return _.defaultsDeep(merged, extension.function(merged))
     } else {
       return merged
@@ -186,7 +186,7 @@ function mergeData (context, paths) {
  * @return {array}         Strings populated with context values
 */
 function parse (context) {
-  if (context.strings === undefined) {
+  if (_.isNil(context.strings)) {
     throw new Error('Improv called without strings property in context argument')
   }
 
