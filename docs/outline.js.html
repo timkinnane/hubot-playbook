@@ -149,22 +149,25 @@
 <h2 id="outline">Outline</h2>
 <p>Outlines are a conversation modelling schema / handler, with collections of
 attributes for setting up scenes, dialogues, paths and directors, for
-interactions defined as bits.</p>
+interactions defined as “bits”.</p>
 <p>Define a key and condition to execute each bit, either consecutively off a
 prior bit, or with a listen attribute to become effectively a global entry
 point to a scene.</p>
 <p>A subsequent bit can even lead back to it’s own parent or any other bit,
 creating a mesh of possible conversational pathways.</p>
+<p>The setupScenes option is provided to disable (set to false) automatically
+adding listeners for bits that enter scenes, in case there’s a need to
+manipulate the bits first, then call <code>.setupScenes()</code> when ready.</p>
 <p><strong>Kind</strong>: global class  </p>
 <ul>
 <li><a href="#Outline">Outline</a><ul>
 <li><a href="#new_Outline_new">new Outline(bits, [options], [key])</a></li>
-<li><a href="#Outline+doBit">.doBit(res, key)</a></li>
-<li><a href="#Outline+setupScene">.setupScene(bit)</a></li>
-<li><a href="#Outline+getSceneArgs">.getSceneArgs()</a> ⇒ <code>array</code></li>
-<li><a href="#Outline+setupDialogue">.setupDialogue(res)</a></li>
-<li><a href="#Outline+setupPath">.setupPath(res)</a></li>
-<li><a href="#Outline+bitCondition">.bitCondition(key)</a> ⇒ <code>RegExp</code></li>
+<li><a href="#Outline+getByKey">.getByKey(key)</a> ⇒ <code>Object</code></li>
+<li><a href="#Outline+parseCondition">.parseCondition(condition)</a> ⇒ <code>RegExp</code></li>
+<li><a href="#Outline+setupScenes">.setupScenes()</a> ⇒ <a href="#Outline"><code>Outline</code></a></li>
+<li><a href="#Outline+setupDialogue">.setupDialogue(res)</a> ⇒ <code>Dialogue</code></li>
+<li><a href="#Outline+bitCallback">.bitCallback(bit, res)</a> ⇒ <code>Promise</code></li>
+<li><a href="#Outline+setupPath">.setupPath(res)</a> ⇒ <code>Promise</code></li>
 </ul>
 </li>
 </ul>
@@ -182,8 +185,8 @@ creating a mesh of possible conversational pathways.</p>
 <tbody>
 <tr>
 <td>bits</td>
-<td><code>Array.&lt;string/Object&gt;</code></td>
-<td>Attributes to setup bits</td>
+<td><code>Array.&lt;Object&gt;</code></td>
+<td>Array of objects with attributes to setup bits</td>
 </tr>
 <tr>
 <td>bits[].key</td>
@@ -211,14 +214,9 @@ creating a mesh of possible conversational pathways.</p>
 <td>Type of listener (hear/respond) for scene entry bit</td>
 </tr>
 <tr>
-<td>[bits[].scene]</td>
+<td>[bits[].scope]</td>
 <td><code>string</code></td>
-<td>Scope for the scene (only used if it has a listen type)</td>
-</tr>
-<tr>
-<td>[bits[].options]</td>
-<td><code>Object</code></td>
-<td>Key/val options for scene and/or dialogue config</td>
+<td>Scope type for scene (only used if it has a listen type)</td>
 </tr>
 <tr>
 <td>[bits[].next]</td>
@@ -226,9 +224,19 @@ creating a mesh of possible conversational pathways.</p>
 <td>Key/s (strings) for consequitive bits</td>
 </tr>
 <tr>
+<td>[bits[].options]</td>
+<td><code>Object</code></td>
+<td>Key/val options for scene and/or dialogue config</td>
+</tr>
+<tr>
 <td>[options]</td>
 <td><code>Object</code></td>
 <td>Key/val options for outline config</td>
+</tr>
+<tr>
+<td>[options.setupScenes]</td>
+<td><code>boolean</code></td>
+<td>Optionally set up scene listeners on load (default true)</td>
 </tr>
 <tr>
 <td>[key]</td>
@@ -238,12 +246,73 @@ creating a mesh of possible conversational pathways.</p>
 </tbody>
 </table>
 <hr>
-<p><a name="Outline+doBit"></a></p>
-<h3 id="outline-dobit-res-key-">outline.doBit(res, key)</h3>
-<p>Send messages and setup any following listeners for a bit.</p>
-<p>Called in an open dialogue, as a callback on entering the scene or
-continuing from a prior bit. Adds the bit as a property of the response.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Outline"><code>Outline</code></a>  </p>
+<p><a name="Outline+getByKey"></a></p>
+<h3 id="outline-getbykey-key-code-object-code-">outline.getByKey(key) ⇒ <code>Object</code></h3>
+<p>Helper, finds a bit with a given key.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Outline"><code>Outline</code></a><br><strong>Returns</strong>: <code>Object</code> - Bit attributes  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>key</td>
+<td><code>string</code></td>
+<td>Key name for required bit</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><a name="Outline+parseCondition"></a></p>
+<h3 id="outline-parsecondition-condition-code-regexp-code-">outline.parseCondition(condition) ⇒ <code>RegExp</code></h3>
+<p>Helper, converts a mixed type condition into a regex.</p>
+<p>Utility for loading regex properties from a file which cast them as strings
+or simply convert a single word to a regular expression.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Outline"><code>Outline</code></a><br><strong>Returns</strong>: <code>RegExp</code> - A valid expression for the given condition  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>condition</td>
+<td><code>*</code></td>
+<td>RegExp to check or string to ccnvert</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><a name="Outline+setupScenes"></a></p>
+<h3 id="outline-setupscenes-code-outline-code-outline-">outline.setupScenes() ⇒ <a href="#Outline"><code>Outline</code></a></h3>
+<p>Setup scene listeners for all “global” bits in the outline via Playbook.</p>
+<p>Calling through Playbook (if available) allows it to keep a reference of
+all created scenes that may be interacted with via other modules, like
+directors and transcripts.</p>
+<p>Only applicable to bits with a <code>listen</code> attribute (hear or respond).
+Subsequent bits will play out within the same scene so their listen type is
+irrelevant because all responses from an engaged audience will be routed
+to the current dialogue.</p>
+<p>Bits only require a <code>.listen</code> and <code>.condition</code> property to setup a scene
+listener and will use defaults if <code>.type</code> and <code>.options</code> are undefined.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Outline"><code>Outline</code></a><br><strong>Returns</strong>: <a href="#Outline"><code>Outline</code></a> - Self, for chaining  </p>
+<hr>
+<p><a name="Outline+setupDialogue"></a></p>
+<h3 id="outline-setupdialogue-res-code-dialogue-code-">outline.setupDialogue(res) ⇒ <code>Dialogue</code></h3>
+<p>Configure a dialogue with options from the executing bit (may be null).</p>
+<p>Dialogue is already open from the scene being triggered and should have
+bit property already added by its callback.</p>
+<p>This is unnecessary for the initial bit’s callback, because it inherits
+the bit options from the scene, but subsequent dialogue’s options must be
+overwritten for each executing bit.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Outline"><code>Outline</code></a><br><strong>Returns</strong>: <code>Dialogue</code> - The dialogue instance with bit config  </p>
 <table>
 <thead>
 <tr>
@@ -258,24 +327,19 @@ continuing from a prior bit. Adds the bit as a property of the response.</p>
 <td><code>Response</code></td>
 <td>Hubot Response object</td>
 </tr>
-<tr>
-<td>key</td>
-<td><code>string</code></td>
-<td>The key for a loaded bit</td>
-</tr>
 </tbody>
 </table>
 <hr>
-<p><a name="Outline+setupScene"></a></p>
-<h3 id="outline-setupscene-bit-">outline.setupScene(bit)</h3>
-<p>Prepare the arguments required to add listener for a scene entering bit.</p>
-<p>Only applicable to bits with a <code>listen</code> attribute (hear or respond).
-Subsequent bits will play out within the same scene so their listen type is
-irrelevant because all responses from an engaged audience will be routed
-through the current dialogue.</p>
-<p>Bits only require a <code>.listen</code> and <code>.condition</code> property to setup a scene
-listener and will use defaults if <code>.scope</code> and <code>.options</code> are null.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Outline"><code>Outline</code></a>  </p>
+<p><a name="Outline+bitCallback"></a></p>
+<h3 id="outline-bitcallback-bit-res-code-promise-code-">outline.bitCallback(bit, res) ⇒ <code>Promise</code></h3>
+<p>Callback for listener executing a bit. Called with ‘this’ bound to outline.</p>
+<p>Send messages and setup any following listeners for a bit.
+May be on entering the scene or continuing from a prior bit.
+Adds the bit as response property.</p>
+<p>The bit argument is provided from binding when setting up the listener,
+in the context of the listener firing, it will only call with res argument.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Outline"><code>Outline</code></a><br><strong>Returns</strong>: <code>Promise</code> - Resolves with addPath result (when sends completed)
+                        or immediately if there’s no following bits.  </p>
 <table>
 <thead>
 <tr>
@@ -288,37 +352,8 @@ listener and will use defaults if <code>.scope</code> and <code>.options</code> 
 <tr>
 <td>bit</td>
 <td><code>Object</code></td>
-<td>Attributes to setup scene for entry to bit</td>
+<td>The bit being executed</td>
 </tr>
-</tbody>
-</table>
-<hr>
-<p><a name="Outline+getSceneArgs"></a></p>
-<h3 id="outline-getsceneargs-code-array-code-">outline.getSceneArgs() ⇒ <code>array</code></h3>
-<p>Get arguments to pass into scene listeners for <em>global</em> bits.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Outline"><code>Outline</code></a><br><strong>Returns</strong>: <code>array</code> - Items contain required arguments (call with spread syntax)<br><strong>Example</strong> <em>(The hard way)</em>  </p>
-<pre><code class="lang-js"><span class="hljs-keyword">const</span> scene = <span class="hljs-keyword">new</span> Scene(robot)
-<span class="hljs-keyword">const</span> outline = <span class="hljs-keyword">new</span> Outline(<span class="hljs-string">'./conversation.yml'</span>)
-outline.getSceneArgs().map(<span class="hljs-function">(<span class="hljs-params">args</span>) =&gt;</span> scene.listen(...args)
-</code></pre>
-<p><strong>Example</strong> <em>(The easy way)</em>  </p>
-<pre><code class="lang-js"><span class="hljs-keyword">const</span> pb = <span class="hljs-keyword">new</span> Playbook(robot).outline(<span class="hljs-string">'./conversation.yml'</span>)
-<span class="hljs-comment">// ^ playbook helper creates outline and sets up scenes</span>
-</code></pre>
-<hr>
-<p><a name="Outline+setupDialogue"></a></p>
-<h3 id="outline-setupdialogue-res-">outline.setupDialogue(res)</h3>
-<p>Dialogue is already open from the scene being triggered.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Outline"><code>Outline</code></a>  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
 <tr>
 <td>res</td>
 <td><code>Response</code></td>
@@ -328,9 +363,12 @@ outline.getSceneArgs().map(<span class="hljs-function">(<span class="hljs-params
 </table>
 <hr>
 <p><a name="Outline+setupPath"></a></p>
-<h3 id="outline-setuppath-res-">outline.setupPath(res)</h3>
-<p>Add path options and branches to</p>
-<p><strong>Kind</strong>: instance method of <a href="#Outline"><code>Outline</code></a>  </p>
+<h3 id="outline-setuppath-res-code-promise-code-">outline.setupPath(res) ⇒ <code>Promise</code></h3>
+<p>Add path, options and branches to dialogue (within listener callback).</p>
+<p>Response object must already be populated with bit and dialogue.</p>
+<p>Here the bit’s catch property shorthand is converted to the path’s
+catchMessage config.</p>
+<p><strong>Kind</strong>: instance method of <a href="#Outline"><code>Outline</code></a><br><strong>Returns</strong>: <code>Promise</code> - Resolves with addPath result (when sends completed)  </p>
 <table>
 <thead>
 <tr>
@@ -344,27 +382,6 @@ outline.getSceneArgs().map(<span class="hljs-function">(<span class="hljs-params
 <td>res</td>
 <td><code>Response</code></td>
 <td>Hubot Response object</td>
-</tr>
-</tbody>
-</table>
-<hr>
-<p><a name="Outline+bitCondition"></a></p>
-<h3 id="outline-bitcondition-key-code-regexp-code-">outline.bitCondition(key) ⇒ <code>RegExp</code></h3>
-<p>Convert a bit’s condition attribute into a regex.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Outline"><code>Outline</code></a><br><strong>Returns</strong>: <code>RegExp</code> - The pattern for the bit’s condition  </p>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>key</td>
-<td><code>string</code></td>
-<td>The key for a loaded bit</td>
 </tr>
 </tbody>
 </table>

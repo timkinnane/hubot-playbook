@@ -206,13 +206,13 @@ class Playbook {
   /**
    * Load outline and setup scene listeners for _global_ bits.
    *
-   * @param  {*} [args] Outline constructor args
+   * @param  {*} [args] Additional outline constructor args
    * @return {Playbook} The reset instance
    */
-  outline (bits, ...args) {
-    let outline = new this.Outline(this.robot, bits, ...args)
-    outline.getSceneArgs().map((args) => this.sceneListen(...args))
+  outline (...args) {
+    let outline = new this.Outline(this.robot, ...args)
     this.outlines.push(outline)
+    return outline
   }
 }
 

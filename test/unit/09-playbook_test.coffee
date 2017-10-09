@@ -322,10 +322,22 @@ describe 'Playbook', ->
 
   describe '.reset', ->
 
-    it 'shuts down', ->
+    it 'shuts down original instance', ->
       sinon.spy playbook, 'shutdown'
       playbook.reset()
       playbook.shutdown.should.have.calledOnce
+
+    it 'clears existing instance collections', ->
+      playbook.dialogues = [{ name: 'foo'}, { name: 'bar' }]
+      playbook.scenes = [{ name: 'foo'}, { name: 'bar' }]
+      playbook.directors = [{ name: 'foo'}, { name: 'bar' }]
+      playbook.transcripts = [{ name: 'foo'}, { name: 'bar' }]
+      playbook.outlines = [{ name: 'foo'}, { name: 'bar' }]
+      playbook = playbook.reset()
+      playbook.dialogues.should.eql([])
+      playbook.scenes.should.eql([])
+      playbook.transcripts.should.eql([])
+      playbook.outlines.should.eql([])
 
     it 'returns re-initialised instance', ->
       playbook = playbook.reset()
