@@ -5,7 +5,7 @@ chai.use require 'sinon-chai'
 co = require 'co'
 _ = require 'lodash'
 pretend = require 'hubot-pretend'
-Dialogue = require '../../src/modules/dialogue'
+Dialogue = require '../../lib/modules/dialogue'
 
 # get the null Timeout prototype instance for comparison
 Timeout = setTimeout () ->

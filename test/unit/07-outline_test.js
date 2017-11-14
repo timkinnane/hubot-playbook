@@ -6,9 +6,9 @@ chai.use(require('sinon-chai'))
 chai.use(require('chai-subset'))
 const pretend = require('hubot-pretend')
 
-const Outline = require('../../src/modules/outline')
-const Dialogue = require('../../src/modules/dialogue')
-let playbook = require('../../src/modules/playbook')
+const Outline = require('../../lib/modules/outline')
+const Dialogue = require('../../lib/modules/dialogue')
+let playbook = require('../../lib/modules/playbook')
 
 describe('Outline', () => {
   beforeEach(() => {

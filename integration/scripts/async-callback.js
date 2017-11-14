@@ -16,7 +16,7 @@
 // Author:
 //   Tim Kinnane
 //
-const playbook = require('../../src')
+const playbook = require('../../lib')
 
 const wait = (delay) => new Promise((resolve, reject) => setTimeout(resolve, delay))
 

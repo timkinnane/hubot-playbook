@@ -14,7 +14,7 @@
 # Author:
 #   Tim Kinnane
 #
-playbook = require '../../src'
+playbook = require '../../lib'
 
 module.exports = (robot) ->
 

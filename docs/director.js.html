@@ -171,7 +171,7 @@ determine access.</p>
 <li><a href="#new_Director_new">new Director(robot, [authorise], [options], [key])</a></li>
 <li><a href="#Director+add">.add(names)</a> ⇒ <a href="#Director"><code>Director</code></a></li>
 <li><a href="#Director+remove">.remove(names)</a> ⇒ <a href="#Director"><code>Director</code></a></li>
-<li><a href="#Director+isAllowed">.isAllowed(res)</a> ⇒ <code>boolean</code></li>
+<li><a href="#Director+isAllowed">.isAllowed(res)</a> ⇒ <code>Boolean/Promise</code></li>
 <li><a href="#Director+process">.process(res)</a> ⇒ <code>Promise</code></li>
 <li><a href="#Director+directMatch">.directMatch(regex)</a> ⇒ <a href="#Director"><code>Director</code></a></li>
 <li><a href="#Director+directListener">.directListener(id)</a> ⇒ <a href="#Director"><code>Director</code></a></li>
@@ -209,7 +209,12 @@ determine access.</p>
 <tr>
 <td>[options.type]</td>
 <td><code>string</code></td>
-<td><code>&#39;whitelist&#39;</code> (default) or <code>&#39;blacklist&#39;</code></td>
+<td>‘whitelist’ (default) or ‘blacklist’</td>
+</tr>
+<tr>
+<td>[options.scope]</td>
+<td><code>string</code></td>
+<td>‘username’ (default) or ‘room’</td>
 </tr>
 <tr>
 <td>[options.deniedReply]</td>
@@ -273,11 +278,11 @@ determine access.</p>
 </table>
 <hr>
 <p><a name="Director+isAllowed"></a></p>
-<h3 id="director-isallowed-res-code-boolean-code-">director.isAllowed(res) ⇒ <code>boolean</code></h3>
+<h3 id="director-isallowed-res-code-boolean-promise-code-">director.isAllowed(res) ⇒ <code>Boolean/Promise</code></h3>
 <p>Determine if user has access, checking usernames/rooms against lists.</p>
 <p><em>Blacklist</em> blocks names on list, let anyone else through. <em>Whitelist</em> lets
 names on list through, block anyone else. Whitelist is default behaviour.</p>
-<p><strong>Kind</strong>: instance method of <a href="#Director"><code>Director</code></a><br><strong>Returns</strong>: <code>boolean</code> - Access allowed  </p>
+<p><strong>Kind</strong>: instance method of <a href="#Director"><code>Director</code></a><br><strong>Returns</strong>: <code>Boolean/Promise</code> - Access allowed - should wrap in resolve  </p>
 <table>
 <thead>
 <tr>

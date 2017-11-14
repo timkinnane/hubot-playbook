@@ -1,14 +1,33 @@
 {
   "name": "hubot-playbook",
-  "description": "Conversation branching library for Hubots.",
-  "main": "src/index.js",
+  "description": "Conversational UI chatbot framework.",
+  "main": "./lib/index.js",
   "files": [
-    "src/"
+    "lib/"
   ],
   "version": "1.0.0",
   "engines": {
     "node": "> 8.0.0",
     "npm": "> 5.0.0"
+  },
+  "author": "Tim Kinnane <timkinnane@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/timkinnane/hubot-playbook.git"
+  },
+  "bugs": {
+    "url": "https://github.com/timkinnane/hubot-playbook/issues"
+  },
+  "homepage": "https://github.com/timkinnane/hubot-playbook#readme",
+  "nyc": {
+    "reporter": [
+      "lcovonly",
+      "text"
+    ],
+    "exclude": [
+      "lib/utils"
+    ]
   },
   "standard": {
     "env": [
@@ -16,10 +35,10 @@
     ]
   },
   "scripts": {
-    "dev:lint": "standard src/**/*.js | snazzy",
+    "dev:lint": "standard lib/**/*.js | snazzy",
     "test:lint": "coffeelint ./test --quiet",
     "test": "nyc mocha test/unit",
-    "test:watch": "onchange 'src/**/*.js' 'test/**/*.coffee' -- npm run test",
+    "test:watch": "onchange 'lib/**/*.js' 'test/**/*.coffee' -- npm run test",
     "pretest": "run-s dev:lint test:lint",
     "build": "run-s test integration docs",
     "preintegration": "rimraf ./integration/node_modules",
@@ -37,10 +56,6 @@
     "prepush": "npm test",
     "commit": "git-cz"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/timkinnane/hubot-playbook.git"
-  },
   "keywords": [
     "hubot",
     "chatbot",
@@ -50,21 +65,6 @@
     "conversation",
     "dialogue"
   ],
-  "author": "Tim Kinnane <tim@nestedcode.com>",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/timkinnane/hubot-playbook/issues"
-  },
-  "homepage": "https://github.com/timkinnane/hubot-playbook#readme",
-  "nyc": {
-    "reporter": [
-      "lcovonly",
-      "text"
-    ],
-    "exclude": [
-      "src/utils"
-    ]
-  },
   "dependencies": {
     "async": "^2.5.0",
     "lodash": "^4.17.4"

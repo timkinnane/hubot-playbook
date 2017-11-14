@@ -1,5 +1,5 @@
 _ = require 'lodash'
-Playbook = require '../src/Playbook'
+Playbook = require '../lib/Playbook'
 
 ###
 TODO:

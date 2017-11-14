@@ -7,8 +7,8 @@ sinon = require 'sinon'
 should = chai.should()
 chai.use require 'sinon-chai'
 pretend = require 'hubot-pretend'
-Dialogue = require '../../src/modules/dialogue'
-Scene = require '../../src/modules/scene'
+Dialogue = require '../../lib/modules/dialogue'
+Scene = require '../../lib/modules/scene'
 
 setImmediatePromise = util.promisify setImmediate
 
