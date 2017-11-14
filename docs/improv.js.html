@@ -213,8 +213,14 @@ replace the entire string.</p>
 <dt><a href="#remember">remember(path, value)</a> ⇒ <code>Object</code></dt>
 <dd><p>Add data to context on the fly</p>
 </dd>
+<dt><a href="#rememberForUser">rememberForUser(id, path, value)</a> ⇒ <code>Object</code></dt>
+<dd><p>Add data to context specific for a given user&#39;s ID</p>
+</dd>
 <dt><a href="#forget">forget(path)</a> ⇒ <code>Object</code></dt>
 <dd><p>Remove data from data on the fly</p>
+</dd>
+<dt><a href="#forgetForUser">forgetForUser(id, path)</a> ⇒ <code>Object</code></dt>
+<dd><p>Remove data from data for a given user&#39;s ID</p>
 </dd>
 <dt><a href="#reset">reset()</a></dt>
 <dd><p>Wipte slate for tests to reinitialise without existing instance or context</p>
@@ -547,6 +553,37 @@ replace the entire string.</p>
 </tbody>
 </table>
 <hr>
+<p><a name="rememberForUser"></a></p>
+<h2 id="rememberforuser-id-path-value-code-object-code-">rememberForUser(id, path, value) ⇒ <code>Object</code></h2>
+<p>Add data to context specific for a given user’s ID</p>
+<p><strong>Kind</strong>: global function<br><strong>Returns</strong>: <code>Object</code> - The module exports for chaining  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td><code>string</code></td>
+<td>The id of the user to remember for</td>
+</tr>
+<tr>
+<td>path</td>
+<td><code>array/string</code></td>
+<td>The path of the property to set</td>
+</tr>
+<tr>
+<td>value</td>
+<td><code>*</code></td>
+<td>The value to set</td>
+</tr>
+</tbody>
+</table>
+<hr>
 <p><a name="forget"></a></p>
 <h2 id="forget-path-code-object-code-">forget(path) ⇒ <code>Object</code></h2>
 <p>Remove data from data on the fly</p>
@@ -560,6 +597,32 @@ replace the entire string.</p>
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>path</td>
+<td><code>array/string</code></td>
+<td>The path of the property to unset</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><a name="forgetForUser"></a></p>
+<h2 id="forgetforuser-id-path-code-object-code-">forgetForUser(id, path) ⇒ <code>Object</code></h2>
+<p>Remove data from data for a given user’s ID</p>
+<p><strong>Kind</strong>: global function<br><strong>Returns</strong>: <code>Object</code> - The module exports for chaining  </p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td><code>string</code></td>
+<td>The id of the user to remember for</td>
+</tr>
 <tr>
 <td>path</td>
 <td><code>array/string</code></td>

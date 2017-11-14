@@ -90,6 +90,14 @@ describe 'Improv', ->
           name: 'Hub'
           lang: 'en'
 
+    describe '.rememberForUser', ->
+
+      it 'stores data at path with user ID', ->
+        uid = pretend.lastListen().message.user.id
+        improv.data.site = name: 'Hub'
+        improv.rememberForUser uid, 'site.nickname', 'Hubby'
+        improv.userData.should.eql `${uid}`: site: nickname: 'Hubby'
+
     describe '.forget', ->
 
       it 'removes data at path', ->
@@ -98,6 +106,14 @@ describe 'Improv', ->
         improv.data.should.eql site:
           name: 'Hub'
           lang: 'en'
+
+    describe '.forgetForUser', ->
+
+      it 'forgets user data at path for user ID', ->
+        uid = pretend.lastListen().message.user.id
+        improv.userData.uid = site: nickname: 'Hubby'
+        improv.forgetForUser uid, 'site.nickname'
+        improv.userData.should.eql {}
 
     describe '.mergeData', ->
 
@@ -110,6 +126,23 @@ describe 'Improv', ->
             user: pretend.lastListen().message.user
             site: name: 'Hub'
 
+        it 'merges data with remembered user data in context', ->
+          user = pretend.lastListen().message.user
+          improv.data.site = name: 'Hub'
+          improv.userData = `${user.id}`: site: nickname: 'Hubby'
+          improv.mergeData user: user
+          .should.eql
+            user: user
+            site: name: 'Hub', nickname: 'Hubby'
+
+        it 'does not merge remembered user data without context', ->
+          user = pretend.lastListen().message.user
+          improv.data.site = name: 'Hub'
+          improv.userData = `${user.id}`: site: nickname: 'Hubby'
+          improv.mergeData()
+          .should.eql
+            site: name: 'Hub'
+
       context 'with data loaded from brain', ->
 
         it 'merges data with user data', ->
@@ -119,9 +152,7 @@ describe 'Improv', ->
           improv.mergeData user: pretend.lastListen().message.user
           .should.eql
             user: pretend.lastListen().message.user
-            site:
-              owner: 'Hubot'
-              name: 'Hub'
+            site: owner: 'Hubot' name: 'Hub'
 
       context 'with extension functions added', ->
 
@@ -216,7 +247,7 @@ describe 'Improv', ->
       context 'with multiple strings', ->
 
         it 'renders each message with data', -> co ->
-          improv.data.site = { name: 'The Hub' }
+          improv.data.site = name: 'The Hub'
           yield pretend.lastListen().send 'testing'
           , 'hi ${ this.user.name }'
           , 'welcome to ${ this.site.name }'
@@ -225,6 +256,32 @@ describe 'Improv', ->
             [ 'testing', 'hubot', 'testing' ]
             [ 'testing', 'hubot', 'hi tester' ]
             [ 'testing', 'hubot', 'welcome to The Hub' ]
+          ]
+
+        it 'renders messages with remembered user data', -> co ->
+          pretend.robot.hear /remember i like (.*)/, res ->
+            improv.rememberForUser res.message.user.id, 'fav', res.match[1]
+          yield pretend.user('blueboi').send('remember i like blue')
+          yield pretend.lastListen().send 'i know you like ${this.fav}'
+          pretend.messages.should.eql [
+            [ 'blueboi', 'remember i like blue' ]
+            [ 'hubot', 'i know you like blue' ]
+          ]
+
+        it 'does not confuse user memory in succession', -> co ->
+          pretend.robot.hear /remember i like (.*)/, res ->
+            improv.rememberForUser res.message.user.id, 'fav', res.match[1]
+          yield pretend.user('blueboi').send('remember i like blue')
+          blueres = pretend.lastListen()
+          yield pretend.user('redkid').send('remember i like red')
+          redres = pretend.lastListen()
+          blueres.reply 'i know you like ${this.fav}'
+          redres.reply 'i know you like ${this.fav}'
+          pretend.messages.should.eql [
+            [ 'blueboi', 'remember i like blue' ]
+            [ 'redkid', 'remember i like red' ]
+            [ 'hubot', '@blueboi i know you like blue' ]
+            [ 'hubot', '@redkid i know you like red' ]
           ]
 
       # beforeEach ->

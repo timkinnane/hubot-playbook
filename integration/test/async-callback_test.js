@@ -1,3 +1,5 @@
+'use strict'
+
 const should = require('chai').should()
 const pretend = require('hubot-pretend')
 const wait = (delay) => new Promise((resolve, reject) => setTimeout(resolve, delay))
